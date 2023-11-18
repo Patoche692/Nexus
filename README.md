@@ -1,2 +1,2 @@
-# nexus
+# Nexus
 Nexus game engine
