@@ -11,7 +11,8 @@
                 "${workspaceFolder}/bin/nexus-engine.so",
                 "-Wall",
                 "-Wextra",
-                "${workspaceFolder}/nexus/src/*.cpp"
+                "-fPIC",
+                "${workspaceFolder}/nexus/src/nexus/*.cpp"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -28,12 +29,12 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
-                "-o",
-                "${workspaceFolder}/bin/nexus-editor",
+                "-o", "${workspaceFolder}/bin/nexus-editor",
+                "-I",  "${workspaceFolder}/nexus/src",
                 "-Wall",
                 "-Wextra",
                 "-g",
-                "${workspaceFolder}/nexus-editor/src/*.cpp",
+                "${workspaceFolder}/nexus-editor/src/**.cpp",
                 "${workspaceFolder}/bin/nexus-engine.so"
             ],
             "options": {
