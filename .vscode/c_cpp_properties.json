@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/nexus/vendor/spdlog/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",

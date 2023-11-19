@@ -1,0 +1,3 @@
+[submodule "nexus/vendor/spdlog"]
+	path = nexus/vendor/spdlog
+	url = git@github.com:gabime/spdlog.git

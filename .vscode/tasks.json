@@ -12,6 +12,7 @@
                 "-Wall",
                 "-Wextra",
                 "-fPIC",
+                "-I", "${workspaceFolder}/nexus/vendor/spdlog/include/",
                 "${workspaceFolder}/nexus/src/nexus/*.cpp"
             ],
             "options": {
@@ -31,6 +32,7 @@
                 "-fdiagnostics-color=always",
                 "-o", "${workspaceFolder}/bin/nexus-editor",
                 "-I",  "${workspaceFolder}/nexus/src",
+                "-I", "${workspaceFolder}/nexus/vendor/spdlog/include/",
                 "-Wall",
                 "-Wextra",
                 "-g",
