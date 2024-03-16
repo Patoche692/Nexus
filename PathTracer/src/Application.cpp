@@ -30,7 +30,6 @@ int main(void)
     Renderer renderer(WIDTH, HEIGHT);
 
     uint32_t *colors = new uint32_t[WIDTH * HEIGHT];
-    std::fill_n(colors, WIDTH * HEIGHT, 0xffff0000);
 
     unsigned int pbo;
     glGenBuffers(1, &pbo);
@@ -60,11 +59,11 @@ int main(void)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //renderer.Render(device_ptr);
+        renderer.Render(device_ptr);
 
         glBindTexture(GL_TEXTURE_2D, textureHandle);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // if not already bound

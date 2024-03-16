@@ -11,53 +11,52 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	//float x = (float)i / (float)imageWidth * 2.0f - 1.0f;
-	//float y = (float)j / (float)imageHeight * 2.0f - 1.0f;
+	float x = (float)i / (float)imageWidth * 2.0f - 1.0f;
+	float y = (float)j / (float)imageHeight * 2.0f - 1.0f;
 
 	if (i >= imageWidth || j >= imageHeight)
 		return;
 
 	uint32_t* imagePtr = (uint32_t*)device_ptr;
-	imagePtr[j * imageWidth + i] = 0xffff0000;
 
-	//glm::vec3 rayOrigin(0, 0, 2.0f);
-	//glm::vec3 rayDirection(x, y, -1.0f);
+	glm::vec3 rayOrigin(0, 0, 2.0f);
+	glm::vec3 rayDirection(x, y, -1.0f);
 
-	//float radius = 0.5f;
+	float radius = 0.5f;
 
-	//float a = glm::dot(rayDirection, rayDirection);
-	//float b = 2.0f * glm::dot(rayOrigin, rayDirection);
-	//float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
+	float a = glm::dot(rayDirection, rayDirection);
+	float b = 2.0f * glm::dot(rayOrigin, rayDirection);
+	float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
 
 
-	//float discriminant = b * b - 4.0f * a * c;
+	float discriminant = b * b - 4.0f * a * c;
 
-	//if (discriminant < 0.0f)
-	//{
-	//	imageData[j * imageWidth + i] = 0xff000000;
-	//	return;
-	//}
+	if (discriminant < 0.0f)
+	{
+		imagePtr[j * imageWidth + i] = 0xff000000;
+		return;
+	}
 
-	//float t0 = (- b + glm::sqrt(discriminant)) / 2.0f * a;
-	//float t1 = (- b - glm::sqrt(discriminant)) / 2.0f * a;
+	float t0 = (- b + glm::sqrt(discriminant)) / 2.0f * a;
+	float t1 = (- b - glm::sqrt(discriminant)) / 2.0f * a;
 
-	//glm::vec3 hitPoint = rayOrigin + rayDirection * t1;
-	//glm::vec3 normal = glm::normalize(hitPoint);
+	glm::vec3 hitPoint = rayOrigin + rayDirection * t1;
+	glm::vec3 normal = glm::normalize(hitPoint);
 
-	//glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+	glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
 
-	//float d = glm::max(glm::dot(normal, -lightDir), 0.0f);
+	float d = glm::max(glm::dot(normal, -lightDir), 0.0f);
 
-	//glm::vec3 sphereColor(1.0f, 0.0f, 1.0f);
-	//sphereColor = sphereColor * d;
+	glm::vec3 sphereColor(1.0f, 0.0f, 1.0f);
+	sphereColor = sphereColor * d;
 
-	//glm::vec4 color = glm::clamp(glm::vec4(sphereColor, 1.0f), glm::vec4(0.0f), glm::vec4(1.0f));
-	//uint8_t red = (uint8_t)(color.r * 255.0f);
-	//uint8_t green = (uint8_t)(color.g * 255.0f);
-	//uint8_t blue = (uint8_t)(color.b * 255.0f);
-	//uint8_t alpha = (uint8_t)(color.a * 255.0f);
-	// 
-	//imageData[j * imageWidth + i] = alpha << 24 | blue << 16 | green << 8 | red;
+	glm::vec4 color = glm::clamp(glm::vec4(sphereColor, 1.0f), glm::vec4(0.0f), glm::vec4(1.0f));
+	uint8_t red = (uint8_t)(color.r * 255.0f);
+	uint8_t green = (uint8_t)(color.g * 255.0f);
+	uint8_t blue = (uint8_t)(color.b * 255.0f);
+	uint8_t alpha = (uint8_t)(color.a * 255.0f);
+	 
+	imagePtr[j * imageWidth + i] = alpha << 24 | blue << 16 | green << 8 | red;
 
 }
 
