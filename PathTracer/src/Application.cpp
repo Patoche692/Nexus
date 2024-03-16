@@ -6,7 +6,7 @@
 #include "Utils.h"
 #include "Renderer.cuh"
 
-int WIDTH = 640, HEIGHT = 480;
+int WIDTH = 640, HEIGHT = 640;
 
 int main(void)
 {
@@ -57,6 +57,7 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        double startTime = glfwGetTime();
         glClear(GL_COLOR_BUFFER_BIT);
 
         renderer.Render(device_ptr);
@@ -72,12 +73,14 @@ int main(void)
         glfwSwapBuffers(window);
 
         glfwPollEvents();
+
+        double elapsedTime = glfwGetTime() - startTime;
     }
 
 
-    //checkCudaErrors(cudaGraphicsUnmapResources(1, &resource, 0));
+    checkCudaErrors(cudaGraphicsUnmapResources(1, &resource, 0));
 
-    //glDeleteBuffers(1, &pbo
+    glDeleteBuffers(1, &pbo);
     glfwTerminate();
     return 0;
 }
