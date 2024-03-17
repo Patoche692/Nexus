@@ -8,6 +8,8 @@ public:
 	~Texture();
 
 	void Bind();
+	void OnResize(uint32_t width, uint32_t height);
+
 	unsigned int GetHandle() { return m_Handle; };
 	uint32_t GetWidth() { return m_Width; };
 	uint32_t GetHeight() { return m_Height; };

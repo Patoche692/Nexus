@@ -6,7 +6,7 @@
 
 #include "RayTracerApplication.h"
 
-int WIDTH = 640, HEIGHT = 640;
+int WIDTH = 1200, HEIGHT = 800;
 
 int main(void)
 {

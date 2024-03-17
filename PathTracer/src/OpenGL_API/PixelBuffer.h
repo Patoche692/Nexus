@@ -12,6 +12,7 @@ public:
 	~PixelBuffer();
 
 	void Bind();
+	void OnResize(uint32_t width, uint32_t height);
 
 	unsigned int GetHandle() { return m_Handle; };
 	cudaGraphicsResource_t& GetCudaResource() { return m_CudaResource; };
