@@ -17,6 +17,11 @@ void Framebuffer::Bind()
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Handle);
 }
 
+void Framebuffer::AttachToTextureHandle(unsigned int handle)
+{
+	glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, handle, 0);
+}
+
 Framebuffer::~Framebuffer()
 {
 	glDeleteFramebuffers(1, &m_Handle);

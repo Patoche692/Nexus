@@ -8,6 +8,7 @@ public:
 	~Framebuffer();
 
 	void Bind();
+	void AttachToTextureHandle(unsigned int handle);
 
 	unsigned int GetHandle() { return m_Handle; };
 

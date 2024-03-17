@@ -39,13 +39,14 @@ void UIRenderer::Render(std::shared_ptr<Texture> texture, std::shared_ptr<PixelB
 	
 	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
 	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
+
 	if (m_ViewportWidth != viewportWidth || m_ViewportHeight != viewportHeight)
 	{
 		texture->OnResize(viewportWidth, viewportHeight);
 		pixelBuffer->OnResize(viewportWidth, viewportHeight);
 
-		m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-		m_ViewportHeight = ImGui::GetContentRegionAvail().y;
+		m_ViewportWidth = viewportWidth;
+		m_ViewportHeight = viewportHeight;
 	}
 
 	ImGui::Image((void *)(intptr_t)texture->GetHandle(), ImVec2(texture->GetWidth(), texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
