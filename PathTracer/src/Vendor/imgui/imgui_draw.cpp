@@ -1,4 +1,4 @@
-// dear imgui, v1.90.4 WIP
+// dear imgui, v1.90.5 WIP
 // (drawing and font code)
 
 /*
@@ -8,6 +8,7 @@ Index of this file:
 // [SECTION] STB libraries implementation
 // [SECTION] Style functions
 // [SECTION] ImDrawList
+// [SECTION] ImTriangulator, ImDrawList concave polygon fill
 // [SECTION] ImDrawListSplitter
 // [SECTION] ImDrawData
 // [SECTION] Helpers ShadeVertsXXX functions
@@ -214,6 +215,8 @@ void ImGui::StyleColorsDark(ImGuiStyle* dst)
     colors[ImGuiCol_TabActive]              = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
     colors[ImGuiCol_TabUnfocused]           = ImLerp(colors[ImGuiCol_Tab],          colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabUnfocusedActive]     = ImLerp(colors[ImGuiCol_TabActive],    colors[ImGuiCol_TitleBg], 0.40f);
+    colors[ImGuiCol_DockingPreview]         = colors[ImGuiCol_HeaderActive] * ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_PlotLines]              = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
     colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
     colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
@@ -274,6 +277,8 @@ void ImGui::StyleColorsClassic(ImGuiStyle* dst)
     colors[ImGuiCol_TabActive]              = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
     colors[ImGuiCol_TabUnfocused]           = ImLerp(colors[ImGuiCol_Tab],          colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabUnfocusedActive]     = ImLerp(colors[ImGuiCol_TabActive],    colors[ImGuiCol_TitleBg], 0.40f);
+    colors[ImGuiCol_DockingPreview]         = colors[ImGuiCol_Header] * ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_PlotLines]              = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     colors[ImGuiCol_PlotLinesHovered]       = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
     colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
@@ -335,6 +340,8 @@ void ImGui::StyleColorsLight(ImGuiStyle* dst)
     colors[ImGuiCol_TabActive]              = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
     colors[ImGuiCol_TabUnfocused]           = ImLerp(colors[ImGuiCol_Tab],          colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabUnfocusedActive]     = ImLerp(colors[ImGuiCol_TabActive],    colors[ImGuiCol_TitleBg], 0.40f);
+    colors[ImGuiCol_DockingPreview]         = colors[ImGuiCol_Header] * ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_PlotLines]              = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
     colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
     colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
@@ -350,88 +357,6 @@ void ImGui::StyleColorsLight(ImGuiStyle* dst)
     colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.20f, 0.20f, 0.20f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-}
-
-void ImGui::StyleDark(ImGuiStyle* dst)
-{
-  ImVec4* colors = ImGui::GetStyle().Colors;
-  colors[ImGuiCol_Text]                   = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-  colors[ImGuiCol_TextDisabled]           = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-  colors[ImGuiCol_WindowBg]               = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-  colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-  colors[ImGuiCol_PopupBg]                = ImVec4(0.19f, 0.19f, 0.19f, 0.92f);
-  colors[ImGuiCol_Border]                 = ImVec4(0.19f, 0.19f, 0.19f, 0.29f);
-  colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.24f);
-  colors[ImGuiCol_FrameBg]                = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
-  colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.19f, 0.19f, 0.19f, 0.54f);
-  colors[ImGuiCol_FrameBgActive]          = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
-  colors[ImGuiCol_TitleBg]                = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_TitleBgActive]          = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
-  colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-  colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
-  colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
-  colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.40f, 0.40f, 0.40f, 0.54f);
-  colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
-  colors[ImGuiCol_CheckMark]              = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
-  colors[ImGuiCol_SliderGrab]             = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
-  colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
-  colors[ImGuiCol_Button]                 = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
-  colors[ImGuiCol_ButtonHovered]          = ImVec4(0.19f, 0.19f, 0.19f, 0.54f);
-  colors[ImGuiCol_ButtonActive]           = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
-  colors[ImGuiCol_Header]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-  colors[ImGuiCol_HeaderHovered]          = ImVec4(0.00f, 0.00f, 0.00f, 0.36f);
-  colors[ImGuiCol_HeaderActive]           = ImVec4(0.20f, 0.22f, 0.23f, 0.33f);
-  colors[ImGuiCol_Separator]              = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
-  colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.44f, 0.44f, 0.44f, 0.29f);
-  colors[ImGuiCol_SeparatorActive]        = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
-  colors[ImGuiCol_ResizeGrip]             = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
-  colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.44f, 0.44f, 0.44f, 0.29f);
-  colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
-  colors[ImGuiCol_Tab]                    = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-  colors[ImGuiCol_TabHovered]             = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-  colors[ImGuiCol_TabActive]              = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
-  colors[ImGuiCol_TabUnfocused]           = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-  colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-  colors[ImGuiCol_PlotLines]              = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_PlotHistogram]          = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_TableHeaderBg]          = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-  colors[ImGuiCol_TableBorderStrong]      = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-  colors[ImGuiCol_TableBorderLight]       = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
-  colors[ImGuiCol_TableRowBg]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-  colors[ImGuiCol_TableRowBgAlt]          = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
-  colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
-  colors[ImGuiCol_DragDropTarget]         = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
-  colors[ImGuiCol_NavHighlight]           = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
-  colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
-  colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
-  colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(1.00f, 0.00f, 0.00f, 0.35f);
-
-  ImGuiStyle& style = ImGui::GetStyle();
-  style.WindowPadding                     = ImVec2(8.00f, 8.00f);
-  style.FramePadding                      = ImVec2(5.00f, 2.00f);
-  style.CellPadding                       = ImVec2(6.00f, 6.00f);
-  style.ItemSpacing                       = ImVec2(6.00f, 6.00f);
-  style.ItemInnerSpacing                  = ImVec2(6.00f, 6.00f);
-  style.TouchExtraPadding                 = ImVec2(0.00f, 0.00f);
-  style.IndentSpacing                     = 25;
-  style.ScrollbarSize                     = 15;
-  style.GrabMinSize                       = 10;
-  style.WindowBorderSize                  = 1;
-  style.ChildBorderSize                   = 1;
-  style.PopupBorderSize                   = 1;
-  style.FrameBorderSize                   = 1;
-  style.TabBorderSize                     = 1;
-  style.WindowRounding                    = 7;
-  style.ChildRounding                     = 4;
-  style.FrameRounding                     = 3;
-  style.PopupRounding                     = 4;
-  style.ScrollbarRounding                 = 9;
-  style.GrabRounding                      = 3;
-  style.LogSliderDeadzone                 = 4;
-  style.TabRounding                       = 4;
 }
 
 //-----------------------------------------------------------------------------
@@ -1782,6 +1707,316 @@ void ImDrawList::AddImageRounded(ImTextureID user_texture_id, const ImVec2& p_mi
         PopTextureID();
 }
 
+//-----------------------------------------------------------------------------
+// [SECTION] ImTriangulator, ImDrawList concave polygon fill
+//-----------------------------------------------------------------------------
+// Triangulate concave polygons. Based on "Triangulation by Ear Clipping" paper, O(N^2) complexity.
+// Reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+// Provided as a convenience for user but not used by main library.
+//-----------------------------------------------------------------------------
+// - ImTriangulator [Internal]
+// - AddConcavePolyFilled()
+//-----------------------------------------------------------------------------
+
+enum ImTriangulatorNodeType
+{
+    ImTriangulatorNodeType_Convex,
+    ImTriangulatorNodeType_Ear,
+    ImTriangulatorNodeType_Reflex
+};
+
+struct ImTriangulatorNode
+{
+    ImTriangulatorNodeType  Type;
+    int                     Index;
+    ImVec2                  Pos;
+    ImTriangulatorNode*     Next;
+    ImTriangulatorNode*     Prev;
+
+    void    Unlink()        { Next->Prev = Prev; Prev->Next = Next; }
+};
+
+struct ImTriangulatorNodeSpan
+{
+    ImTriangulatorNode**    Data = NULL;
+    int                     Size = 0;
+
+    void    push_back(ImTriangulatorNode* node) { Data[Size++] = node; }
+    void    find_erase_unsorted(int idx)        { for (int i = Size - 1; i >= 0; i--) if (Data[i]->Index == idx) { Data[i] = Data[Size - 1]; Size--; return; } }
+};
+
+struct ImTriangulator
+{
+    static int EstimateTriangleCount(int points_count)      { return (points_count < 3) ? 0 : points_count - 2; }
+    static int EstimateScratchBufferSize(int points_count)  { return sizeof(ImTriangulatorNode) * points_count + sizeof(ImTriangulatorNode*) * points_count * 2; }
+
+    void    Init(const ImVec2* points, int points_count, void* scratch_buffer);
+    void    GetNextTriangle(unsigned int out_triangle[3]);     // Return relative indexes for next triangle
+
+    // Internal functions
+    void    BuildNodes(const ImVec2* points, int points_count);
+    void    BuildReflexes();
+    void    BuildEars();
+    void    FlipNodeList();
+    bool    IsEar(int i0, int i1, int i2, const ImVec2& v0, const ImVec2& v1, const ImVec2& v2) const;
+    void    ReclassifyNode(ImTriangulatorNode* node);
+
+    // Internal members
+    int                     _TrianglesLeft = 0;
+    ImTriangulatorNode*     _Nodes = NULL;
+    ImTriangulatorNodeSpan  _Ears;
+    ImTriangulatorNodeSpan  _Reflexes;
+};
+
+// Distribute storage for nodes, ears and reflexes.
+// FIXME-OPT: if everything is convex, we could report it to caller and let it switch to an convex renderer
+// (this would require first building reflexes to bail to convex if empty, without even building nodes)
+void ImTriangulator::Init(const ImVec2* points, int points_count, void* scratch_buffer)
+{
+    IM_ASSERT(scratch_buffer != NULL && points_count >= 3);
+    _TrianglesLeft = EstimateTriangleCount(points_count);
+    _Nodes         = (ImTriangulatorNode*)scratch_buffer;                          // points_count x Node
+    _Ears.Data     = (ImTriangulatorNode**)(_Nodes + points_count);                // points_count x Node*
+    _Reflexes.Data = (ImTriangulatorNode**)(_Nodes + points_count) + points_count; // points_count x Node*
+    BuildNodes(points, points_count);
+    BuildReflexes();
+    BuildEars();
+}
+
+void ImTriangulator::BuildNodes(const ImVec2* points, int points_count)
+{
+    for (int i = 0; i < points_count; i++)
+    {
+        _Nodes[i].Type = ImTriangulatorNodeType_Convex;
+        _Nodes[i].Index = i;
+        _Nodes[i].Pos = points[i];
+        _Nodes[i].Next = _Nodes + i + 1;
+        _Nodes[i].Prev = _Nodes + i - 1;
+    }
+    _Nodes[0].Prev = _Nodes + points_count - 1;
+    _Nodes[points_count - 1].Next = _Nodes;
+}
+
+void ImTriangulator::BuildReflexes()
+{
+    ImTriangulatorNode* n1 = _Nodes;
+    for (int i = _TrianglesLeft; i >= 0; i--, n1 = n1->Next)
+    {
+        if (ImTriangleIsClockwise(n1->Prev->Pos, n1->Pos, n1->Next->Pos))
+            continue;
+        n1->Type = ImTriangulatorNodeType_Reflex;
+        _Reflexes.push_back(n1);
+    }
+}
+
+void ImTriangulator::BuildEars()
+{
+    ImTriangulatorNode* n1 = _Nodes;
+    for (int i = _TrianglesLeft; i >= 0; i--, n1 = n1->Next)
+    {
+        if (n1->Type != ImTriangulatorNodeType_Convex)
+            continue;
+        if (!IsEar(n1->Prev->Index, n1->Index, n1->Next->Index, n1->Prev->Pos, n1->Pos, n1->Next->Pos))
+            continue;
+        n1->Type = ImTriangulatorNodeType_Ear;
+        _Ears.push_back(n1);
+    }
+}
+
+void ImTriangulator::GetNextTriangle(unsigned int out_triangle[3])
+{
+    if (_Ears.Size == 0)
+    {
+        FlipNodeList();
+
+        ImTriangulatorNode* node = _Nodes;
+        for (int i = _TrianglesLeft; i >= 0; i--, node = node->Next)
+            node->Type = ImTriangulatorNodeType_Convex;
+        _Reflexes.Size = 0;
+        BuildReflexes();
+        BuildEars();
+
+        // If we still don't have ears, it means geometry is degenerated.
+        if (_Ears.Size == 0)
+        {
+            // Return first triangle available, mimicking the behavior of convex fill.
+            IM_ASSERT(_TrianglesLeft > 0); // Geometry is degenerated
+            _Ears.Data[0] = _Nodes;
+            _Ears.Size    = 1;
+        }
+    }
+
+    ImTriangulatorNode* ear = _Ears.Data[--_Ears.Size];
+    out_triangle[0] = ear->Prev->Index;
+    out_triangle[1] = ear->Index;
+    out_triangle[2] = ear->Next->Index;
+
+    ear->Unlink();
+    if (ear == _Nodes)
+        _Nodes = ear->Next;
+
+    ReclassifyNode(ear->Prev);
+    ReclassifyNode(ear->Next);
+    _TrianglesLeft--;
+}
+
+void ImTriangulator::FlipNodeList()
+{
+    ImTriangulatorNode* prev = _Nodes;
+    ImTriangulatorNode* temp = _Nodes;
+    ImTriangulatorNode* current = _Nodes->Next;
+    prev->Next = prev;
+    prev->Prev = prev;
+    while (current != _Nodes)
+    {
+        temp = current->Next;
+
+        current->Next = prev;
+        prev->Prev = current;
+        _Nodes->Next = current;
+        current->Prev = _Nodes;
+
+        prev = current;
+        current = temp;
+    }
+    _Nodes = prev;
+}
+
+// A triangle is an ear is no other vertex is inside it. We can test reflexes vertices only (see reference algorithm)
+bool ImTriangulator::IsEar(int i0, int i1, int i2, const ImVec2& v0, const ImVec2& v1, const ImVec2& v2) const
+{
+    ImTriangulatorNode** p_end = _Reflexes.Data + _Reflexes.Size;
+    for (ImTriangulatorNode** p = _Reflexes.Data; p < p_end; p++)
+    {
+        ImTriangulatorNode* reflex = *p;
+        if (reflex->Index != i0 && reflex->Index != i1 && reflex->Index != i2)
+            if (ImTriangleContainsPoint(v0, v1, v2, reflex->Pos))
+                return false;
+    }
+    return true;
+}
+
+void ImTriangulator::ReclassifyNode(ImTriangulatorNode* n1)
+{
+    // Classify node
+    ImTriangulatorNodeType type;
+    const ImTriangulatorNode* n0 = n1->Prev;
+    const ImTriangulatorNode* n2 = n1->Next;
+    if (!ImTriangleIsClockwise(n0->Pos, n1->Pos, n2->Pos))
+        type = ImTriangulatorNodeType_Reflex;
+    else if (IsEar(n0->Index, n1->Index, n2->Index, n0->Pos, n1->Pos, n2->Pos))
+        type = ImTriangulatorNodeType_Ear;
+    else
+        type = ImTriangulatorNodeType_Convex;
+
+    // Update lists when a type changes
+    if (type == n1->Type)
+        return;
+    if (n1->Type == ImTriangulatorNodeType_Reflex)
+        _Reflexes.find_erase_unsorted(n1->Index);
+    else if (n1->Type == ImTriangulatorNodeType_Ear)
+        _Ears.find_erase_unsorted(n1->Index);
+    if (type == ImTriangulatorNodeType_Reflex)
+        _Reflexes.push_back(n1);
+    else if (type == ImTriangulatorNodeType_Ear)
+        _Ears.push_back(n1);
+    n1->Type = type;
+}
+
+// Use ear-clipping algorithm to triangulate a simple polygon (no self-interaction, no holes).
+// (Reminder: we don't perform any coarse clipping/culling in ImDrawList layer!
+// It is up to caller to ensure not making costly calls that will be outside of visible area.
+// As concave fill is noticeably more expensive than other primitives, be mindful of this...
+// Caller can build AABB of points, and avoid filling if 'draw_list->_CmdHeader.ClipRect.Overlays(points_bb) == false')
+void ImDrawList::AddConcavePolyFilled(const ImVec2* points, const int points_count, ImU32 col)
+{
+    if (points_count < 3 || (col & IM_COL32_A_MASK) == 0)
+        return;
+
+    const ImVec2 uv = _Data->TexUvWhitePixel;
+    ImTriangulator triangulator;
+    unsigned int triangle[3];
+    if (Flags & ImDrawListFlags_AntiAliasedFill)
+    {
+        // Anti-aliased Fill
+        const float AA_SIZE = _FringeScale;
+        const ImU32 col_trans = col & ~IM_COL32_A_MASK;
+        const int idx_count = (points_count - 2) * 3 + points_count * 6;
+        const int vtx_count = (points_count * 2);
+        PrimReserve(idx_count, vtx_count);
+
+        // Add indexes for fill
+        unsigned int vtx_inner_idx = _VtxCurrentIdx;
+        unsigned int vtx_outer_idx = _VtxCurrentIdx + 1;
+
+        _Data->TempBuffer.reserve_discard((ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(ImVec2)) / sizeof(ImVec2));
+        triangulator.Init(points, points_count, _Data->TempBuffer.Data);
+        while (triangulator._TrianglesLeft > 0)
+        {
+            triangulator.GetNextTriangle(triangle);
+            _IdxWritePtr[0] = (ImDrawIdx)(vtx_inner_idx + (triangle[0] << 1)); _IdxWritePtr[1] = (ImDrawIdx)(vtx_inner_idx + (triangle[1] << 1)); _IdxWritePtr[2] = (ImDrawIdx)(vtx_inner_idx + (triangle[2] << 1));
+            _IdxWritePtr += 3;
+        }
+
+        // Compute normals
+        _Data->TempBuffer.reserve_discard(points_count);
+        ImVec2* temp_normals = _Data->TempBuffer.Data;
+        for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
+        {
+            const ImVec2& p0 = points[i0];
+            const ImVec2& p1 = points[i1];
+            float dx = p1.x - p0.x;
+            float dy = p1.y - p0.y;
+            IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+            temp_normals[i0].x = dy;
+            temp_normals[i0].y = -dx;
+        }
+
+        for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
+        {
+            // Average normals
+            const ImVec2& n0 = temp_normals[i0];
+            const ImVec2& n1 = temp_normals[i1];
+            float dm_x = (n0.x + n1.x) * 0.5f;
+            float dm_y = (n0.y + n1.y) * 0.5f;
+            IM_FIXNORMAL2F(dm_x, dm_y);
+            dm_x *= AA_SIZE * 0.5f;
+            dm_y *= AA_SIZE * 0.5f;
+
+            // Add vertices
+            _VtxWritePtr[0].pos.x = (points[i1].x - dm_x); _VtxWritePtr[0].pos.y = (points[i1].y - dm_y); _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;        // Inner
+            _VtxWritePtr[1].pos.x = (points[i1].x + dm_x); _VtxWritePtr[1].pos.y = (points[i1].y + dm_y); _VtxWritePtr[1].uv = uv; _VtxWritePtr[1].col = col_trans;  // Outer
+            _VtxWritePtr += 2;
+
+            // Add indexes for fringes
+            _IdxWritePtr[0] = (ImDrawIdx)(vtx_inner_idx + (i1 << 1)); _IdxWritePtr[1] = (ImDrawIdx)(vtx_inner_idx + (i0 << 1)); _IdxWritePtr[2] = (ImDrawIdx)(vtx_outer_idx + (i0 << 1));
+            _IdxWritePtr[3] = (ImDrawIdx)(vtx_outer_idx + (i0 << 1)); _IdxWritePtr[4] = (ImDrawIdx)(vtx_outer_idx + (i1 << 1)); _IdxWritePtr[5] = (ImDrawIdx)(vtx_inner_idx + (i1 << 1));
+            _IdxWritePtr += 6;
+        }
+        _VtxCurrentIdx += (ImDrawIdx)vtx_count;
+    }
+    else
+    {
+        // Non Anti-aliased Fill
+        const int idx_count = (points_count - 2) * 3;
+        const int vtx_count = points_count;
+        PrimReserve(idx_count, vtx_count);
+        for (int i = 0; i < vtx_count; i++)
+        {
+            _VtxWritePtr[0].pos = points[i]; _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;
+            _VtxWritePtr++;
+        }
+        _Data->TempBuffer.reserve_discard((ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(ImVec2)) / sizeof(ImVec2));
+        triangulator.Init(points, points_count, _Data->TempBuffer.Data);
+        while (triangulator._TrianglesLeft > 0)
+        {
+            triangulator.GetNextTriangle(triangle);
+            _IdxWritePtr[0] = (ImDrawIdx)(_VtxCurrentIdx + triangle[0]); _IdxWritePtr[1] = (ImDrawIdx)(_VtxCurrentIdx + triangle[1]); _IdxWritePtr[2] = (ImDrawIdx)(_VtxCurrentIdx + triangle[2]);
+            _IdxWritePtr += 3;
+        }
+        _VtxCurrentIdx += (ImDrawIdx)vtx_count;
+    }
+}
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImDrawListSplitter
@@ -3963,6 +4198,7 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
 // - RenderArrow()
 // - RenderBullet()
 // - RenderCheckMark()
+// - RenderArrowDockMenu()
 // - RenderArrowPointingAt()
 // - RenderRectFilledRangeH()
 // - RenderRectFilledWithHole()
@@ -4037,6 +4273,14 @@ void ImGui::RenderArrowPointingAt(ImDrawList* draw_list, ImVec2 pos, ImVec2 half
     }
 }
 
+// This is less wide than RenderArrow() and we use in dock nodes instead of the regular RenderArrow() to denote a change of functionality,
+// and because the saved space means that the left-most tab label can stay at exactly the same position as the label of a loose window.
+void ImGui::RenderArrowDockMenu(ImDrawList* draw_list, ImVec2 p_min, float sz, ImU32 col)
+{
+    draw_list->AddRectFilled(p_min + ImVec2(sz * 0.20f, sz * 0.15f), p_min + ImVec2(sz * 0.80f, sz * 0.30f), col);
+    RenderArrowPointingAt(draw_list, p_min + ImVec2(sz * 0.50f, sz * 0.85f), ImVec2(sz * 0.30f, sz * 0.40f), ImGuiDir_Down, col);
+}
+
 static inline float ImAcos01(float x)
 {
     if (x <= 0.0f) return IM_PI * 0.5f;
@@ -4079,8 +4323,8 @@ void ImGui::RenderRectFilledRangeH(ImDrawList* draw_list, const ImRect& rect, Im
     }
     else
     {
-        draw_list->PathArcTo(ImVec2(x0, p1.y - rounding), rounding, IM_PI - arc0_e, IM_PI - arc0_b, 3); // BL
-        draw_list->PathArcTo(ImVec2(x0, p0.y + rounding), rounding, IM_PI + arc0_b, IM_PI + arc0_e, 3); // TR
+        draw_list->PathArcTo(ImVec2(x0, p1.y - rounding), rounding, IM_PI - arc0_e, IM_PI - arc0_b); // BL
+        draw_list->PathArcTo(ImVec2(x0, p0.y + rounding), rounding, IM_PI + arc0_b, IM_PI + arc0_e); // TR
     }
     if (p1.x > rect.Min.x + rounding)
     {
@@ -4099,8 +4343,8 @@ void ImGui::RenderRectFilledRangeH(ImDrawList* draw_list, const ImRect& rect, Im
         }
         else
         {
-            draw_list->PathArcTo(ImVec2(x1, p0.y + rounding), rounding, -arc1_e, -arc1_b, 3); // TR
-            draw_list->PathArcTo(ImVec2(x1, p1.y - rounding), rounding, +arc1_b, +arc1_e, 3); // BR
+            draw_list->PathArcTo(ImVec2(x1, p0.y + rounding), rounding, -arc1_e, -arc1_b); // TR
+            draw_list->PathArcTo(ImVec2(x1, p1.y - rounding), rounding, +arc1_b, +arc1_e); // BR
         }
     }
     draw_list->PathFillConvex(col);
@@ -4120,6 +4364,17 @@ void ImGui::RenderRectFilledWithHole(ImDrawList* draw_list, const ImRect& outer,
     if (fill_R && fill_U) draw_list->AddRectFilled(ImVec2(inner.Max.x, outer.Min.y), ImVec2(outer.Max.x, inner.Min.y), col, rounding, ImDrawFlags_RoundCornersTopRight);
     if (fill_L && fill_D) draw_list->AddRectFilled(ImVec2(outer.Min.x, inner.Max.y), ImVec2(inner.Min.x, outer.Max.y), col, rounding, ImDrawFlags_RoundCornersBottomLeft);
     if (fill_R && fill_D) draw_list->AddRectFilled(ImVec2(inner.Max.x, inner.Max.y), ImVec2(outer.Max.x, outer.Max.y), col, rounding, ImDrawFlags_RoundCornersBottomRight);
+}
+
+ImDrawFlags ImGui::CalcRoundingFlagsForRectInRect(const ImRect& r_in, const ImRect& r_outer, float threshold)
+{
+    bool round_l = r_in.Min.x <= r_outer.Min.x + threshold;
+    bool round_r = r_in.Max.x >= r_outer.Max.x - threshold;
+    bool round_t = r_in.Min.y <= r_outer.Min.y + threshold;
+    bool round_b = r_in.Max.y >= r_outer.Max.y - threshold;
+    return ImDrawFlags_RoundCornersNone
+        | ((round_t && round_l) ? ImDrawFlags_RoundCornersTopLeft : 0) | ((round_t && round_r) ? ImDrawFlags_RoundCornersTopRight : 0)
+        | ((round_b && round_l) ? ImDrawFlags_RoundCornersBottomLeft : 0) | ((round_b && round_r) ? ImDrawFlags_RoundCornersBottomRight : 0);
 }
 
 // Helper for ColorPicker4()

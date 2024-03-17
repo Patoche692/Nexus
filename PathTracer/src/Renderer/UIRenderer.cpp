@@ -9,7 +9,9 @@ UIRenderer::UIRenderer(GLFWwindow *window, unsigned int viewportTextureHandle, u
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui::StyleDark();
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 }
@@ -27,6 +29,8 @@ void UIRenderer::Render(std::shared_ptr<Texture> texture)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	ImGui::DockSpaceOverViewport();
+
 	ImGui::Begin("Settings");
 	ImGui::Text("Render time millisec:");
 	ImGui::End();
@@ -34,6 +38,7 @@ void UIRenderer::Render(std::shared_ptr<Texture> texture)
 	ImGui::Begin("Viewport");
 	ImGui::Image((void *)(intptr_t)texture->GetHandle(), ImVec2(texture->GetWidth(), texture->GetHeight()));
 	ImGui::End();
+
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
