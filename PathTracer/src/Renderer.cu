@@ -1,11 +1,5 @@
 #include "Renderer.cuh"
 
-//#include <vector>
-//#include <cuda_runtime_api.h>
-#include <device_launch_parameters.h>
-//
-//#include "Utils.h"
-//
 __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHeight)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -60,14 +54,15 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 
 }
 
-void Renderer::Render(void *device_ptr)
-{ 
+void cudaRender(void *device_ptr, uint32_t imageWidth, uint32_t imageHeight)
+{
 	uint32_t tx = 8, ty = 8;
-	dim3 blocks(m_ImageWidth / tx + 1, m_ImageHeight / ty + 1);
+	dim3 blocks(imageWidth / tx + 1, imageHeight / ty + 1);
 	dim3 threads(tx, ty);
 
-	traceRay<<<blocks, threads>>>(device_ptr, m_ImageWidth, m_ImageHeight);
+	traceRay<<<blocks, threads>>>(device_ptr, imageWidth, imageHeight);
 }
+
 //
 //
 //void Renderer::Render(const Camera& camera)

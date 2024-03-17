@@ -15,10 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Application.cpp">
+    <ClCompile Include="src\RayTracerApplication.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Camera.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL_API\Framebuffer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL_API\Texture.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL_API\TextureRenderer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,12 +50,28 @@
     <ClInclude Include="src\Utils.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Renderer.cuh" />
+    <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Camera.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Ray.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\RayTracerApplication.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OpenGL_API\PixelBuffer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OpenGL_API\Framebuffer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OpenGL_API\Texture.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OpenGL_API\TextureRenderer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Renderer.cuh" />
   </ItemGroup>
 </Project>
