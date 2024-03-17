@@ -1,9 +1,10 @@
 #pragma once
 
-//#include <memory>
 #include <glm.hpp>
 #include <cuda_runtime_api.h>
+#include "UIRenderer.h"
 #include "../OpenGL_API/TextureRenderer.h"
+#include <GLFW/glfw3.h>
 
 //#include "Camera.h"
 //#include "Ray.h"
@@ -12,10 +13,11 @@ class Renderer
 {
 public:
 	Renderer() = default;
-	Renderer(uint32_t width, uint32_t height)
+	Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 		:m_ImageWidth(width), m_ImageHeight(height) 
 	{
 		m_TextureRenderer = std::make_shared<TextureRenderer>(width, height);
+		m_UIRenderer = std::make_shared<UIRenderer>(window);
 	}
 
 	//void OnResize(uint32_t width, uint32_t height);
@@ -30,5 +32,6 @@ private:
 	//uint32_t* m_ImageData = nullptr;
 	uint32_t m_ImageWidth, m_ImageHeight;
 	std::shared_ptr<TextureRenderer> m_TextureRenderer;
+	std::shared_ptr<UIRenderer> m_UIRenderer;
 };
 

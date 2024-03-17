@@ -5,6 +5,12 @@
 #include "PixelBuffer.h"
 #include "Texture.h"
 
+/**
+ * This class is used to unpack the pixel buffer (updated every frame by cuda)
+ * to the opengl texture which is linked to the framebuffer and can finally be rendered on the screen.
+ *
+ * Every operation (pixel buffer write with cuda, unpacking to texture) happens gpu side for better performance.
+ */
 class TextureRenderer
 {
 public:

@@ -1,10 +1,10 @@
 #pragma once
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
 
 class RayTracerApplication {
 
 public:
-	RayTracerApplication(int width, int height);
+	RayTracerApplication(int width, int height, GLFWwindow* window);
 
 	void Update(double deltaTime);
 
