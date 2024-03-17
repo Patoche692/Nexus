@@ -4,7 +4,8 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-UIRenderer::UIRenderer(GLFWwindow *window)
+UIRenderer::UIRenderer(GLFWwindow *window, unsigned int viewportTextureHandle, uint32_t viewportTextureWidth, uint32_t viewportTextureHeight)
+	:m_ViewportTextureHandle(viewportTextureHandle), m_ViewportTextureWidth(viewportTextureWidth), m_ViewportTextureHeight(viewportTextureHeight)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -20,12 +21,19 @@ UIRenderer::~UIRenderer()
     ImGui::DestroyContext();
 }
 
-void UIRenderer::Render()
+void UIRenderer::Render(std::shared_ptr<Texture> texture)
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGui::ShowDemoWindow();
+
+	ImGui::Begin("Settings");
+	ImGui::Text("Render time millisec:");
+	ImGui::End();
+
+	ImGui::Begin("Viewport");
+	ImGui::Image((void *)(intptr_t)texture->GetHandle(), ImVec2(texture->GetWidth(), texture->GetHeight()));
+	ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

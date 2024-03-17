@@ -12,15 +12,9 @@
 class Renderer
 {
 public:
-	Renderer() = default;
-	Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
-		:m_ImageWidth(width), m_ImageHeight(height) 
-	{
-		m_TextureRenderer = std::make_shared<TextureRenderer>(width, height);
-		m_UIRenderer = std::make_shared<UIRenderer>(window);
-	}
+	Renderer(uint32_t width, uint32_t height, GLFWwindow* window);
 
-	//void OnResize(uint32_t width, uint32_t height);
+	void OnResize(uint32_t width, uint32_t height);
 	void Render();
 
 	//std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
