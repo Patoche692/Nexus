@@ -6,9 +6,9 @@ class RayTracerApplication {
 public:
 	RayTracerApplication(int width, int height, GLFWwindow* window);
 
-	void Update(double deltaTime);
+	void Update(float deltaTime);
 
-	void Display();
+	void Display(double deltaTime);
 
 	void OnResize(int width, int height);
 

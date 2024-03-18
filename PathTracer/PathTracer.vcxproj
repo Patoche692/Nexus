@@ -142,6 +142,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\OpenGL_API\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp" />
     <ClCompile Include="src\OpenGL_API\Texture.cpp" />
@@ -154,7 +155,6 @@
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
-    <ClCompile Include="src\Renderer\UIRenderer.cpp" />
     <ClCompile Include="src\Utils.cpp" />
     <ClCompile Include="src\Vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\Vendor\imgui\imgui_demo.cpp" />
@@ -168,6 +168,7 @@
     <CudaCompile Include="src\Renderer\Renderer.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\OpenGL_API\Framebuffer.h" />
     <ClInclude Include="src\OpenGL_API\PixelBuffer.h" />
@@ -177,7 +178,6 @@
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Renderer\Renderer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
-    <ClInclude Include="src\Renderer\UIRenderer.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\Vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Vendor\imgui\imgui.h" />

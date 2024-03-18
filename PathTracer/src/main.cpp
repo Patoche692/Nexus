@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include "Input.h"
 #include "RayTracerApplication.h"
 
 int WIDTH = 1200, HEIGHT = 800;
@@ -13,7 +14,7 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Path Tracer", NULL, NULL);
     if (!window)
     {
         std::cout << "Error creating glfw window" << std::endl;
@@ -23,6 +24,7 @@ int main(void)
 
     glfwMakeContextCurrent(window);
 
+    Input::Init(window);
     // Disable vsync (frame rate / screen refresh rate synchronization)
     //glfwSwapInterval(0);
 
@@ -47,7 +49,7 @@ int main(void)
 
             elapsedTime = glfwGetTime() - startTime;
             startTime = glfwGetTime();
-            rayTracerApplication.Update(elapsedTime);
+            rayTracerApplication.Update((float)elapsedTime * 1000.0f);
 
             glfwSwapBuffers(window);
         }

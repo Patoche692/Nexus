@@ -7,19 +7,38 @@
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
-	:m_ImageWidth(width), m_ImageHeight(height)
+	:m_ViewportWidth(width), m_ViewportHeight(height)
 {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    ImGui::StyleColorsCustomDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
+
 	m_TextureRenderer = std::make_shared<TextureRenderer>(width, height);
-	m_UIRenderer = std::make_shared<UIRenderer>(window, m_TextureRenderer->GetTexture()->GetHandle(), width, height);
 }
 
-void Renderer::Render()
+Renderer::~Renderer()
+{
+
+	ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+
+void Renderer::Render(float deltaTime)
 { 
-	std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
-	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
-	m_UIRenderer->Render(texture, pixelBuffer);
+	RenderUI(deltaTime);
+
+	std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
+	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
 
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
 	size_t size = 0;
@@ -44,7 +63,42 @@ void Renderer::Render()
 	//glBlitFramebuffer(0, 0, 800, 800, 0, 0, 800, 800, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
+void Renderer::RenderUI(float deltaTime)
+{
+	ImGui::DockSpaceOverViewport();
+
+	ImGui::Begin("Settings");
+	ImGui::Text("Render time millisec: %.3f", deltaTime);
+	ImGui::Text("FPS: %d", (int)(1000.0f / deltaTime));
+	ImGui::End();
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("Viewport");
+	
+	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
+	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
+
+	OnResize(viewportWidth, viewportHeight);
+
+	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
+	ImGui::Image((void *)(intptr_t)texture->GetHandle(), ImVec2(texture->GetWidth(), texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+
+	ImGui::End();
+	ImGui::PopStyleVar();
+}
+
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
+	if (m_ViewportWidth != width || m_ViewportHeight != height)
+	{
+		std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
+		std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
+
+		texture->OnResize(width, height);
+		pixelBuffer->OnResize(width, height);
+
+		m_ViewportWidth = width;
+		m_ViewportHeight = height;
+	}
 }
 

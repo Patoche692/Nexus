@@ -5,16 +5,16 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 {
 }
 
-void RayTracerApplication::Update(double deltaTime)
+void RayTracerApplication::Update(float deltaTime)
 {
 	
-	std::cout << deltaTime * 1000 << std::endl;
-	Display();
+	//std::cout << deltaTime * 1000 << std::endl;
+	Display(deltaTime);
 }
 
-void RayTracerApplication::Display()
+void RayTracerApplication::Display(double deltaTime)
 {
-	m_Renderer.Render();
+	m_Renderer.Render(deltaTime);
 }
 
 void RayTracerApplication::OnResize(int width, int height)
