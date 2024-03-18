@@ -34,7 +34,7 @@ void Camera::OnUpdate(float ts)
 	glm::vec2 delta = (mousePos - m_LastMousePosition) * 2.0f;
 	m_LastMousePosition = mousePos;
 
-	if (!Input::IsKeyDown(GLFW_MOUSE_BUTTON_RIGHT))
+	if (!Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
 	{
 		Input::SetCursorMode(GLFW_CURSOR_NORMAL);
 		return;
@@ -47,7 +47,7 @@ void Camera::OnUpdate(float ts)
 	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
 
-	float speed = 0.05f;
+	float speed = 0.005f;
 
 	if (Input::IsKeyDown(GLFW_KEY_W))
 	{
@@ -116,7 +116,7 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 
 float Camera::GetRotationSpeed()
 {
-	return 0.8f;
+	return 0.0008f;
 }
 
 void Camera::RecalculateProjection()

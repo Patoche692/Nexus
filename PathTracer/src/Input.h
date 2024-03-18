@@ -8,6 +8,7 @@ public:
 	static void Init(GLFWwindow* window);
 	static glm::vec2 GetMousePosition();
 	static bool IsKeyDown(int key);
+	static bool IsMouseButtonDown(int key);
 	static void SetCursorMode(int mode);
 		
 

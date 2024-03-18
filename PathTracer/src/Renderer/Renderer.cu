@@ -15,9 +15,10 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 	uint32_t* imagePtr = (uint32_t*)device_ptr;
 
 	glm::vec4 target = camera->GetInverseProjection() * glm::vec4(x, y, 1.0f, 1.0f);
-	//glm::vec3 rayDirection2 = glm::vec3(camera->GetInverseView() * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0));
-	glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 2.0f);
-	glm::vec3 rayDirection(x, y, -1.0f);
+	glm::vec3 rayDirection = glm::vec3(camera->GetInverseView() * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0));
+	glm::vec3 rayOrigin = camera->GetPosition();
+	//glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 2.0f);
+	//glm::vec3 rayDirection(x, y, -1.0f);
 
 	float radius = 0.5f;
 
