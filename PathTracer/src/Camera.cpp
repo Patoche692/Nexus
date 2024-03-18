@@ -5,6 +5,7 @@
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
 
+#include "../Utils.h"
 #include "Input.h"
 
 
@@ -13,7 +14,19 @@ Camera::Camera(float verticalFOV, float nearClip, float farClip)
 {
 	m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
 	m_Position = glm::vec3(0.0f, 0.0f, 3.0f);
+	//RecalculateView();
+	//RecalculateProjection();
+
+	checkCudaErrors(cudaMalloc((void**)&m_DevicePtr, sizeof(Camera)));
+	SendDataToDevice();
 }
+
+Camera::~Camera()
+{
+	checkCudaErrors(cudaFree(m_DevicePtr));
+}
+
+
 
 void Camera::OnUpdate(float ts)
 {
@@ -82,7 +95,9 @@ void Camera::OnUpdate(float ts)
 	if (moved)
 	{
 		RecalculateView();
-		RecalculateRayDirections();
+		
+		SendDataToDevice();
+		//RecalculateRayDirections();
 	}
 }
 
@@ -95,6 +110,7 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 	m_ViewportHeight = height;
 
 	RecalculateProjection();
+	SendDataToDevice();
 	//RecalculateRayDirections();
 }
 
@@ -131,4 +147,9 @@ void Camera::RecalculateRayDirections()
 			//m_RayDirections[y * m_ViewportWidth + x] = rayDirection;
 		}
 	}
+}
+
+void Camera::SendDataToDevice()
+{
+	checkCudaErrors(cudaMemcpy(m_DevicePtr, this, sizeof(Camera), cudaMemcpyHostToDevice));
 }

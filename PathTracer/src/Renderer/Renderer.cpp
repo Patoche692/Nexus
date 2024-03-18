@@ -29,7 +29,7 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::Render(Camera& camera, float deltaTime)
+void Renderer::Render(Camera* camera, float deltaTime)
 { 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -39,16 +39,16 @@ void Renderer::Render(Camera& camera, float deltaTime)
 	RenderUI(camera, deltaTime);
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
-	RenderViewport(m_PixelBuffer);
+	RenderViewport(m_PixelBuffer, camera->GetDevicePtr());
 
-	// Unpack the pixel buffer written by cuda to the texture
+	// Unpack the pixel buffer written by cuda to the renderer texture
 	UnpackToTexture();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Renderer::RenderUI(Camera& camera, float deltaTime)
+void Renderer::RenderUI(Camera* camera, float deltaTime)
 {
 	ImGui::DockSpaceOverViewport();
 
@@ -79,13 +79,13 @@ void Renderer::UnpackToTexture()
 	m_PixelBuffer->Unbind();
 }
 
-void Renderer::OnResize(Camera& camera, uint32_t width, uint32_t height)
+void Renderer::OnResize(Camera* camera, uint32_t width, uint32_t height)
 {
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
-		camera.OnResize(width, height);
+		camera->OnResize(width, height);
 
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;

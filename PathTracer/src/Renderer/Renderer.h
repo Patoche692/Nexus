@@ -14,9 +14,9 @@ public:
 	Renderer(uint32_t width, uint32_t height, GLFWwindow* window);
 	~Renderer();
 
-	void OnResize(Camera& camera, uint32_t width, uint32_t height);
-	void Render(Camera& camera, float deltaTime);
-	void RenderUI(Camera& camera, float deltaTime);
+	void OnResize(Camera* camera, uint32_t width, uint32_t height);
+	void Render(Camera* camera, float deltaTime);
+	void RenderUI(Camera* camera, float deltaTime);
 	void UnpackToTexture();
 
 	std::shared_ptr<PixelBuffer> GetPixelBuffer() { return m_PixelBuffer; };

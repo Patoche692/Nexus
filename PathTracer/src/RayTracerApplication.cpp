@@ -15,7 +15,7 @@ void RayTracerApplication::Update(float deltaTime)
 
 void RayTracerApplication::Display(double deltaTime)
 {
-	m_Renderer.Render(m_Camera, deltaTime);
+	m_Renderer.Render(&m_Camera, deltaTime);
 }
 
 void RayTracerApplication::OnResize(int width, int height)
