@@ -1,8 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <cuda_gl_interop.h>
-
 
 #include "RayTracerApplication.h"
 
@@ -24,6 +22,9 @@ int main(void)
     }
 
     glfwMakeContextCurrent(window);
+
+    // Disable vsync (frame rate / screen refresh rate synchronization)
+    //glfwSwapInterval(0);
 
     if (glewInit() != GLEW_OK)
         std::cout << "Error initializing GLEW" << std::endl;

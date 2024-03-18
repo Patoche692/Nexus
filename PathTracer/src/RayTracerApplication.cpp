@@ -8,7 +8,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 void RayTracerApplication::Update(double deltaTime)
 {
 	
-	//std::cout << deltaTime * 1000 << std::endl;
+	std::cout << deltaTime * 1000 << std::endl;
 	Display();
 }
 
