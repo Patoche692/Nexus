@@ -10,7 +10,7 @@ UIRenderer::UIRenderer(GLFWwindow *window, unsigned int viewportTextureHandle, u
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 }

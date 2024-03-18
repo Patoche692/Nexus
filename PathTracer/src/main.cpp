@@ -29,25 +29,28 @@ int main(void)
     if (glewInit() != GLEW_OK)
         std::cout << "Error initializing GLEW" << std::endl;
 
-    RayTracerApplication rayTracerApplication(WIDTH, HEIGHT, window);
-
-    int width, height;
-    double startTime, elapsedTime;
-    startTime = glfwGetTime();
-    while (!glfwWindowShouldClose(window))
+    // This scope allows to free everything in the app (textures, buffers) by calling the application destructor before glfwTerminate()
     {
-        glfwPollEvents();
+        RayTracerApplication rayTracerApplication(WIDTH, HEIGHT, window);
 
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glfwGetWindowSize(window, &width, &height);
-        rayTracerApplication.OnResize(width, height);
-
-        elapsedTime = glfwGetTime() - startTime;
+        int width, height;
+        double startTime, elapsedTime;
         startTime = glfwGetTime();
-        rayTracerApplication.Update(elapsedTime);
+        while (!glfwWindowShouldClose(window))
+        {
+            glfwPollEvents();
 
-        glfwSwapBuffers(window);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glfwGetWindowSize(window, &width, &height);
+            rayTracerApplication.OnResize(width, height);
+
+            elapsedTime = glfwGetTime() - startTime;
+            startTime = glfwGetTime();
+            rayTracerApplication.Update(elapsedTime);
+
+            glfwSwapBuffers(window);
+        }
     }
 
     glfwTerminate();

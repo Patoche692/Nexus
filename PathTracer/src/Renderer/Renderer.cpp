@@ -18,6 +18,7 @@ void Renderer::Render()
 	std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
 	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
 
+	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	m_UIRenderer->Render(texture, pixelBuffer);
 
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
