@@ -15,6 +15,7 @@ void TextureRenderer::Render()
 	m_Texture->Bind();
 	m_PixelBuffer->Bind();
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture->GetWidth(), m_Texture->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	m_PixelBuffer->Unbind();
 }
 
 void TextureRenderer::OnResize(uint32_t width, uint32_t height)

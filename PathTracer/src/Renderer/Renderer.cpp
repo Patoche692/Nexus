@@ -34,15 +34,13 @@ void Renderer::Render()
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 	// Display on screen the texture rendered by the TextureRenderer
-	std::shared_ptr<Framebuffer> framebuffer = m_TextureRenderer->GetFramebuffer();
-	framebuffer->AttachToTextureHandle(texture->GetHandle());
+	//std::shared_ptr<Framebuffer> framebuffer = m_TextureRenderer->GetFramebuffer();
+	//framebuffer->AttachToTextureHandle(texture->GetHandle());
 
-	if (texture->GetWidth() == 0 || texture->GetHeight() == 0)
-		std::cout << "Width equals 0" << std::endl;
-
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, 800, 800, 0, 0, 800, 800, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	//glBlitFramebuffer(0, 0, 800, 800, 0, 0, 800, 800, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
