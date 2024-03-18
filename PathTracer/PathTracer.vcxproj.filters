@@ -33,9 +33,6 @@
     <ClCompile Include="src\OpenGL_API\Texture.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL_API\TextureRenderer.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Renderer\Renderer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -91,9 +88,6 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\OpenGL_API\Texture.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\OpenGL_API\TextureRenderer.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Renderer.cuh" />

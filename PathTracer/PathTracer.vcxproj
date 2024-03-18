@@ -146,7 +146,6 @@
     <ClCompile Include="src\OpenGL_API\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp" />
     <ClCompile Include="src\OpenGL_API\Texture.cpp" />
-    <ClCompile Include="src\OpenGL_API\TextureRenderer.cpp" />
     <ClCompile Include="src\RayTracerApplication.cpp" />
     <ClCompile Include="src\Camera.cpp">
       <DeploymentContent>false</DeploymentContent>
@@ -173,7 +172,6 @@
     <ClInclude Include="src\OpenGL_API\Framebuffer.h" />
     <ClInclude Include="src\OpenGL_API\PixelBuffer.h" />
     <ClInclude Include="src\OpenGL_API\Texture.h" />
-    <ClInclude Include="src\OpenGL_API\TextureRenderer.h" />
     <ClInclude Include="src\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Renderer\Renderer.cuh" />

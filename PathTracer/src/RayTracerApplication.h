@@ -1,5 +1,6 @@
 #pragma once
 #include "Renderer/Renderer.h"
+#include "Camera.h"
 
 class RayTracerApplication {
 
@@ -14,4 +15,5 @@ public:
 
 private:
 	Renderer m_Renderer;
+	Camera m_Camera;
 };

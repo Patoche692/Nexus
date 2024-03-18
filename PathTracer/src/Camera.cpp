@@ -18,7 +18,7 @@ Camera::Camera(float verticalFOV, float nearClip, float farClip)
 void Camera::OnUpdate(float ts)
 {
 	glm::vec2 mousePos = Input::GetMousePosition();
-	glm::vec2 delta = (mousePos - m_LastMousePosition) * 0.002f;
+	glm::vec2 delta = (mousePos - m_LastMousePosition) * 2.0f;
 	m_LastMousePosition = mousePos;
 
 	if (!Input::IsKeyDown(GLFW_MOUSE_BUTTON_RIGHT))
@@ -34,7 +34,7 @@ void Camera::OnUpdate(float ts)
 	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
 
-	float speed = 5.0f;
+	float speed = 0.05f;
 
 	if (Input::IsKeyDown(GLFW_KEY_W))
 	{
@@ -95,7 +95,7 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 	m_ViewportHeight = height;
 
 	RecalculateProjection();
-	RecalculateRayDirections();
+	//RecalculateRayDirections();
 }
 
 float Camera::GetRotationSpeed()

@@ -15,10 +15,13 @@ public:
 	void Unbind();
 	void OnResize(uint32_t width, uint32_t height);
 
+	const uint32_t GetWidth() const { return m_Width; };
+	const uint32_t GetHeight() const { return m_Height; };
 	unsigned int GetHandle() { return m_Handle; };
 	cudaGraphicsResource_t& GetCudaResource() { return m_CudaResource; };
 
 private:
 	unsigned int m_Handle = 0;
 	cudaGraphicsResource_t m_CudaResource;
+	uint32_t m_Width, m_Height;
 };

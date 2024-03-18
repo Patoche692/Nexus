@@ -2,6 +2,7 @@
 #include "../Utils.h"
 
 PixelBuffer::PixelBuffer(uint32_t width, uint32_t height)
+    :m_Width(width), m_Height(height)
 {
     glGenBuffers(1, &m_Handle);
     Bind();
@@ -24,6 +25,8 @@ void PixelBuffer::Unbind()
 
 void PixelBuffer::OnResize(uint32_t width, uint32_t height)
 {
+    m_Width = width;
+    m_Height = height;
     Bind();
     checkCudaErrors(cudaGraphicsUnregisterResource(m_CudaResource));
     glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * sizeof(uint32_t), NULL, GL_DYNAMIC_DRAW);

@@ -16,7 +16,8 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 
-	m_TextureRenderer = std::make_shared<TextureRenderer>(width, height);
+	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
+	m_Texture = std::make_shared<Texture>(width, height);
 }
 
 Renderer::~Renderer()
@@ -28,42 +29,26 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::Render(float deltaTime)
+void Renderer::Render(Camera& camera, float deltaTime)
 { 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
-	RenderUI(deltaTime);
+	RenderUI(camera, deltaTime);
 
-	std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
-	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
+	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
+	RenderViewport(m_PixelBuffer);
 
-	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
-	size_t size = 0;
-	void* device_ptr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer(&device_ptr, &size, pixelBuffer->GetCudaResource()));
-
-	// Launch cuda path tracing kernel
-	cudaRender(device_ptr, texture->GetWidth(), texture->GetHeight());
-
-	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
-
-	m_TextureRenderer->Render();
+	// Unpack the pixel buffer written by cuda to the texture
+	UnpackToTexture();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-	// Display on screen the texture rendered by the TextureRenderer
-	//std::shared_ptr<Framebuffer> framebuffer = m_TextureRenderer->GetFramebuffer();
-	//framebuffer->AttachToTextureHandle(texture->GetHandle());
-
-	//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	//glBlitFramebuffer(0, 0, 800, 800, 0, 0, 800, 800, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void Renderer::RenderUI(float deltaTime)
+void Renderer::RenderUI(Camera& camera, float deltaTime)
 {
 	ImGui::DockSpaceOverViewport();
 
@@ -78,24 +63,29 @@ void Renderer::RenderUI(float deltaTime)
 	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
 	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
 
-	OnResize(viewportWidth, viewportHeight);
+	OnResize(camera, viewportWidth, viewportHeight);
 
-	std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
-	ImGui::Image((void *)(intptr_t)texture->GetHandle(), ImVec2(texture->GetWidth(), texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
 	ImGui::PopStyleVar();
 }
 
-void Renderer::OnResize(uint32_t width, uint32_t height)
+void Renderer::UnpackToTexture()
 {
-	if (m_ViewportWidth != width || m_ViewportHeight != height)
-	{
-		std::shared_ptr<PixelBuffer> pixelBuffer = m_TextureRenderer->GetPixelBuffer();
-		std::shared_ptr<Texture> texture = m_TextureRenderer->GetTexture();
+	m_Texture->Bind();
+	m_PixelBuffer->Bind();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture->GetWidth(), m_Texture->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	m_PixelBuffer->Unbind();
+}
 
-		texture->OnResize(width, height);
-		pixelBuffer->OnResize(width, height);
+void Renderer::OnResize(Camera& camera, uint32_t width, uint32_t height)
+{
+	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
+	{
+		m_Texture->OnResize(width, height);
+		m_PixelBuffer->OnResize(width, height);
+		camera.OnResize(width, height);
 
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
