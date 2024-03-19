@@ -1,7 +1,10 @@
 #include "Renderer.cuh"
 #include "../Utils.h"
 
-__global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHeight, Camera* camera)
+__device__ __constant__ CameraData cameraData;
+
+
+__global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHeight)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -14,11 +17,9 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 
 	uint32_t* imagePtr = (uint32_t*)device_ptr;
 
-	glm::vec4 target = camera->GetInverseProjection() * glm::vec4(x, y, 1.0f, 1.0f);
-	glm::vec3 rayDirection = glm::vec3(camera->GetInverseView() * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0));
-	glm::vec3 rayOrigin = camera->GetPosition();
-	//glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 2.0f);
-	//glm::vec3 rayDirection(x, y, -1.0f);
+	glm::vec3 rayOrigin = cameraData.position;
+	glm::vec3 up = cameraData.upDirection;
+	glm::vec3 rayDirection = glm::normalize(cameraData.forwardDirection + x * cameraData.rightDirection + y * up);
 
 	float radius = 0.5f;
 
@@ -58,7 +59,7 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 
 }
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, Camera* camera)
+void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 {
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
 	size_t size = 0;
@@ -69,8 +70,13 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, Camera* camera)
 	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
 	dim3 threads(tx, ty);
 
-	traceRay<<<blocks, threads>>>(devicePtr, pixelBuffer->GetWidth(), pixelBuffer->GetHeight(), camera);
+	traceRay<<<blocks, threads>>>(devicePtr, pixelBuffer->GetWidth(), pixelBuffer->GetHeight());
 
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
+}
+
+void SendCameraDataToDevice(Camera* camera)
+{
+	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &camera->GetCameraData(), sizeof(CameraData)));
 }
 
