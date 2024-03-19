@@ -1,4 +1,5 @@
 #include "Renderer.cuh"
+#include<math.h>
 #include "../Utils.h"
 
 __device__ __constant__ CameraData cameraData;
@@ -19,7 +20,8 @@ __global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHe
 
 	glm::vec3 rayOrigin = cameraData.position;
 	glm::vec3 up = cameraData.upDirection;
-	glm::vec3 rayDirection = glm::normalize(cameraData.forwardDirection + x * cameraData.rightDirection + y * up);
+	float aspectRatio = imageWidth / (float)imageHeight;
+	glm::vec3 rayDirection = glm::normalize(cameraData.forwardDirection + x * aspectRatio * cameraData.rightDirection * tanf(cameraData.verticalFOV / 2 * 3.1415 / 180) + y * up * tanf(cameraData.verticalFOV / 2 * 3.1415 / 180));
 
 	float radius = 0.5f;
 
