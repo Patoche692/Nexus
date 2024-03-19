@@ -8,14 +8,13 @@
 
 struct CameraData
 {
-	float verticalFOV;
-	float imagePlaneHalfHeight;
-	uint32_t viewportWidth;
-	uint32_t viewportHeight;
 	float3 position;
 	float3 forwardDirection;
-	float3 rightDirection;
-	float3 upDirection;
+	float3 lowerLeftCorner;
+	float3 horizontal;
+	float3 vertical;
+	uint32_t viewportWidth;
+	uint32_t viewportHeight;
 };
 
 __global__ void traceRay(void* bufferDevicePtr);

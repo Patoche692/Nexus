@@ -37,6 +37,8 @@ void Renderer::Render(Camera* camera, float deltaTime)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	UpdateTimer(deltaTime);
+
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(camera, deltaTime);
 
@@ -62,15 +64,6 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::Text("Time info");
-	m_NAccumulatedFrame++;
-	m_AccumulatedTime += deltaTime;
-	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f)
-	{
-		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
-		m_NAccumulatedFrame = 0;
-		m_AccumulatedTime = 0.0f;
-		m_DisplayFPSTimer = glfwGetTime();
-	}
 	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
 
@@ -94,6 +87,19 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 
 	ImGui::End();
 	ImGui::PopStyleVar();
+}
+
+void Renderer::UpdateTimer(float deltaTime)
+{
+	m_NAccumulatedFrame++;
+	m_AccumulatedTime += deltaTime;
+	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f || m_DeltaTime == 0)
+	{
+		m_DisplayFPSTimer = glfwGetTime();
+		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
+		m_NAccumulatedFrame = 0;
+		m_AccumulatedTime = 0.0f;
+	}
 }
 
 void Renderer::UnpackToTexture()

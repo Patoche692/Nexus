@@ -8,6 +8,7 @@ class Camera
 {
 public:
 	Camera(float verticalFOV, uint32_t width, uint32_t height);
+	Camera(glm::vec3 position, glm::vec3 forward, float verticalFOV, uint32_t width, uint32_t height);
 
 	void OnUpdate(float ts);
 	void OnResize(uint32_t width, uint32_t height);

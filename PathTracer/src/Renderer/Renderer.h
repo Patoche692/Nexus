@@ -18,6 +18,7 @@ public:
 	void Render(Camera* camera, float deltaTime);
 	void RenderUI(Camera* camera, float deltaTime);
 	void UnpackToTexture();
+	void UpdateTimer(float deltaTime);
 
 	std::shared_ptr<PixelBuffer> GetPixelBuffer() { return m_PixelBuffer; };
 	std::shared_ptr<Texture> GetTexture() { return m_Texture; };

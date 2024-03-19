@@ -10,8 +10,8 @@ __global__ void traceRay(void *bufferDevicePtr)
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	float x = (float)i / (float)cameraData.viewportWidth * 2.0f - 1.0f;
-	float y = (float)j / (float)cameraData.viewportHeight * 2.0f - 1.0f;
+	float x = (float)i / (float)cameraData.viewportWidth;
+	float y = (float)j / (float)cameraData.viewportHeight;
 
 	if (i >= cameraData.viewportWidth || j >= cameraData.viewportHeight)
 		return;
@@ -19,9 +19,7 @@ __global__ void traceRay(void *bufferDevicePtr)
 	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
 	float3 rayOrigin = cameraData.position;
-	float3 up = cameraData.upDirection;
-	float aspectRatio = cameraData.viewportWidth / (float)cameraData.viewportHeight;
-	float3 rayDirection = normalize(cameraData.forwardDirection + x * aspectRatio * cameraData.rightDirection * cameraData.imagePlaneHalfHeight + y * up * cameraData.imagePlaneHalfHeight);
+	float3 rayDirection = normalize(cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin);
 
 	float radius = 0.5f;
 
@@ -84,15 +82,23 @@ void SendCameraDataToDevice(Camera* camera)
 	glm::vec3 forwardDirection = camera->GetForwardDirection();
 	glm::vec3 rightDirection = camera->GetRightDirection();
 	glm::vec3 upDirection = glm::cross(rightDirection, forwardDirection);
+
+	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
+	float halfHeight = tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
+	float halfWidth = aspectRatio * halfHeight;
+
+	glm::vec3 lowerLeftCorner = position - halfWidth * rightDirection - halfHeight * upDirection + forwardDirection;
+	glm::vec3 horizontal = 2 * halfWidth * rightDirection;
+	glm::vec3 vertical = 2 * halfHeight * upDirection;
+
 	CameraData data = {
-		camera->GetVerticalFOV(),
-		tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f),
-		camera->GetViewportWidth(),
-		camera->GetViewportHeight(),
 		make_float3(position.x, position.y, position.z),
 		make_float3(forwardDirection.x, forwardDirection.y, forwardDirection.z),
-		make_float3(rightDirection.x, rightDirection.y, rightDirection.z),
-		make_float3(upDirection.x, upDirection.y, upDirection.z)
+		make_float3(lowerLeftCorner.x, lowerLeftCorner.y, lowerLeftCorner.z),
+		make_float3(horizontal.x, horizontal.y, horizontal.z),
+		make_float3(vertical.x, vertical.y, vertical.z),
+		camera->GetViewportWidth(),
+		camera->GetViewportHeight()
 	};
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }

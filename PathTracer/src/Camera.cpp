@@ -22,6 +22,12 @@ Camera::Camera(float verticalFOV, uint32_t width, uint32_t height)
 	m_RightDirection = glm::vec3(1.0f, 0.0f, 0.0f);
 }
 
+Camera::Camera(glm::vec3 position, glm::vec3 forward, float verticalFOV, uint32_t width, uint32_t height)
+	:m_Position(position), m_ForwardDirection(forward), m_VerticalFOV(verticalFOV), m_ViewportWidth(width),
+	m_ViewportHeight(height), m_RightDirection(glm::cross(m_ForwardDirection, glm::vec3(0.0f, 1.0f, 0.0f)))
+{
+}
+
 
 void Camera::OnUpdate(float ts)
 {
