@@ -26,5 +26,9 @@ private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
 	std::shared_ptr<PixelBuffer> m_PixelBuffer;
 	std::shared_ptr<Texture> m_Texture;
+	float m_DisplayFPSTimer;
+	float m_DeltaTime = 0.0f;
+	float m_AccumulatedTime = 0.0f;
+	uint32_t m_NAccumulatedFrame = 0;
 };
 

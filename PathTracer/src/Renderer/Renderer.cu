@@ -32,14 +32,14 @@ __global__ void traceRay(void *bufferDevicePtr)
 
 	float discriminant = b * b - 4.0f * a * c;
 
-	if (discriminant < 0.0f)
+	float t0 = (- b + sqrt(discriminant)) / 2.0f * a;
+	float t1 = (- b - sqrt(discriminant)) / 2.0f * a;
+
+	if (discriminant < 0.0f || t1 < 0.0f)
 	{
 		imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
 		return;
 	}
-
-	float t0 = (- b + glm::sqrt(discriminant)) / 2.0f * a;
-	float t1 = (- b - glm::sqrt(discriminant)) / 2.0f * a;
 
 	float3 hitPoint = rayOrigin + rayDirection * t1;
 	float3 normal = normalize(hitPoint);

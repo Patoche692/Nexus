@@ -18,6 +18,8 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 
 	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
 	m_Texture = std::make_shared<Texture>(width, height);
+
+	m_DisplayFPSTimer = glfwGetTime();
 }
 
 Renderer::~Renderer()
@@ -56,14 +58,27 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 	ImGui::DockSpaceOverViewport();
 
 	ImGui::Begin("Settings");
-	ImGui::Text("Render time millisec: %.3f", deltaTime);
-	ImGui::Text("FPS: %d", (int)(1000.0f / deltaTime));
 
-	ImGui::BeginChild("Camera");
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Text("Time info");
+	m_NAccumulatedFrame++;
+	m_AccumulatedTime += deltaTime;
+	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f)
+	{
+		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
+		m_NAccumulatedFrame = 0;
+		m_AccumulatedTime = 0.0f;
+		m_DisplayFPSTimer = glfwGetTime();
+	}
+	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
+	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Text("Camera");
 	if (ImGui::SliderFloat("Camera FOV", &camera->GetVerticalFOV(), 1.0f, 180.0f))
 		camera->Invalidate();
-
-	ImGui::EndChild();
 
 	ImGui::End();
 
