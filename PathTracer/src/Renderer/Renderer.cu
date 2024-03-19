@@ -1,63 +1,63 @@
 #include "Renderer.cuh"
-#include<math.h>
+#include "cuda/cuda_math.h"
 #include "../Utils.h"
 
 __device__ __constant__ CameraData cameraData;
 
 
-__global__ void traceRay(void *device_ptr, uint32_t imageWidth, uint32_t imageHeight)
+__global__ void traceRay(void *bufferDevicePtr)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	float x = (float)i / (float)imageWidth * 2.0f - 1.0f;
-	float y = (float)j / (float)imageHeight * 2.0f - 1.0f;
+	float x = (float)i / (float)cameraData.viewportWidth * 2.0f - 1.0f;
+	float y = (float)j / (float)cameraData.viewportHeight * 2.0f - 1.0f;
 
-	if (i >= imageWidth || j >= imageHeight)
+	if (i >= cameraData.viewportWidth || j >= cameraData.viewportHeight)
 		return;
 
-	uint32_t* imagePtr = (uint32_t*)device_ptr;
+	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
-	glm::vec3 rayOrigin = cameraData.position;
-	glm::vec3 up = cameraData.upDirection;
-	float aspectRatio = imageWidth / (float)imageHeight;
-	glm::vec3 rayDirection = glm::normalize(cameraData.forwardDirection + x * aspectRatio * cameraData.rightDirection * tanf(cameraData.verticalFOV / 2 * 3.1415 / 180) + y * up * tanf(cameraData.verticalFOV / 2 * 3.1415 / 180));
+	float3 rayOrigin = cameraData.position;
+	float3 up = cameraData.upDirection;
+	float aspectRatio = cameraData.viewportWidth / (float)cameraData.viewportHeight;
+	float3 rayDirection = normalize(cameraData.forwardDirection + x * aspectRatio * cameraData.rightDirection * cameraData.imagePlaneHalfHeight + y * up * cameraData.imagePlaneHalfHeight);
 
 	float radius = 0.5f;
 
-	float a = glm::dot(rayDirection, rayDirection);
-	float b = 2.0f * glm::dot(rayOrigin, rayDirection);
-	float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
+	float a = dot(rayDirection, rayDirection);
+	float b = 2.0f * dot(rayOrigin, rayDirection);
+	float c = dot(rayOrigin, rayOrigin) - radius * radius;
 
 
 	float discriminant = b * b - 4.0f * a * c;
 
 	if (discriminant < 0.0f)
 	{
-		imagePtr[j * imageWidth + i] = 0xff000000;
+		imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
 		return;
 	}
 
 	float t0 = (- b + glm::sqrt(discriminant)) / 2.0f * a;
 	float t1 = (- b - glm::sqrt(discriminant)) / 2.0f * a;
 
-	glm::vec3 hitPoint = rayOrigin + rayDirection * t1;
-	glm::vec3 normal = glm::normalize(hitPoint);
+	float3 hitPoint = rayOrigin + rayDirection * t1;
+	float3 normal = normalize(hitPoint);
 
-	glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+	float3 lightDir = normalize(make_float3(-1.0f, -1.0f, -1.0f));
 
-	float d = glm::max(glm::dot(normal, -lightDir), 0.0f);
+	float d = max(dot(normal, -lightDir), 0.0f);
 
-	glm::vec3 sphereColor(1.0f, 0.0f, 1.0f);
+	float3 sphereColor = make_float3(1.0f, 0.0f, 1.0f);
 	sphereColor = sphereColor * d;
 
-	glm::vec4 color = glm::clamp(glm::vec4(sphereColor, 1.0f), glm::vec4(0.0f), glm::vec4(1.0f));
-	uint8_t red = (uint8_t)(color.r * 255.0f);
-	uint8_t green = (uint8_t)(color.g * 255.0f);
-	uint8_t blue = (uint8_t)(color.b * 255.0f);
-	uint8_t alpha = (uint8_t)(color.a * 255.0f);
+	float4 color = clamp(make_float4(sphereColor, 1.0f), make_float4(0.0f), make_float4(1.0f));
+	uint8_t red = (uint8_t)(color.x * 255.0f);
+	uint8_t green = (uint8_t)(color.y * 255.0f);
+	uint8_t blue = (uint8_t)(color.z * 255.0f);
+	uint8_t alpha = (uint8_t)(color.w * 255.0f);
 	 
-	imagePtr[j * imageWidth + i] = alpha << 24 | blue << 16 | green << 8 | red;
+	imagePtr[j * cameraData.viewportWidth + i] = alpha << 24 | blue << 16 | green << 8 | red;
 
 }
 
@@ -72,13 +72,28 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
 	dim3 threads(tx, ty);
 
-	traceRay<<<blocks, threads>>>(devicePtr, pixelBuffer->GetWidth(), pixelBuffer->GetHeight());
+	traceRay<<<blocks, threads>>>(devicePtr);
 
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
 }
 
 void SendCameraDataToDevice(Camera* camera)
 {
-	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &camera->GetCameraData(), sizeof(CameraData)));
+
+	glm::vec3 position = camera->GetPosition();
+	glm::vec3 forwardDirection = camera->GetForwardDirection();
+	glm::vec3 rightDirection = camera->GetRightDirection();
+	glm::vec3 upDirection = glm::cross(rightDirection, forwardDirection);
+	CameraData data = {
+		camera->GetVerticalFOV(),
+		tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f),
+		camera->GetViewportWidth(),
+		camera->GetViewportHeight(),
+		make_float3(position.x, position.y, position.z),
+		make_float3(forwardDirection.x, forwardDirection.y, forwardDirection.z),
+		make_float3(rightDirection.x, rightDirection.y, rightDirection.z),
+		make_float3(upDirection.x, upDirection.y, upDirection.z)
+	};
+	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 

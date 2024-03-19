@@ -177,6 +177,7 @@
     <ClInclude Include="src\Renderer\Renderer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Utils.h" />
+    <ClInclude Include="src\Vendor\cuda\cuda_math.h" />
     <ClInclude Include="src\Vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Vendor\imgui\imgui.h" />
     <ClInclude Include="src\Vendor\imgui\imgui_impl_glfw.h" />

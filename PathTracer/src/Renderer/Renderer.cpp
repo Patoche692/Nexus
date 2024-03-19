@@ -35,10 +35,11 @@ void Renderer::Render(Camera* camera, float deltaTime)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	if (camera->HasMoved())
-		SendCameraDataToDevice(camera);
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(camera, deltaTime);
+
+	if (camera->IsInvalid())
+		camera->sendDataToDevice();
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	RenderViewport(m_PixelBuffer);
@@ -57,6 +58,13 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 	ImGui::Begin("Settings");
 	ImGui::Text("Render time millisec: %.3f", deltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / deltaTime));
+
+	ImGui::BeginChild("Camera");
+	if (ImGui::SliderFloat("Camera FOV", &camera->GetVerticalFOV(), 1.0f, 180.0f))
+		camera->Invalidate();
+
+	ImGui::EndChild();
+
 	ImGui::End();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));

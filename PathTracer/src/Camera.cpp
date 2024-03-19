@@ -5,21 +5,21 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
+#include <math.h>
 
 #include "../Utils.h"
 #include "Input.h"
 #include "Renderer/Renderer.cuh"
 
 
-Camera::Camera(float verticalFOV)
+Camera::Camera(float verticalFOV, uint32_t width, uint32_t height)
 {
-	m_CameraData = {
-		verticalFOV,
-		glm::vec3(0.0f, 0.0f, 2.0f),
-		glm::vec3(0.0f, 0.0f, -1.0f),
-		glm::vec3(1.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f)
-	};
+	m_VerticalFOV = verticalFOV;
+	m_ViewportWidth = width;
+	m_ViewportHeight = height;
+	m_Position = glm::vec3(0.0f, 0.0f, 2.0f);
+	m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+	m_RightDirection = glm::vec3(1.0f, 0.0f, 0.0f);
 }
 
 
@@ -37,41 +37,39 @@ void Camera::OnUpdate(float ts)
 
 	Input::SetCursorMode(GLFW_CURSOR_DISABLED);
 
-	m_Moved = false;
-
 	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 
-	float speed = 0.005f;
+	float speed = 0.003f;
 
 	if (Input::IsKeyDown(GLFW_KEY_W))
 	{
-		m_CameraData.position += ts * speed * m_CameraData.forwardDirection;
-		m_Moved = true;
+		m_Position += ts * speed * m_ForwardDirection;
+		m_Invalid = true;
 	}
 	else if (Input::IsKeyDown(GLFW_KEY_S))
 	{
-		m_CameraData.position -= ts * speed * m_CameraData.forwardDirection;
-		m_Moved = true;
+		m_Position -= ts * speed * m_ForwardDirection;
+		m_Invalid = true;
 	}
 	if (Input::IsKeyDown(GLFW_KEY_A))
 	{
-		m_CameraData.position -= ts * speed * m_CameraData.rightDirection;
-		m_Moved = true;
+		m_Position -= ts * speed * m_RightDirection;
+		m_Invalid = true;
 	}
 	else if (Input::IsKeyDown(GLFW_KEY_D))
 	{
-		m_CameraData.position += ts * speed * m_CameraData.rightDirection;
-		m_Moved = true;
+		m_Position += ts * speed * m_RightDirection;
+		m_Invalid = true;
 	}
 	if (Input::IsKeyDown(GLFW_KEY_Q))
 	{
-		m_CameraData.position -= ts * speed * upDirection;
-		m_Moved = true;
+		m_Position -= ts * speed * upDirection;
+		m_Invalid = true;
 	}
 	else if (Input::IsKeyDown(GLFW_KEY_E))
 	{
-		m_CameraData.position += ts * speed * upDirection;
-		m_Moved = true;
+		m_Position += ts * speed * upDirection;
+		m_Invalid = true;
 	}
 
 	if (delta.x != 0.0f || delta.y != 0.0f)
@@ -79,18 +77,12 @@ void Camera::OnUpdate(float ts)
 		float pitchDelta = delta.y * GetRotationSpeed();
 		float yawDelta = delta.x * GetRotationSpeed();
 
-		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, m_CameraData.rightDirection),
+		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, m_RightDirection),
 			glm::angleAxis(-yawDelta, glm::vec3(0.0f, 1.0f, 0.0f))));
-		m_CameraData.forwardDirection = glm::rotate(q, m_CameraData.forwardDirection);
-		m_CameraData.rightDirection = glm::cross(m_CameraData.forwardDirection, upDirection);
-		m_CameraData.upDirection = glm::cross(m_CameraData.rightDirection, m_CameraData.forwardDirection);
+		m_ForwardDirection = glm::rotate(q, m_ForwardDirection);
+		m_RightDirection = glm::cross(m_ForwardDirection, upDirection);
 
-		m_Moved = true;
-	}
-
-	if (m_Moved)
-	{
-		//SendDataToDevice();
+		m_Invalid = true;
 	}
 }
 
@@ -101,10 +93,22 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
+	Invalidate();
+}
+
+void Camera::SetVerticalFOV(float verticalFOV)
+{
+	m_VerticalFOV = verticalFOV;
 }
 
 float Camera::GetRotationSpeed()
 {
 	return 0.0008f;
+}
+
+void Camera::sendDataToDevice()
+{
+	m_Invalid = false;
+	SendCameraDataToDevice(this);
 }
 
