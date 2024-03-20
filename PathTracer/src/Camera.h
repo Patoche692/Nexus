@@ -26,7 +26,7 @@ public:
 	bool IsInvalid() { return m_Invalid; };
 	void Invalidate() { m_Invalid = true; };
 
-	void sendDataToDevice();
+	void SendDataToDevice();
 
 private:
 	glm::vec2 m_LastMousePosition{ 0.0f, 0.0 };

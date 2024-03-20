@@ -112,7 +112,7 @@ float Camera::GetRotationSpeed()
 	return 0.0008f;
 }
 
-void Camera::sendDataToDevice()
+void Camera::SendDataToDevice()
 {
 	m_Invalid = false;
 	SendCameraDataToDevice(this);

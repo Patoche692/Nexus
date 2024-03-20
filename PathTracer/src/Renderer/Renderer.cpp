@@ -1,3 +1,4 @@
+#include <gtc/type_ptr.hpp>
 #include "Renderer.h"
 #include "Renderer.cuh"
 #include "../Utils.h"
@@ -43,7 +44,9 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	RenderUI(scene, deltaTime);
 
 	if (scene.GetCamera()->IsInvalid())
-		scene.GetCamera()->sendDataToDevice();
+		scene.GetCamera()->SendDataToDevice();
+	if (scene.IsInvalid())
+		scene.SendDataToDevice();
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	RenderViewport(m_PixelBuffer);
@@ -72,6 +75,23 @@ void Renderer::RenderUI(Scene& scene, float deltaTime)
 	ImGui::Text("Camera");
 	if (ImGui::SliderFloat("Camera FOV", &scene.GetCamera()->GetVerticalFOV(), 1.0f, 180.0f))
 		scene.GetCamera()->Invalidate();
+
+	ImGui::End();
+
+	ImGui::Begin("Scene");
+
+	for (Sphere& sphere : scene.GetSpheres())
+	{
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Text("Sphere");
+		if (ImGui::DragFloat3("Position", glm::value_ptr(sphere.position), 0.1f, -50.0f, 50.0f))
+			scene.Invalidate();
+		if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 50.0f))
+			scene.Invalidate();
+		if (ImGui::ColorEdit3("Material", glm::value_ptr(sphere.material.color)))
+			scene.Invalidate();
+	}
 
 	ImGui::End();
 

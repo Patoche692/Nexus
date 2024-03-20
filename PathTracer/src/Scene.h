@@ -11,8 +11,12 @@ public:
 	Scene(uint32_t width, uint32_t height);
 
 	bool IsInvalid() const { return m_Invalid; };
-	bool Invalidate() { m_Invalid = true; };
+	void Invalidate() { m_Invalid = true; };
+
+	std::vector<Sphere>& GetSpheres() { return m_Spheres; };
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; };
+
+	void SendDataToDevice();
 
 private:
 	bool m_Invalid = true;

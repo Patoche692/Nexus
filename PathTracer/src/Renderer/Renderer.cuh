@@ -4,7 +4,7 @@
 #include <iostream>
 #include <glm.hpp>
 #include "../OpenGL_API/PixelBuffer.h"
-#include "../Camera.h"
+#include "../Scene.h"
 
 struct CameraData
 {
@@ -17,6 +17,24 @@ struct CameraData
 	uint32_t viewportHeight;
 };
 
+struct MaterialData
+{
+	float3 color;
+};
+
+struct SphereData
+{
+	float radius;
+	float3 position;
+	MaterialData material;
+};
+
+struct SceneData
+{
+	SphereData spheres[MAX_SPHERES];
+};
+
 __global__ void traceRay(void* bufferDevicePtr);
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer);
 void SendCameraDataToDevice(Camera *camera);
+void SendSceneDataToDevice(Scene* scene);

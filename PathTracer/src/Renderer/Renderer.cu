@@ -3,6 +3,7 @@
 #include "../Utils.h"
 
 __device__ __constant__ CameraData cameraData;
+__device__ __constant__ SceneData sceneData;
 
 
 __global__ void traceRay(void *bufferDevicePtr)
@@ -19,34 +20,34 @@ __global__ void traceRay(void *bufferDevicePtr)
 	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
 	float3 rayOrigin = cameraData.position;
+	float3 origin = rayOrigin - sceneData.spheres[0].position;
 	float3 rayDirection = normalize(cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin);
 
-	float radius = 0.5f;
+	float radius = sceneData.spheres[0].radius;
 
 	float a = dot(rayDirection, rayDirection);
-	float b = 2.0f * dot(rayOrigin, rayDirection);
-	float c = dot(rayOrigin, rayOrigin) - radius * radius;
+	float b = 2.0f * dot(origin, rayDirection);
+	float c = dot(origin, origin) - radius * radius;
 
 
 	float discriminant = b * b - 4.0f * a * c;
 
-	float t0 = (- b + sqrt(discriminant)) / 2.0f * a;
-	float t1 = (- b - sqrt(discriminant)) / 2.0f * a;
+	float closestT = (- b - sqrt(discriminant)) / 2.0f * a;
 
-	if (discriminant < 0.0f || t1 < 0.0f)
+	if (discriminant < 0.0f || closestT < 0.0f)
 	{
 		imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
 		return;
 	}
 
-	float3 hitPoint = rayOrigin + rayDirection * t1;
+	float3 hitPoint = origin + rayDirection * closestT;
 	float3 normal = normalize(hitPoint);
 
 	float3 lightDir = normalize(make_float3(-1.0f, -1.0f, -1.0f));
 
 	float d = max(dot(normal, -lightDir), 0.0f);
 
-	float3 sphereColor = make_float3(1.0f, 0.0f, 1.0f);
+	float3 sphereColor = sceneData.spheres[0].material.color;
 	sphereColor = sphereColor * d;
 
 	float4 color = clamp(make_float4(sphereColor, 1.0f), make_float4(0.0f), make_float4(1.0f));
@@ -77,7 +78,6 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 
 void SendCameraDataToDevice(Camera* camera)
 {
-
 	glm::vec3 position = camera->GetPosition();
 	glm::vec3 forwardDirection = camera->GetForwardDirection();
 	glm::vec3 rightDirection = camera->GetRightDirection();
@@ -103,3 +103,18 @@ void SendCameraDataToDevice(Camera* camera)
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 
+void SendSceneDataToDevice(Scene* scene)
+{
+	SceneData data;
+	std::vector<Sphere> spheres = scene->GetSpheres();
+	for (int i = 0; i < spheres.size(); i++)
+	{
+		data.spheres[i] = {
+			spheres[i].radius,
+			make_float3(spheres[i].position),
+			{ make_float3(spheres[i].material.color) }
+		};
+	}
+	// TODO: change the size of copy
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(Sphere) * spheres.size()));
+}
