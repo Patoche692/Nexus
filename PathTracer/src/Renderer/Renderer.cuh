@@ -31,6 +31,7 @@ struct SphereData
 
 struct SceneData
 {
+	unsigned int nSpheres;
 	SphereData spheres[MAX_SPHERES];
 };
 

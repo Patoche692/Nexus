@@ -85,8 +85,8 @@ void Camera::OnUpdate(float ts)
 
 		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, m_RightDirection),
 			glm::angleAxis(-yawDelta, glm::vec3(0.0f, 1.0f, 0.0f))));
-		m_ForwardDirection = glm::rotate(q, m_ForwardDirection);
-		m_RightDirection = glm::cross(m_ForwardDirection, upDirection);
+		m_ForwardDirection = glm::normalize(glm::rotate(q, m_ForwardDirection));
+		m_RightDirection = glm::normalize(glm::cross(m_ForwardDirection, upDirection));
 
 		m_Invalid = true;
 	}

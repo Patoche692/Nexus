@@ -20,34 +20,55 @@ __global__ void traceRay(void *bufferDevicePtr)
 	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
 	float3 rayOrigin = cameraData.position;
-	float3 origin = rayOrigin - sceneData.spheres[0].position;
-	float3 rayDirection = normalize(cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin);
+	float3 rayDirection = cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin;
 
-	float radius = sceneData.spheres[0].radius;
+	SphereData* closestSphere = nullptr;
+	float hitDistance = FLT_MAX;
 
-	float a = dot(rayDirection, rayDirection);
-	float b = 2.0f * dot(origin, rayDirection);
-	float c = dot(origin, origin) - radius * radius;
+	for (int i = 0; i < sceneData.nSpheres; i++)
+	{
+		float3 origin = rayOrigin - sceneData.spheres[i].position;
+
+		float radius = sceneData.spheres[i].radius;
+
+		float a = dot(rayDirection, rayDirection);
+		float b = dot(origin, rayDirection);
+		float c = dot(origin, origin) - radius * radius;
 
 
-	float discriminant = b * b - 4.0f * a * c;
+		float discriminant = b * b - a * c;
 
-	float closestT = (- b - sqrt(discriminant)) / 2.0f * a;
+		if (discriminant < 0.0f)
+		{
+			imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
+			continue;
+		}
 
-	if (discriminant < 0.0f || closestT < 0.0f)
+		float closestT = (-b - sqrt(discriminant)) / a;
+
+		if (closestT < hitDistance && closestT > 0.0f)
+		{
+			hitDistance = closestT;
+			closestSphere = &sceneData.spheres[i];
+		}
+	}
+
+	if (closestSphere == nullptr)
 	{
 		imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
 		return;
 	}
 
-	float3 hitPoint = origin + rayDirection * closestT;
+
+	float3 origin = rayOrigin - closestSphere->position;
+	float3 hitPoint = origin + rayDirection * hitDistance;
 	float3 normal = normalize(hitPoint);
 
 	float3 lightDir = normalize(make_float3(-1.0f, -1.0f, -1.0f));
 
 	float d = max(dot(normal, -lightDir), 0.0f);
 
-	float3 sphereColor = sceneData.spheres[0].material.color;
+	float3 sphereColor = closestSphere->material.color;
 	sphereColor = sphereColor * d;
 
 	float4 color = clamp(make_float4(sphereColor, 1.0f), make_float4(0.0f), make_float4(1.0f));
@@ -107,6 +128,7 @@ void SendSceneDataToDevice(Scene* scene)
 {
 	SceneData data;
 	std::vector<Sphere> spheres = scene->GetSpheres();
+	data.nSpheres = spheres.size();
 	for (int i = 0; i < spheres.size(); i++)
 	{
 		data.spheres[i] = {
@@ -116,5 +138,5 @@ void SendSceneDataToDevice(Scene* scene)
 		};
 	}
 	// TODO: change the size of copy
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(Sphere) * spheres.size()));
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, (sizeof(unsigned int) + sizeof(Sphere)) * data.nSpheres));
 }
