@@ -31,7 +31,7 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::Render(Camera* camera, float deltaTime)
+void Renderer::Render(Scene& scene, float deltaTime)
 { 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -40,10 +40,10 @@ void Renderer::Render(Camera* camera, float deltaTime)
 	UpdateTimer(deltaTime);
 
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
-	RenderUI(camera, deltaTime);
+	RenderUI(scene, deltaTime);
 
-	if (camera->IsInvalid())
-		camera->sendDataToDevice();
+	if (scene.GetCamera()->IsInvalid())
+		scene.GetCamera()->sendDataToDevice();
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	RenderViewport(m_PixelBuffer);
@@ -55,7 +55,7 @@ void Renderer::Render(Camera* camera, float deltaTime)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Renderer::RenderUI(Camera* camera, float deltaTime)
+void Renderer::RenderUI(Scene& scene, float deltaTime)
 {
 	ImGui::DockSpaceOverViewport();
 
@@ -70,8 +70,8 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::Text("Camera");
-	if (ImGui::SliderFloat("Camera FOV", &camera->GetVerticalFOV(), 1.0f, 180.0f))
-		camera->Invalidate();
+	if (ImGui::SliderFloat("Camera FOV", &scene.GetCamera()->GetVerticalFOV(), 1.0f, 180.0f))
+		scene.GetCamera()->Invalidate();
 
 	ImGui::End();
 
@@ -81,7 +81,7 @@ void Renderer::RenderUI(Camera* camera, float deltaTime)
 	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
 	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
 
-	OnResize(camera, viewportWidth, viewportHeight);
+	OnResize(scene.GetCamera(), viewportWidth, viewportHeight);
 
 	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
@@ -110,7 +110,7 @@ void Renderer::UnpackToTexture()
 	m_PixelBuffer->Unbind();
 }
 
-void Renderer::OnResize(Camera* camera, uint32_t width, uint32_t height)
+void Renderer::OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t height)
 {
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{

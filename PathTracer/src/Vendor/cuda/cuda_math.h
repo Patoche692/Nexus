@@ -80,6 +80,11 @@ inline __host__ __device__ float2 make_float2(uint2 a)
     return make_float2(float(a.x), float(a.y));
 }
 
+inline __host__ __device__ float2 make_float2(glm::vec2 a)
+{
+    return make_float2(a.x, a.y);
+}
+
 inline __host__ __device__ int2 make_int2(int s)
 {
     return make_int2(s, s);
@@ -133,6 +138,11 @@ inline __host__ __device__ float3 make_float3(int3 a)
 inline __host__ __device__ float3 make_float3(uint3 a)
 {
     return make_float3(float(a.x), float(a.y), float(a.z));
+}
+
+inline __host__ __device__ float3 make_float3(glm::vec3 a)
+{
+    return make_float3(a.x, a.y, a.z);
 }
 
 inline __host__ __device__ int3 make_int3(int s)

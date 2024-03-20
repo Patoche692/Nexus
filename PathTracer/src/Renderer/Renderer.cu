@@ -92,11 +92,11 @@ void SendCameraDataToDevice(Camera* camera)
 	glm::vec3 vertical = 2 * halfHeight * upDirection;
 
 	CameraData data = {
-		make_float3(position.x, position.y, position.z),
-		make_float3(forwardDirection.x, forwardDirection.y, forwardDirection.z),
-		make_float3(lowerLeftCorner.x, lowerLeftCorner.y, lowerLeftCorner.z),
-		make_float3(horizontal.x, horizontal.y, horizontal.z),
-		make_float3(vertical.x, vertical.y, vertical.z),
+		make_float3(position),
+		make_float3(forwardDirection),
+		make_float3(lowerLeftCorner),
+		make_float3(horizontal),
+		make_float3(vertical),
 		camera->GetViewportWidth(),
 		camera->GetViewportHeight()
 	};

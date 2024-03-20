@@ -7,6 +7,7 @@
 #include "../Camera.h"
 #include "../OpenGL_API/PixelBuffer.h"
 #include "../OpenGL_API/Texture.h"
+#include "../Scene.h"
 
 class Renderer
 {
@@ -14,9 +15,9 @@ public:
 	Renderer(uint32_t width, uint32_t height, GLFWwindow* window);
 	~Renderer();
 
-	void OnResize(Camera* camera, uint32_t width, uint32_t height);
-	void Render(Camera* camera, float deltaTime);
-	void RenderUI(Camera* camera, float deltaTime);
+	void OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t height);
+	void Render(Scene& scene, float deltaTime);
+	void RenderUI(Scene& scene, float deltaTime);
 	void UnpackToTexture();
 	void UpdateTimer(float deltaTime);
 
