@@ -8,7 +8,7 @@ Scene::Scene(uint32_t width, uint32_t height)
 		Material material = { glm::vec3(0.0f, 1.0f, 1.0f) };
 		Sphere sphere = {
 			0.5f,
-			glm::vec3(0.0f),
+			glm::vec3(-0.8f, 0.0f, 0.0f),
 			material
 		};
 		m_Spheres.push_back(sphere);
@@ -18,6 +18,15 @@ Scene::Scene(uint32_t width, uint32_t height)
 		Sphere sphere = {
 			99.3f,
 			glm::vec3(0.0f, -100.0f, 0.0f),
+			material
+		};
+		m_Spheres.push_back(sphere);
+	}
+	{
+		Material material = { glm::vec3(0.0f, 1.0f, 0.0f) };
+		Sphere sphere = {
+			0.5f,
+			glm::vec3(0.8f, 0.0f, 0.0f),
 			material
 		};
 		m_Spheres.push_back(sphere);

@@ -35,7 +35,6 @@ __global__ void traceRay(void *bufferDevicePtr)
 		float b = dot(origin, rayDirection);
 		float c = dot(origin, origin) - radius * radius;
 
-
 		float discriminant = b * b - a * c;
 
 		if (discriminant < 0.0f)
@@ -59,12 +58,10 @@ __global__ void traceRay(void *bufferDevicePtr)
 		return;
 	}
 
+	float3 hitPoint = rayOrigin + rayDirection * hitDistance;
+	float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 
-	float3 origin = rayOrigin - closestSphere->position;
-	float3 hitPoint = origin + rayDirection * hitDistance;
-	float3 normal = normalize(hitPoint);
-
-	float3 lightDir = normalize(make_float3(-1.0f, -1.0f, -1.0f));
+	float3 lightDir = normalize(make_float3(-1.0f));
 
 	float d = max(dot(normal, -lightDir), 0.0f);
 
