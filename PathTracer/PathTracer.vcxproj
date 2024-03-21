@@ -157,7 +157,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Scene.cpp" />
-    <ClCompile Include="src\Utils.cpp" />
+    <ClCompile Include="src\Utils\Utils.cpp" />
     <ClCompile Include="src\Vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\Vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\Vendor\imgui\imgui_draw.cpp" />
@@ -182,7 +182,7 @@
     <ClInclude Include="src\Renderer\Renderer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
-    <ClInclude Include="src\Utils.h" />
+    <ClInclude Include="src\Utils\Utils.h" />
     <ClInclude Include="src\Vendor\cuda\cuda_math.h" />
     <ClInclude Include="src\Vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Vendor\imgui\imgui.h" />

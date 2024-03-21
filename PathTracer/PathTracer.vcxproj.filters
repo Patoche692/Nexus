@@ -36,7 +36,7 @@
     <ClCompile Include="src\Renderer\Renderer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utils.cpp">
+    <ClCompile Include="src\Utils\Utils.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Vendor\imgui\imgui.cpp">
@@ -77,7 +77,7 @@
     <CudaCompile Include="src\Renderer\Renderer.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Utils.h">
+    <ClInclude Include="src\Utils\Utils.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Renderer.h" />

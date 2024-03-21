@@ -1,13 +1,15 @@
 #include "Camera.h"
 
 #include <GL/glew.h>
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
+#include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
 #include <math.h>
 
-#include "../Utils.h"
+#include "../Utils/Utils.h"
+#include "cuda/cuda_math.h"
 #include "Input.h"
 #include "Renderer/Renderer.cuh"
 
@@ -17,22 +19,22 @@ Camera::Camera(float verticalFOV, uint32_t width, uint32_t height)
 	m_VerticalFOV = verticalFOV;
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
-	m_Position = glm::vec3(0.0f, 0.0f, 2.0f);
-	m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
-	m_RightDirection = glm::vec3(1.0f, 0.0f, 0.0f);
+	m_Position = make_float3(0.0f, 0.0f, 2.0f);
+	m_ForwardDirection = make_float3(0.0f, 0.0f, -1.0f);
+	m_RightDirection = make_float3(1.0f, 0.0f, 0.0f);
 }
 
-Camera::Camera(glm::vec3 position, glm::vec3 forward, float verticalFOV, uint32_t width, uint32_t height)
+Camera::Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height)
 	:m_Position(position), m_ForwardDirection(forward), m_VerticalFOV(verticalFOV), m_ViewportWidth(width),
-	m_ViewportHeight(height), m_RightDirection(glm::cross(m_ForwardDirection, glm::vec3(0.0f, 1.0f, 0.0f)))
+	m_ViewportHeight(height), m_RightDirection(cross(m_ForwardDirection, make_float3(0.0f, 1.0f, 0.0f)))
 {
 }
 
 
 void Camera::OnUpdate(float ts)
 {
-	glm::vec2 mousePos = Input::GetMousePosition();
-	glm::vec2 delta = (mousePos - m_LastMousePosition) * 2.0f;
+	float2 mousePos = Input::GetMousePosition();
+	float2 delta = (mousePos - m_LastMousePosition) * 2.0f;
 	m_LastMousePosition = mousePos;
 
 	if (!Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
@@ -43,7 +45,7 @@ void Camera::OnUpdate(float ts)
 
 	Input::SetCursorMode(GLFW_CURSOR_DISABLED);
 
-	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
+	float3 upDirection = make_float3(0.0f, 1.0f, 0.0f);
 
 	float speed = 0.003f;
 
@@ -83,10 +85,12 @@ void Camera::OnUpdate(float ts)
 		float pitchDelta = delta.y * GetRotationSpeed();
 		float yawDelta = delta.x * GetRotationSpeed();
 
-		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, m_RightDirection),
+		glm::vec3 rightDirection(m_RightDirection.x, m_RightDirection.y, m_RightDirection.z);
+		glm::vec3 forwardDirection(m_ForwardDirection.x, m_ForwardDirection.y, m_ForwardDirection.z);
+		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, rightDirection),
 			glm::angleAxis(-yawDelta, glm::vec3(0.0f, 1.0f, 0.0f))));
-		m_ForwardDirection = glm::normalize(glm::rotate(q, m_ForwardDirection));
-		m_RightDirection = glm::normalize(glm::cross(m_ForwardDirection, upDirection));
+		m_ForwardDirection = make_float3(glm::normalize(glm::rotate(q, forwardDirection)));
+		m_RightDirection = normalize(cross(m_ForwardDirection, upDirection));
 
 		m_Invalid = true;
 	}

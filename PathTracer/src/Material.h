@@ -1,7 +1,7 @@
 #pragma once
-#include <glm.hpp>
+#include "cuda/cuda_math.h"
 
 struct Material {
-	glm::vec3 color;
+	float3 color;
 };
 

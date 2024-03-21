@@ -8,7 +8,7 @@ class Camera
 {
 public:
 	Camera(float verticalFOV, uint32_t width, uint32_t height);
-	Camera(glm::vec3 position, glm::vec3 forward, float verticalFOV, uint32_t width, uint32_t height);
+	Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height);
 
 	void OnUpdate(float ts);
 	void OnResize(uint32_t width, uint32_t height);
@@ -19,9 +19,9 @@ public:
 	float& GetVerticalFOV() { return m_VerticalFOV; };
 	uint32_t GetViewportWidth() { return m_ViewportWidth; };
 	uint32_t GetViewportHeight() { return m_ViewportHeight; };
-	glm::vec3& GetPosition() { return m_Position; };
-	glm::vec3& GetForwardDirection() { return m_ForwardDirection; };
-	glm::vec3& GetRightDirection() { return m_RightDirection; };
+	float3& GetPosition() { return m_Position; };
+	float3& GetForwardDirection() { return m_ForwardDirection; };
+	float3& GetRightDirection() { return m_RightDirection; };
 
 	bool IsInvalid() { return m_Invalid; };
 	void Invalidate() { m_Invalid = true; };
@@ -29,14 +29,14 @@ public:
 	void SendDataToDevice();
 
 private:
-	glm::vec2 m_LastMousePosition{ 0.0f, 0.0 };
+	float2 m_LastMousePosition{ 0.0f, 0.0 };
 
 	float m_VerticalFOV;
 	uint32_t m_ViewportWidth;
 	uint32_t m_ViewportHeight;
-	glm::vec3 m_Position;
-	glm::vec3 m_ForwardDirection;
-	glm::vec3 m_RightDirection;
+	float3 m_Position;
+	float3 m_ForwardDirection;
+	float3 m_RightDirection;
 
 	bool m_Invalid = true;
 };

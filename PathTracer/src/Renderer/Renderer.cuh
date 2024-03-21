@@ -17,22 +17,10 @@ struct CameraData
 	uint32_t viewportHeight;
 };
 
-struct MaterialData
-{
-	float3 color;
-};
-
-struct SphereData
-{
-	float radius;
-	float3 position;
-	MaterialData material;
-};
-
 struct SceneData
 {
 	unsigned int nSpheres;
-	SphereData spheres[MAX_SPHERES];
+	Sphere spheres[MAX_SPHERES];
 };
 
 __global__ void traceRay(void* bufferDevicePtr);

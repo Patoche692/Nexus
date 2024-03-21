@@ -1,12 +1,12 @@
 #pragma once
 #include "GLFW/glfw3.h"
-#include "glm.hpp"
+#include "cuda/cuda_math.h"
 
 class Input
 {
 public:
 	static void Init(GLFWwindow* window);
-	static glm::vec2 GetMousePosition();
+	static float2 GetMousePosition();
 	static bool IsKeyDown(int key);
 	static bool IsMouseButtonDown(int key);
 	static void SetCursorMode(int mode);

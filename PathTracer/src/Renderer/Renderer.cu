@@ -1,6 +1,7 @@
 #include "Renderer.cuh"
 #include "cuda/cuda_math.h"
-#include "../Utils.h"
+#include "../Utils/Utils.h"
+#include "../Camera.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
@@ -22,7 +23,7 @@ __global__ void traceRay(void *bufferDevicePtr)
 	float3 rayOrigin = cameraData.position;
 	float3 rayDirection = cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin;
 
-	SphereData* closestSphere = nullptr;
+	Sphere* closestSphere = nullptr;
 	float hitDistance = FLT_MAX;
 
 	for (int i = 0; i < sceneData.nSpheres; i++)
@@ -96,25 +97,25 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 
 void SendCameraDataToDevice(Camera* camera)
 {
-	glm::vec3 position = camera->GetPosition();
-	glm::vec3 forwardDirection = camera->GetForwardDirection();
-	glm::vec3 rightDirection = camera->GetRightDirection();
-	glm::vec3 upDirection = glm::cross(rightDirection, forwardDirection);
+	float3 position = camera->GetPosition();
+	float3 forwardDirection = camera->GetForwardDirection();
+	float3 rightDirection = camera->GetRightDirection();
+	float3 upDirection = cross(rightDirection, forwardDirection);
 
 	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
 	float halfHeight = tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
 	float halfWidth = aspectRatio * halfHeight;
 
-	glm::vec3 lowerLeftCorner = position - halfWidth * rightDirection - halfHeight * upDirection + forwardDirection;
-	glm::vec3 horizontal = 2 * halfWidth * rightDirection;
-	glm::vec3 vertical = 2 * halfHeight * upDirection;
+	float3 lowerLeftCorner = position - halfWidth * rightDirection - halfHeight * upDirection + forwardDirection;
+	float3 horizontal = 2 * halfWidth * rightDirection;
+	float3 vertical = 2 * halfHeight * upDirection;
 
 	CameraData data = {
-		make_float3(position),
-		make_float3(forwardDirection),
-		make_float3(lowerLeftCorner),
-		make_float3(horizontal),
-		make_float3(vertical),
+		position,
+		forwardDirection,
+		lowerLeftCorner,
+		horizontal,
+		vertical,
 		camera->GetViewportWidth(),
 		camera->GetViewportHeight()
 	};
@@ -128,11 +129,7 @@ void SendSceneDataToDevice(Scene* scene)
 	data.nSpheres = spheres.size();
 	for (int i = 0; i < spheres.size(); i++)
 	{
-		data.spheres[i] = {
-			spheres[i].radius,
-			make_float3(spheres[i].position),
-			{ make_float3(spheres[i].material.color) }
-		};
+		data.spheres[i] = spheres[i];
 	}
 	// TODO: change the size of copy
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, (sizeof(unsigned int) + sizeof(Sphere)) * data.nSpheres));

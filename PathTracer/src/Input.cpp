@@ -1,4 +1,5 @@
 #include "Input.h"
+#include "cuda/cuda_math.h"
 
 GLFWwindow* Input::m_Window;
 
@@ -7,11 +8,11 @@ void Input::Init(GLFWwindow* window)
 	m_Window = window;
 }
 
-glm::vec2 Input::GetMousePosition()
+float2 Input::GetMousePosition()
 {
 	double xpos, ypos;
 	glfwGetCursorPos(m_Window, &xpos, &ypos);
-	return glm::vec2(xpos, ypos);
+	return make_float2(xpos, ypos);
 }
 
 bool Input::IsKeyDown(int key)

@@ -26,6 +26,9 @@
 typedef unsigned int uint;
 typedef unsigned short ushort;
 
+#include <vector_types.h>
+#include <glm.hpp>
+
 #ifndef __CUDACC__
 #include <math.h>
 
@@ -57,6 +60,52 @@ inline float rsqrtf(float x)
 {
     return 1.0f / sqrtf(x);
 }
+
+inline float2 make_float2(float a, float b)
+{
+    return { a, b };
+}
+
+inline int2 make_int2(int a, int b)
+{
+    return { a, b };
+}
+
+inline uint2 make_uint2(uint a, uint b)
+{
+    return { a, b };
+}
+
+inline float3 make_float3(float a, float b, float c)
+{
+    return { a, b, c };
+}
+
+inline int3 make_int3(int a, int b, int c)
+{
+    return { a, b, c };
+}
+
+inline uint3 make_uint3(uint a, uint b, uint c)
+{
+    return { a, b, c };
+}
+
+inline float4 make_float4(float a, float b, float c, float d)
+{
+    return { a, b, c, d };
+}
+
+inline int4 make_int4(int a, int b, int c, int d)
+{
+    return { a, b, c, d };
+}
+
+inline uint4 make_uint4(uint a, uint b, uint c, uint d)
+{
+    return { a, b, c, d };
+}
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

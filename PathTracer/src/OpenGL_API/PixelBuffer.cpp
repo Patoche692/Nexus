@@ -1,5 +1,5 @@
 #include "PixelBuffer.h"
-#include "../Utils.h"
+#include "../Utils/Utils.h"
 
 PixelBuffer::PixelBuffer(uint32_t width, uint32_t height)
     :m_Width(width), m_Height(height)
