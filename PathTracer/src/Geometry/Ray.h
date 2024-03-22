@@ -1,5 +1,5 @@
 #pragma once
-#include "cuda/cuda_math.h"
+#include "../Utils/cuda_math.h"
 
 // Make it a struct so that its properties are publicly available to CUDA without setters / getters
 

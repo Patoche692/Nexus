@@ -1,6 +1,6 @@
 #pragma once
 #include "GLFW/glfw3.h"
-#include "cuda/cuda_math.h"
+#include "Utils/cuda_math.h"
 
 class Input
 {

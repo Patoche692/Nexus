@@ -1,5 +1,5 @@
 #pragma once
-#include "cuda/cuda_math.h"
+#include "../Utils/cuda_math.h"
 #include "Material.h"
 #include "Ray.h"
 

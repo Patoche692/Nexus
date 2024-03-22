@@ -5,8 +5,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "../Camera.h"
-#include "../OpenGL_API/PixelBuffer.h"
-#include "../OpenGL_API/Texture.h"
+#include "../OpenGL/PixelBuffer.h"
+#include "../OpenGL/Texture.h"
 #include "../Scene.h"
 
 class Renderer

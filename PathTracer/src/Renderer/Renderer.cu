@@ -1,5 +1,5 @@
 #include "Renderer.cuh"
-#include "cuda/cuda_math.h"
+#include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
 #include "../Camera.h"
 

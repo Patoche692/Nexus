@@ -1,5 +1,4 @@
 #include "Input.h"
-#include "cuda/cuda_math.h"
 
 GLFWwindow* Input::m_Window;
 

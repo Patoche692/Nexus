@@ -145,9 +145,9 @@
     <ClCompile Include="src\Geometry\Material.cpp" />
     <ClCompile Include="src\Geometry\Sphere.cpp" />
     <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\OpenGL_API\Framebuffer.cpp" />
-    <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp" />
-    <ClCompile Include="src\OpenGL_API\Texture.cpp" />
+    <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
+    <ClCompile Include="src\OpenGL\PixelBuffer.cpp" />
+    <ClCompile Include="src\OpenGL\Texture.cpp" />
     <ClCompile Include="src\RayTracerApplication.cpp" />
     <ClCompile Include="src\Camera.cpp">
       <DeploymentContent>false</DeploymentContent>
@@ -175,16 +175,16 @@
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\OpenGL_API\Framebuffer.h" />
-    <ClInclude Include="src\OpenGL_API\PixelBuffer.h" />
-    <ClInclude Include="src\OpenGL_API\Texture.h" />
+    <ClInclude Include="src\OpenGL\Framebuffer.h" />
+    <ClInclude Include="src\OpenGL\PixelBuffer.h" />
+    <ClInclude Include="src\OpenGL\Texture.h" />
     <ClInclude Include="src\Geometry\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Renderer\Renderer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Utils\Utils.h" />
-    <ClInclude Include="src\Vendor\cuda\cuda_math.h" />
+    <ClInclude Include="src\Utils\cuda_math.h" />
     <ClInclude Include="src\Vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Vendor\imgui\imgui.h" />
     <ClInclude Include="src\Vendor\imgui\imgui_impl_glfw.h" />

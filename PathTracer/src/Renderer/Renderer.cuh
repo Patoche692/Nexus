@@ -3,7 +3,7 @@
 #include <device_launch_parameters.h>
 #include <iostream>
 #include <glm.hpp>
-#include "../OpenGL_API/PixelBuffer.h"
+#include "../OpenGL/PixelBuffer.h"
 #include "../Scene.h"
 
 struct CameraData

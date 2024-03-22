@@ -9,7 +9,7 @@
 #include <math.h>
 
 #include "../Utils/Utils.h"
-#include "cuda/cuda_math.h"
+#include "Utils/cuda_math.h"
 #include "Input.h"
 #include "Renderer/Renderer.cuh"
 

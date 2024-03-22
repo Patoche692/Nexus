@@ -24,13 +24,13 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp">
+    <ClCompile Include="src\OpenGL\PixelBuffer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL_API\Framebuffer.cpp">
+    <ClCompile Include="src\OpenGL\Framebuffer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL_API\Texture.cpp">
+    <ClCompile Include="src\OpenGL\Texture.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Renderer\Renderer.cpp">
@@ -90,13 +90,13 @@
     <ClInclude Include="src\RayTracerApplication.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL_API\PixelBuffer.h">
+    <ClInclude Include="src\OpenGL\PixelBuffer.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL_API\Framebuffer.h">
+    <ClInclude Include="src\OpenGL\Framebuffer.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL_API\Texture.h">
+    <ClInclude Include="src\OpenGL\Texture.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Renderer.cuh" />
@@ -139,7 +139,7 @@
     <ClInclude Include="src\Input.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Vendor\cuda\cuda_math.h">
+    <ClInclude Include="src\Utils\cuda_math.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene.h">
