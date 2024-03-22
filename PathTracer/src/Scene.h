@@ -16,6 +16,8 @@ public:
 	std::vector<Sphere>& GetSpheres() { return m_Spheres; };
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; };
 
+	void AddSphere(Sphere sphere);
+
 	void SendDataToDevice();
 
 private:

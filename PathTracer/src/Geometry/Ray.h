@@ -9,7 +9,7 @@ struct Ray
 	__host__ __device__ Ray(float3 o, float3 d)
 		:origin(o), direction(d) {};
 
-	__host__ __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
+	inline __host__ __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
 
 	float3 origin;
 	float3 direction;

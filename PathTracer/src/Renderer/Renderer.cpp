@@ -89,7 +89,7 @@ void Renderer::RenderUI(Scene& scene, float deltaTime)
 			scene.Invalidate();
 		if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 100.0f))
 			scene.Invalidate();
-		if (ImGui::ColorEdit3("Material", (float*)&sphere.material->color))
+		if (ImGui::ColorEdit3("Material", (float*)&sphere.material.color))
 			scene.Invalidate();
 		ImGui::PopID();
 	}

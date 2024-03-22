@@ -7,6 +7,18 @@ __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 
 
+inline __device__ uint32_t toColorUInt(float3& color)
+{
+	float4 clamped = clamp(make_float4(color, 1.0f), make_float4(0.0f), make_float4(1.0f));
+	uint8_t red = (uint8_t)(clamped.x * 255.0f);
+	uint8_t green = (uint8_t)(clamped.y * 255.0f);
+	uint8_t blue = (uint8_t)(clamped.z * 255.0f);
+	uint8_t alpha = (uint8_t)(clamped.w * 255.0f);
+	 
+	return alpha << 24 | blue << 16 | green << 8 | red;
+}
+
+
 __global__ void traceRay(void *bufferDevicePtr)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -27,39 +39,15 @@ __global__ void traceRay(void *bufferDevicePtr)
 
 	Sphere* closestSphere = nullptr;
 	float hitDistance = FLT_MAX;
-	HitResult hitResult;
+	float t;
 
 	for (int i = 0; i < sceneData.nSpheres; i++)
 	{
-		if (sceneData.spheres[i].Hit(ray, hitResult))
+		if (sceneData.spheres[i].Hit(ray, t) && t < hitDistance)
 		{
-			hitDistance = hitResult.t;
+			hitDistance = t;
 			closestSphere = &sceneData.spheres[i];
 		}
-
-		//float3 origin = ray.origin - sceneData.spheres[i].position;
-
-		//float radius = sceneData.spheres[i].radius;
-
-		//float a = dot(ray.direction, ray.direction);
-		//float b = dot(origin, ray.direction);
-		//float c = dot(origin, origin) - radius * radius;
-
-		//float discriminant = b * b - a * c;
-
-		//if (discriminant < 0.0f)
-		//{
-		//	imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
-		//	continue;
-		//}
-
-		//float closestT = (-b - sqrt(discriminant)) / a;
-
-		//if (closestT < hitDistance && closestT > 0.0f)
-		//{
-		//	hitDistance = closestT;
-		//	closestSphere = &sceneData.spheres[i];
-		//}
 	}
 
 	if (closestSphere == nullptr)
@@ -75,16 +63,10 @@ __global__ void traceRay(void *bufferDevicePtr)
 
 	float d = max(dot(normal, -lightDir), 0.0f);
 
-	float3 sphereColor = closestSphere->material->color;
+	float3 sphereColor = closestSphere->material.color;
 	sphereColor = sphereColor * d;
 
-	float4 color = clamp(make_float4(sphereColor, 1.0f), make_float4(0.0f), make_float4(1.0f));
-	uint8_t red = (uint8_t)(color.x * 255.0f);
-	uint8_t green = (uint8_t)(color.y * 255.0f);
-	uint8_t blue = (uint8_t)(color.z * 255.0f);
-	uint8_t alpha = (uint8_t)(color.w * 255.0f);
-	 
-	imagePtr[j * cameraData.viewportWidth + i] = alpha << 24 | blue << 16 | green << 8 | red;
+	imagePtr[j * cameraData.viewportWidth + i] = toColorUInt(sphereColor);
 
 }
 
