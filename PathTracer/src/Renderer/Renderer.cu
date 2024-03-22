@@ -86,7 +86,7 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 	void* devicePtr = 0;
 	checkCudaErrors(cudaGraphicsResourceGetMappedPointer(&devicePtr, &size, pixelBuffer->GetCudaResource()));
 
-	uint32_t tx = 8, ty = 8;
+	uint32_t tx = 16, ty = 16;
 	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
 	dim3 threads(tx, ty);
 
@@ -132,5 +132,5 @@ void SendSceneDataToDevice(Scene* scene)
 		data.spheres[i] = spheres[i];
 	}
 	// TODO: change the size of copy
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, (sizeof(unsigned int) + sizeof(Sphere)) * data.nSpheres));
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres));
 }

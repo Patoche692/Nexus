@@ -142,8 +142,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Material.cpp" />
-    <ClCompile Include="src\Sphere.cpp" />
+    <ClCompile Include="src\Geometry\Material.cpp" />
+    <ClCompile Include="src\Geometry\Sphere.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\OpenGL_API\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL_API\PixelBuffer.cpp" />
@@ -170,14 +170,15 @@
     <CudaCompile Include="src\Renderer\Renderer.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Material.h" />
-    <ClInclude Include="src\Sphere.h" />
+    <ClInclude Include="src\Geometry\Hitable.h" />
+    <ClInclude Include="src\Geometry\Material.h" />
+    <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\OpenGL_API\Framebuffer.h" />
     <ClInclude Include="src\OpenGL_API\PixelBuffer.h" />
     <ClInclude Include="src\OpenGL_API\Texture.h" />
-    <ClInclude Include="src\Ray.h" />
+    <ClInclude Include="src\Geometry\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Renderer\Renderer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
