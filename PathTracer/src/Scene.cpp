@@ -10,7 +10,7 @@ Scene::Scene(uint32_t width, uint32_t height)
 		Sphere sphere = {
 			0.5f,
 			make_float3(-0.8f, 0.0f, 0.0f),
-			material
+			&material
 		};
 		m_Spheres.push_back(sphere);
 	}
@@ -19,7 +19,7 @@ Scene::Scene(uint32_t width, uint32_t height)
 		Sphere sphere = {
 			99.3f,
 			make_float3(0.0f, -100.0f, 0.0f),
-			material
+			&material
 		};
 		m_Spheres.push_back(sphere);
 	}
@@ -28,7 +28,7 @@ Scene::Scene(uint32_t width, uint32_t height)
 		Sphere sphere = {
 			0.5f,
 			make_float3(0.8f, 0.0f, 0.0f),
-			material
+			&material
 		};
 		m_Spheres.push_back(sphere);
 	}

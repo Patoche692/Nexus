@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "Camera.h"
-#include "Sphere.h"
+#include "Geometry/Sphere.h"
 
 class Scene
 {

@@ -14,5 +14,6 @@ struct HitResult
 class Hitable
 {
 public:
-	__host__ __device__ virtual bool Hit(const Ray& r, float t_min, float t_max, HitResult& hitResult) const = 0;
+	__host__ __device__ Hitable() { };
+	__host__ __device__ virtual bool Hit(const Ray& r, HitResult& hitResult) const = 0;
 };

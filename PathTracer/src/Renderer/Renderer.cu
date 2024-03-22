@@ -12,45 +12,54 @@ __global__ void traceRay(void *bufferDevicePtr)
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	float x = (float)i / (float)cameraData.viewportWidth;
-	float y = (float)j / (float)cameraData.viewportHeight;
+	float x = i / (float)cameraData.viewportWidth;
+	float y = j / (float)cameraData.viewportHeight;
 
 	if (i >= cameraData.viewportWidth || j >= cameraData.viewportHeight)
 		return;
 
 	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
-	float3 rayOrigin = cameraData.position;
-	float3 rayDirection = cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - rayOrigin;
+	Ray ray(
+		cameraData.position,
+		cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - cameraData.position
+	);
 
 	Sphere* closestSphere = nullptr;
 	float hitDistance = FLT_MAX;
+	HitResult hitResult;
 
 	for (int i = 0; i < sceneData.nSpheres; i++)
 	{
-		float3 origin = rayOrigin - sceneData.spheres[i].position;
-
-		float radius = sceneData.spheres[i].radius;
-
-		float a = dot(rayDirection, rayDirection);
-		float b = dot(origin, rayDirection);
-		float c = dot(origin, origin) - radius * radius;
-
-		float discriminant = b * b - a * c;
-
-		if (discriminant < 0.0f)
+		if (sceneData.spheres[i].Hit(ray, hitResult))
 		{
-			imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
-			continue;
-		}
-
-		float closestT = (-b - sqrt(discriminant)) / a;
-
-		if (closestT < hitDistance && closestT > 0.0f)
-		{
-			hitDistance = closestT;
+			hitDistance = hitResult.t;
 			closestSphere = &sceneData.spheres[i];
 		}
+
+		//float3 origin = ray.origin - sceneData.spheres[i].position;
+
+		//float radius = sceneData.spheres[i].radius;
+
+		//float a = dot(ray.direction, ray.direction);
+		//float b = dot(origin, ray.direction);
+		//float c = dot(origin, origin) - radius * radius;
+
+		//float discriminant = b * b - a * c;
+
+		//if (discriminant < 0.0f)
+		//{
+		//	imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
+		//	continue;
+		//}
+
+		//float closestT = (-b - sqrt(discriminant)) / a;
+
+		//if (closestT < hitDistance && closestT > 0.0f)
+		//{
+		//	hitDistance = closestT;
+		//	closestSphere = &sceneData.spheres[i];
+		//}
 	}
 
 	if (closestSphere == nullptr)
@@ -59,14 +68,14 @@ __global__ void traceRay(void *bufferDevicePtr)
 		return;
 	}
 
-	float3 hitPoint = rayOrigin + rayDirection * hitDistance;
+	float3 hitPoint = ray.origin + ray.direction * hitDistance;
 	float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 
 	float3 lightDir = normalize(make_float3(-1.0f));
 
 	float d = max(dot(normal, -lightDir), 0.0f);
 
-	float3 sphereColor = closestSphere->material.color;
+	float3 sphereColor = closestSphere->material->color;
 	sphereColor = sphereColor * d;
 
 	float4 color = clamp(make_float4(sphereColor, 1.0f), make_float4(0.0f), make_float4(1.0f));
