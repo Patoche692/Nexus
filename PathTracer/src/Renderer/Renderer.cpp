@@ -85,9 +85,9 @@ void Renderer::RenderUI(Scene& scene, float deltaTime)
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Text("Sphere");
-		if (ImGui::DragFloat3("Position", (float*)&sphere.position, 0.1f, -100.0f, 100.0f))
+		if (ImGui::DragFloat3("Position", (float*)&sphere.position, 0.1f, -10000.0f, 10000.0f))
 			scene.Invalidate();
-		if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 100.0f))
+		if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
 			scene.Invalidate();
 		if (ImGui::ColorEdit3("Material", (float*)&sphere.material.color))
 			scene.Invalidate();

@@ -31,7 +31,7 @@ struct Sphere
 			}
 
 			temp = (-b + sqrt(discriminant)) / a;
-			if (temp > 0)
+			if (temp > 0.0f)
 			{
 				t = temp;
 				return true;
