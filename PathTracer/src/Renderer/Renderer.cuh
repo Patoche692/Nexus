@@ -23,7 +23,7 @@ struct SceneData
 	Sphere spheres[MAX_SPHERES];
 };
 
-__global__ void traceRay(void* bufferDevicePtr);
+__global__ void traceRay(uint32_t* outBufferPtr);
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer);
 void SendCameraDataToDevice(Camera *camera);
 void SendSceneDataToDevice(Scene* scene);

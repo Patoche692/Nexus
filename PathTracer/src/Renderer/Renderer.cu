@@ -19,18 +19,17 @@ inline __device__ uint32_t toColorUInt(float3& color)
 }
 
 
-__global__ void traceRay(void *bufferDevicePtr)
+__global__ void traceRay(uint32_t *outBufferPtr)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
+	// Avoid using modulo, it significantly impacts performance
 	float x = i / (float)cameraData.viewportWidth;
 	float y = j / (float)cameraData.viewportHeight;
 
 	if (i >= cameraData.viewportWidth || j >= cameraData.viewportHeight)
 		return;
-
-	uint32_t* imagePtr = (uint32_t*)bufferDevicePtr;
 
 	Ray ray(
 		cameraData.position,
@@ -52,7 +51,7 @@ __global__ void traceRay(void *bufferDevicePtr)
 
 	if (closestSphere == nullptr)
 	{
-		imagePtr[j * cameraData.viewportWidth + i] = 0xff000000;
+		outBufferPtr[j * cameraData.viewportWidth + i] = 0xff000000;
 		return;
 	}
 
@@ -66,7 +65,7 @@ __global__ void traceRay(void *bufferDevicePtr)
 	float3 sphereColor = closestSphere->material.color;
 	sphereColor = sphereColor * d;
 
-	imagePtr[j * cameraData.viewportWidth + i] = toColorUInt(sphereColor);
+	outBufferPtr[j * cameraData.viewportWidth + i] = toColorUInt(sphereColor);
 
 }
 
@@ -74,8 +73,8 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 {
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
 	size_t size = 0;
-	void* devicePtr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer(&devicePtr, &size, pixelBuffer->GetCudaResource()));
+	uint32_t* devicePtr = 0;
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer->GetCudaResource()));
 
 	uint32_t tx = 16, ty = 16;
 	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
