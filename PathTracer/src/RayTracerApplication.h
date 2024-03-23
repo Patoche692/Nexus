@@ -6,7 +6,6 @@ class RayTracerApplication {
 
 public:
 	RayTracerApplication(int width, int height, GLFWwindow* window);
-	~RayTracerApplication();
 
 	void Update(float deltaTime);
 
@@ -17,5 +16,4 @@ public:
 private:
 	Renderer m_Renderer;
 	Scene m_Scene;
-	std::vector<Material*> m_Materials;
 };

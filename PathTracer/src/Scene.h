@@ -16,7 +16,10 @@ public:
 	std::vector<Sphere>& GetSpheres() { return m_Spheres; };
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; };
 
+	void AddSphere();
 	void AddSphere(Sphere sphere);
+	void AddMaterial(Material material);
+	std::vector<Material>& GetMaterials() { return m_Materials; };
 
 	void SendDataToDevice();
 
@@ -24,5 +27,6 @@ private:
 	bool m_Invalid = true;
 	std::shared_ptr<Camera> m_Camera;
 	std::vector<Sphere> m_Spheres;
+	std::vector<Material> m_Materials;
 
 };

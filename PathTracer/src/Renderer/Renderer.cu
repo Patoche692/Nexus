@@ -66,7 +66,6 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 	sphereColor = sphereColor * d;
 
 	outBufferPtr[j * cameraData.viewportWidth + i] = toColorUInt(sphereColor);
-
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)

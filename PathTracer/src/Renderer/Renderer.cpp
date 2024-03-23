@@ -94,6 +94,11 @@ void Renderer::RenderUI(Scene& scene, float deltaTime)
 		ImGui::PopID();
 	}
 
+	ImGui::Spacing();
+	ImGui::Separator();
+	if (ImGui::Button("Add a sphere"))
+		scene.AddSphere();
+
 	ImGui::End();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));

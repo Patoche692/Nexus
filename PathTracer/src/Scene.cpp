@@ -7,6 +7,15 @@ Scene::Scene(uint32_t width, uint32_t height)
 {
 }
 
+void Scene::AddSphere()
+{
+	if (m_Spheres.size() >= MAX_SPHERES)
+		return;
+
+	m_Materials.push_back(Material(make_float3(1.0f)));
+	AddSphere(Sphere(0.5, make_float3(0.0f), m_Materials[m_Materials.size() - 1]));
+}
+
 void Scene::AddSphere(Sphere sphere)
 {
 	if (m_Spheres.size() >= MAX_SPHERES)
@@ -15,6 +24,13 @@ void Scene::AddSphere(Sphere sphere)
 	m_Spheres.push_back(sphere);
 	m_Invalid = true;
 }
+
+void Scene::AddMaterial(Material material)
+{
+	m_Materials.push_back(material);
+	m_Invalid = true;
+}
+
 
 void Scene::SendDataToDevice()
 {
