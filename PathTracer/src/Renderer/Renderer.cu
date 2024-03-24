@@ -1,4 +1,5 @@
 #include "Renderer.cuh"
+#include "../Cuda/Random.cuh"
 #include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
 #include "../Camera.h"
@@ -24,11 +25,17 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	// Avoid using modulo, it significantly impacts performance
-	float x = i / (float)cameraData.viewportWidth;
-	float y = j / (float)cameraData.viewportHeight;
+	uint2 pixel = make_uint2(i, j);
 
-	if (i >= cameraData.viewportWidth || j >= cameraData.viewportHeight)
+	uint2 resolution = cameraData.resolution;
+	// Avoid using modulo, it significantly impacts performance
+	float x = pixel.x / (float)resolution.x;
+	float y = pixel.y / (float)resolution.y;
+
+	unsigned int rngState = Random::InitRNG(pixel, resolution);
+	float r = Random::Rand(rngState);
+
+	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
 		return;
 
 	Ray ray(
@@ -51,7 +58,7 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 
 	if (closestSphere == nullptr)
 	{
-		outBufferPtr[j * cameraData.viewportWidth + i] = 0xff000000;
+		outBufferPtr[pixel.y * resolution.x + pixel.x] = 0xff000000;
 		return;
 	}
 
@@ -65,7 +72,7 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 	float3 sphereColor = closestSphere->material.color;
 	sphereColor = sphereColor * d;
 
-	outBufferPtr[j * cameraData.viewportWidth + i] = toColorUInt(sphereColor);
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(sphereColor);
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
@@ -105,8 +112,7 @@ void SendCameraDataToDevice(Camera* camera)
 		lowerLeftCorner,
 		horizontal,
 		vertical,
-		camera->GetViewportWidth(),
-		camera->GetViewportHeight()
+		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
 	};
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }

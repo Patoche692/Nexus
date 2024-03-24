@@ -13,8 +13,7 @@ struct CameraData
 	float3 lowerLeftCorner;
 	float3 horizontal;
 	float3 vertical;
-	uint32_t viewportWidth;
-	uint32_t viewportHeight;
+	uint2 resolution;
 };
 
 struct SceneData

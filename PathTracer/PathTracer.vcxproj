@@ -116,6 +116,7 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,6 +140,7 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -170,6 +172,7 @@
     <CudaCompile Include="src\Renderer\Renderer.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Hitable.h" />
     <ClInclude Include="src\Geometry\Material.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
@@ -197,6 +200,9 @@
     <ClInclude Include="src\Vendor\imgui\stb_rect_pack.h" />
     <ClInclude Include="src\Vendor\imgui\stb_textedit.h" />
     <ClInclude Include="src\Vendor\imgui\stb_truetype.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
