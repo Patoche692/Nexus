@@ -19,6 +19,44 @@ inline __device__ uint32_t toColorUInt(float3& color)
 	return alpha << 24 | blue << 16 | green << 8 | red;
 }
 
+inline __device__ float3 color(Ray& r, unsigned int& rngState)
+{
+	Ray currentRay = r;
+	float currentAttenuation = 1.0f;
+
+	for (int j = 0; j < 30; j++)
+	{
+		Sphere* closestSphere = nullptr;
+		float hitDistance = FLT_MAX;
+		float t;
+
+		for (int i = 0; i < sceneData.nSpheres; i++)
+		{
+			if (sceneData.spheres[i].Hit(currentRay, t) && t < hitDistance)
+			{
+				hitDistance = t;
+				closestSphere = &sceneData.spheres[i];
+			}
+		}
+
+		if (closestSphere)
+		{
+			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
+			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
+			float3 target = hitPoint + normal + Random::RandomUnitVector(rngState);
+			currentAttenuation *= 0.5f;
+			currentRay = Ray(hitPoint + normal * 0.0001f, target - hitPoint);
+		}
+		else
+		{
+			float3 unitDirection = normalize(currentRay.direction);
+			float t = 0.5 * (unitDirection.y + 1.0f);
+			return currentAttenuation * ((1.0 - t) * make_float3(1.0f) + t * make_float3(0.5f, 0.7f, 1.0f));
+		}
+	}
+
+	return make_float3(0.0f);
+}
 
 __global__ void traceRay(uint32_t *outBufferPtr)
 {
@@ -43,36 +81,37 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 		cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - cameraData.position
 	);
 
-	Sphere* closestSphere = nullptr;
-	float hitDistance = FLT_MAX;
-	float t;
+	//Sphere* closestSphere = nullptr;
+	//float hitDistance = FLT_MAX;
+	//float t;
 
-	for (int i = 0; i < sceneData.nSpheres; i++)
-	{
-		if (sceneData.spheres[i].Hit(ray, t) && t < hitDistance)
-		{
-			hitDistance = t;
-			closestSphere = &sceneData.spheres[i];
-		}
-	}
+	//for (int i = 0; i < sceneData.nSpheres; i++)
+	//{
+	//	if (sceneData.spheres[i].Hit(ray, t) && t < hitDistance)
+	//	{
+	//		hitDistance = t;
+	//		closestSphere = &sceneData.spheres[i];
+	//	}
+	//}
 
-	if (closestSphere == nullptr)
-	{
-		outBufferPtr[pixel.y * resolution.x + pixel.x] = 0xff000000;
-		return;
-	}
+	//if (closestSphere == nullptr)
+	//{
+	//	outBufferPtr[pixel.y * resolution.x + pixel.x] = 0xff000000;
+	//	return;
+	//}
 
-	float3 hitPoint = ray.origin + ray.direction * hitDistance;
-	float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
+	//float3 hitPoint = ray.origin + ray.direction * hitDistance;
+	//float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 
-	float3 lightDir = normalize(make_float3(-1.0f));
+	//float3 lightDir = normalize(make_float3(-1.0f));
 
-	float d = max(dot(normal, -lightDir), 0.0f);
+	//float d = max(dot(normal, -lightDir), 0.0f);
 
-	float3 sphereColor = closestSphere->material.color;
-	sphereColor = sphereColor * d;
+	//float3 sphereColor = closestSphere->material.color;
+	//sphereColor = sphereColor * d;
 
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(sphereColor);
+	float3 c = color(ray, rngState);
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
