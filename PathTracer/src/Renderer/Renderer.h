@@ -32,5 +32,7 @@ private:
 	float m_DeltaTime = 0.0f;
 	float m_AccumulatedTime = 0.0f;
 	uint32_t m_NAccumulatedFrame = 0;
+	uint32_t m_FrameNumber = 0;
+	float3* m_AccumulationBuffer;
 };
 

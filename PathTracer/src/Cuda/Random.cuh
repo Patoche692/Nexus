@@ -9,7 +9,7 @@
 class Random
 {
 public:
-	static inline __host__ __device__ unsigned int InitRNG(uint2 pixel, uint2 resolution);
+	static inline __host__ __device__ unsigned int InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber);
 	static inline __host__ __device__ float Rand(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomUnitVector(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
@@ -64,9 +64,9 @@ inline __host__ __device__ float uintToFloat(unsigned int x)
 	return *b - 1.0f;
 }
 
-inline __host__ __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resolution)
+inline __host__ __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber)
 {
-	unsigned int rngState = dot(pixel, make_uint2(1, resolution.x));
+	unsigned int rngState = dot(pixel, make_uint2(1, resolution.x)) ^ jenkinsHash(frameNumber);
 	return jenkinsHash(rngState);
 }
 

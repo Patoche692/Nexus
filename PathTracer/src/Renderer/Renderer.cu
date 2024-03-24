@@ -6,6 +6,7 @@
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
+__device__ float3* accumulatedColor;
 
 
 inline __device__ uint32_t toColorUInt(float3& color)
@@ -45,7 +46,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 			float3 target = hitPoint + normal + Random::RandomUnitVector(rngState);
 			currentAttenuation *= 0.5f;
-			currentRay = Ray(hitPoint + normal * 0.0001f, target - hitPoint);
+			currentRay = Ray(hitPoint + normal * 0.001f, target - hitPoint);
 		}
 		else
 		{
@@ -58,7 +59,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	return make_float3(0.0f);
 }
 
-__global__ void traceRay(uint32_t *outBufferPtr)
+__global__ void traceRay(uint32_t *outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -66,12 +67,11 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 	uint2 pixel = make_uint2(i, j);
 
 	uint2 resolution = cameraData.resolution;
-	// Avoid using modulo, it significantly impacts performance
-	float x = pixel.x / (float)resolution.x;
-	float y = pixel.y / (float)resolution.y;
+	unsigned int rngState = Random::InitRNG(pixel, resolution, frameNumber);
 
-	unsigned int rngState = Random::InitRNG(pixel, resolution);
-	float r = Random::Rand(rngState);
+	// Avoid using modulo, it significantly impacts performance
+	float x = (pixel.x + Random::Rand(rngState)) / (float)resolution.x;
+	float y = (pixel.y + Random::Rand(rngState)) / (float)resolution.y;
 
 	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
 		return;
@@ -81,40 +81,17 @@ __global__ void traceRay(uint32_t *outBufferPtr)
 		cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - cameraData.position
 	);
 
-	//Sphere* closestSphere = nullptr;
-	//float hitDistance = FLT_MAX;
-	//float t;
-
-	//for (int i = 0; i < sceneData.nSpheres; i++)
-	//{
-	//	if (sceneData.spheres[i].Hit(ray, t) && t < hitDistance)
-	//	{
-	//		hitDistance = t;
-	//		closestSphere = &sceneData.spheres[i];
-	//	}
-	//}
-
-	//if (closestSphere == nullptr)
-	//{
-	//	outBufferPtr[pixel.y * resolution.x + pixel.x] = 0xff000000;
-	//	return;
-	//}
-
-	//float3 hitPoint = ray.origin + ray.direction * hitDistance;
-	//float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
-
-	//float3 lightDir = normalize(make_float3(-1.0f));
-
-	//float d = max(dot(normal, -lightDir), 0.0f);
-
-	//float3 sphereColor = closestSphere->material.color;
-	//sphereColor = sphereColor * d;
-
 	float3 c = color(ray, rngState);
+	if (frameNumber == 1)
+		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
+	else
+		accumulationBuffer[pixel.y * resolution.x + pixel.x] += c;
+
+	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);
 }
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
+void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
 	size_t size = 0;
@@ -125,8 +102,9 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer)
 	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
 	dim3 threads(tx, ty);
 
-	traceRay<<<blocks, threads>>>(devicePtr);
+	traceRay<<<blocks, threads>>>(devicePtr, frameNumber, accumulationBuffer);
 
+	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
 }
 
@@ -167,4 +145,41 @@ void SendSceneDataToDevice(Scene* scene)
 	}
 	// TODO: change the size of copy
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres));
+}
+
+__global__ void InitGPUDataKernel(uint32_t width, uint32_t height)
+{
+	accumulatedColor = (float3*)malloc(1920 * 1080 * sizeof(float3));
+}
+
+void InitGPUData(uint32_t width, uint32_t height)
+{
+	InitGPUDataKernel<<<1, 1>>>(width, height);
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaDeviceSynchronize());
+}
+
+__global__ void ResizeBuffersKernel(uint32_t width, uint32_t height)
+{
+	free(accumulatedColor);
+	accumulatedColor = (float3*)malloc(width * height * sizeof(float3));
+}
+
+void ResizeBuffers(uint32_t width, uint32_t height)
+{
+	//ResizeBuffersKernel<<<1, 1>>>(width, height);
+	//checkCudaErrors(cudaGetLastError());
+	//checkCudaErrors(cudaDeviceSynchronize());
+}
+
+__global__ void FreeGPUDataKernel()
+{
+	free(accumulatedColor);
+}
+
+void FreeGPUData()
+{
+	FreeGPUDataKernel<<<1, 1>>>();
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaDeviceSynchronize());
 }

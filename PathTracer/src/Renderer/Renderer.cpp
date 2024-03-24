@@ -20,12 +20,17 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
 	m_Texture = std::make_shared<Texture>(width, height);
 
+	//InitGPUData(width, height);
+	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
+
 	m_DisplayFPSTimer = glfwGetTime();
 }
 
 Renderer::~Renderer()
 {
 
+	//FreeGPUData();
+	checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 	ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -44,12 +49,19 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	RenderUI(scene, deltaTime);
 
 	if (scene.GetCamera()->IsInvalid())
+	{
 		scene.GetCamera()->SendDataToDevice();
+		m_FrameNumber = 0;
+	}
 	if (scene.IsInvalid())
+	{
 		scene.SendDataToDevice();
+		m_FrameNumber = 0;
+	}
 
+	m_FrameNumber++;
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
-	RenderViewport(m_PixelBuffer);
+	RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
 
 	// Unpack the pixel buffer written by cuda to the renderer texture
 	UnpackToTexture();
@@ -69,6 +81,7 @@ void Renderer::RenderUI(Scene& scene, float deltaTime)
 	ImGui::Text("Time info");
 	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
+	ImGui::Text("Frame: %d", m_FrameNumber);
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -142,9 +155,13 @@ void Renderer::OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t
 {
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
+		m_FrameNumber = 0;
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
 		camera->OnResize(width, height);
+		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
+		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
+		//ResizeBuffers(width, height);
 
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
