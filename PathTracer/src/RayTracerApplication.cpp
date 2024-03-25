@@ -10,26 +10,27 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	material = Material(make_float3(0.0f, 1.0f, 0.0f));
 	m_Scene.AddMaterial(material);
 
-	std::vector<Material>& materials = m_Scene.GetMaterials();
+	MaterialManager materialManager = m_Scene.GetMaterialManager();
+	std::vector<Material>& materials = materialManager.GetMaterials();
 
 	Sphere sphere = {
 		0.5f,
 		make_float3(-0.8f, 0.0f, 0.0f),
-		materials[0]
+		materialManager.GetDevicePtr(0)
 	};
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
 		999.3f,
 		make_float3(0.0f, -1000.0f, 0.0f),
-		materials[1]
+		materialManager.GetDevicePtr(1)
 	};
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
 		0.5f,
 		make_float3(0.8f, 0.0f, 0.0f),
-		materials[2]
+		materialManager.GetDevicePtr(2)
 	};
 	m_Scene.AddSphere(sphere);
 }

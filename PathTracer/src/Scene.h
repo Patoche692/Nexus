@@ -4,6 +4,7 @@
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
+#include "Geometry/Materials/MaterialManager.h"
 
 class Scene
 {
@@ -19,7 +20,8 @@ public:
 	void AddSphere();
 	void AddSphere(Sphere sphere);
 	void AddMaterial(Material material);
-	std::vector<Material>& GetMaterials() { return m_Materials; };
+	std::vector<Material>& GetMaterials() { return m_MaterialManager.GetMaterials(); };
+	MaterialManager& GetMaterialManager() { return m_MaterialManager; };
 
 	void SendDataToDevice();
 
@@ -27,6 +29,6 @@ private:
 	bool m_Invalid = true;
 	std::shared_ptr<Camera> m_Camera;
 	std::vector<Sphere> m_Spheres;
-	std::vector<Material> m_Materials;
 
+	MaterialManager m_MaterialManager;
 };

@@ -12,8 +12,7 @@ void Scene::AddSphere()
 	if (m_Spheres.size() >= MAX_SPHERES)
 		return;
 
-	m_Materials.push_back(Material(make_float3(1.0f)));
-	AddSphere(Sphere(0.5, make_float3(0.0f), m_Materials[m_Materials.size() - 1]));
+	AddSphere(Sphere(0.5, make_float3(0.0f), m_MaterialManager.GetDevicePtr(m_MaterialManager.GetMaterials().size() - 1)));
 }
 
 void Scene::AddSphere(Sphere sphere)
@@ -27,8 +26,7 @@ void Scene::AddSphere(Sphere sphere)
 
 void Scene::AddMaterial(Material material)
 {
-	m_Materials.push_back(material);
-	m_Invalid = true;
+	m_MaterialManager.AddMaterial(material);
 }
 
 

@@ -51,6 +51,10 @@ void Renderer::Render(Scene& scene, float deltaTime)
 		scene.GetCamera()->SendDataToDevice();
 		m_FrameNumber = 0;
 	}
+
+	if (scene.GetMaterialManager().SendDataToDevice())
+		m_FrameNumber = 0;
+
 	if (scene.IsInvalid())
 	{
 		scene.SendDataToDevice();
@@ -100,8 +104,13 @@ void Renderer::RenderUI(Scene& scene)
 				scene.Invalidate();
 			if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
 				scene.Invalidate();
-			if (ImGui::ColorEdit3("Material", (float*)&sphere.material.color))
-				scene.Invalidate();
+
+			MaterialManager& materialManager = scene.GetMaterialManager();
+			Material& material = materialManager.GetMaterialForPtr(sphere.material);
+
+			if (ImGui::ColorEdit3("Material", (float*)&material.color))
+				materialManager.Invalidate(material.id);
+
 		}
 		ImGui::PopID();
 	}

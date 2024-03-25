@@ -44,7 +44,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 			float3 direction = normal + Random::RandomUnitVector(rngState);
 			currentRay = Ray(hitPoint + normal * 0.001f, direction);
-			currentAttenuation *= 0.5f;
+			currentAttenuation *= 0.4f;
 		}
 		else
 		{

@@ -1,6 +1,6 @@
 #pragma once
 #include "../Utils/cuda_math.h"
-#include "Material.h"
+#include "Materials/Material.h"
 #include "Ray.h"
 
 struct HitResult

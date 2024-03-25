@@ -1,5 +1,5 @@
 #pragma once
-#include "Material.h"
+#include "Materials/Material.h"
 #include "../Utils/cuda_math.h"
 #include "Hitable.h"
 
@@ -8,7 +8,7 @@
 struct Sphere
 {
 	__host__ __device__ Sphere() { };
-	__host__ __device__ Sphere(float radius, float3 position, Material material)
+	__host__ __device__ Sphere(float radius, float3 position, Material* material)
 		:radius(radius), position(position), material(material) { }
 
 	inline __host__ __device__ bool Hit(const Ray& r, float& t)
@@ -42,7 +42,7 @@ struct Sphere
 
 	float radius;
 	float3 position;
-	Material material;
+	Material *material;
 };
 
 

@@ -144,7 +144,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Geometry\Material.cpp" />
+    <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp" />
     <ClCompile Include="src\Geometry\Sphere.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
@@ -174,7 +174,9 @@
   <ItemGroup>
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Hitable.h" />
-    <ClInclude Include="src\Geometry\Material.h" />
+    <ClInclude Include="src\Geometry\Materials\Lambertian.h" />
+    <ClInclude Include="src\Geometry\Materials\Material.h" />
+    <ClInclude Include="src\Geometry\Materials\MaterialManager.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
