@@ -17,7 +17,7 @@ public:
 
 	void OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t height);
 	void Render(Scene& scene, float deltaTime);
-	void RenderUI(Scene& scene, float deltaTime);
+	void RenderUI(Scene& scene);
 	void UnpackToTexture();
 	void UpdateTimer(float deltaTime);
 

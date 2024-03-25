@@ -20,8 +20,8 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
-		9999.3f,
-		make_float3(0.0f, -10000.0f, 0.0f),
+		999.3f,
+		make_float3(0.0f, -1000.0f, 0.0f),
 		materials[1]
 	};
 	m_Scene.AddSphere(sphere);

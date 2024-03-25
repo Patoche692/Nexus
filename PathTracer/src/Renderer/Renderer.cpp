@@ -46,7 +46,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	UpdateTimer(deltaTime);
 
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
-	RenderUI(scene, deltaTime);
+	RenderUI(scene);
 
 	if (scene.GetCamera()->IsInvalid())
 	{
@@ -70,7 +70,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Renderer::RenderUI(Scene& scene, float deltaTime)
+void Renderer::RenderUI(Scene& scene)
 {
 	ImGui::DockSpaceOverViewport();
 
