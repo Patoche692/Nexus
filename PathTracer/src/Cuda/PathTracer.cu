@@ -7,7 +7,7 @@
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 
-inline __device__ uint32_t toColorUInt(float3& color)
+inline __device__ uint32_t toColorUInt(float3 color)
 {
 	float4 clamped = clamp(make_float4(color, 1.0f), make_float4(0.0f), make_float4(1.0f));
 	uint8_t red = (uint8_t)(clamped.x * 255.0f);
@@ -86,6 +86,9 @@ __global__ void traceRay(uint32_t *outBufferPtr, uint32_t frameNumber, float3* a
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] += c;
 
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
+
+	// Gamma correction
+	c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
 	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);
 }
 
@@ -108,10 +111,6 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumb
 
 void SendCameraDataToDevice(Camera* camera)
 {
-	unsigned int seed = 0;
-	float a = Random::Rand(seed);
-	a = Random::Rand(seed);
-	a = Random::Rand(seed);
 	float3 position = camera->GetPosition();
 	float3 forwardDirection = camera->GetForwardDirection();
 	float3 rightDirection = camera->GetRightDirection();
