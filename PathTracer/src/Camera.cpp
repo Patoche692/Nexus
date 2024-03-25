@@ -11,7 +11,7 @@
 #include "../Utils/Utils.h"
 #include "Utils/cuda_math.h"
 #include "Input.h"
-#include "Renderer/Renderer.cuh"
+#include "Cuda/PathTracer.cuh"
 
 
 Camera::Camera(float verticalFOV, uint32_t width, uint32_t height)

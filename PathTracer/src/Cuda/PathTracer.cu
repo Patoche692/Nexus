@@ -1,4 +1,4 @@
-#include "Renderer.cuh"
+#include "PathTracer.cuh"
 #include "../Cuda/Random.cuh"
 #include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
@@ -6,8 +6,6 @@
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
-__device__ float3* accumulatedColor;
-
 
 inline __device__ uint32_t toColorUInt(float3& color)
 {
@@ -25,7 +23,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	Ray currentRay = r;
 	float currentAttenuation = 1.0f;
 
-	for (int j = 0; j < 30; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		Sphere* closestSphere = nullptr;
 		float hitDistance = FLT_MAX;
@@ -147,39 +145,3 @@ void SendSceneDataToDevice(Scene* scene)
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres));
 }
 
-__global__ void InitGPUDataKernel(uint32_t width, uint32_t height)
-{
-	accumulatedColor = (float3*)malloc(1920 * 1080 * sizeof(float3));
-}
-
-void InitGPUData(uint32_t width, uint32_t height)
-{
-	InitGPUDataKernel<<<1, 1>>>(width, height);
-	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaDeviceSynchronize());
-}
-
-__global__ void ResizeBuffersKernel(uint32_t width, uint32_t height)
-{
-	free(accumulatedColor);
-	accumulatedColor = (float3*)malloc(width * height * sizeof(float3));
-}
-
-void ResizeBuffers(uint32_t width, uint32_t height)
-{
-	//ResizeBuffersKernel<<<1, 1>>>(width, height);
-	//checkCudaErrors(cudaGetLastError());
-	//checkCudaErrors(cudaDeviceSynchronize());
-}
-
-__global__ void FreeGPUDataKernel()
-{
-	free(accumulatedColor);
-}
-
-void FreeGPUData()
-{
-	FreeGPUDataKernel<<<1, 1>>>();
-	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaDeviceSynchronize());
-}

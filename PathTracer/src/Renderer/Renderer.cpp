@@ -1,6 +1,6 @@
 #include <gtc/type_ptr.hpp>
 #include "Renderer.h"
-#include "Renderer.cuh"
+#include "../Cuda/PathTracer.cuh"
 #include "../Utils/Utils.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -20,7 +20,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
 	m_Texture = std::make_shared<Texture>(width, height);
 
-	//InitGPUData(width, height);
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
 	m_DisplayFPSTimer = glfwGetTime();
@@ -29,7 +28,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 Renderer::~Renderer()
 {
 
-	//FreeGPUData();
 	checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 	ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -161,7 +159,6 @@ void Renderer::OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t
 		camera->OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
-		//ResizeBuffers(width, height);
 
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;

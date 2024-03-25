@@ -22,8 +22,6 @@ struct SceneData
 	Sphere spheres[MAX_SPHERES];
 };
 
-void InitGPUData(uint32_t width, uint32_t height);
-void FreeGPUData();
 void ResizeBuffers(uint32_t width, uint32_t height);
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
 void SendCameraDataToDevice(Camera *camera);

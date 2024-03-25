@@ -74,7 +74,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\Renderer\Renderer.cu" />
+    <CudaCompile Include="src\Cuda\PathTracer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -99,7 +99,7 @@
     <ClInclude Include="src\OpenGL\Texture.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Renderer\Renderer.cuh" />
+    <ClInclude Include="src\Cuda\PathTracer.cuh" />
     <ClInclude Include="src\Vendor\imgui\imconfig.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>

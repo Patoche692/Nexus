@@ -169,7 +169,7 @@
     <ClCompile Include="src\Vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\Renderer\Renderer.cu" />
+    <CudaCompile Include="src\Cuda\PathTracer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Cuda\Random.cuh" />
@@ -183,7 +183,7 @@
     <ClInclude Include="src\OpenGL\Texture.h" />
     <ClInclude Include="src\Geometry\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
-    <ClInclude Include="src\Renderer\Renderer.cuh" />
+    <ClInclude Include="src\Cuda\PathTracer.cuh" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Utils\Utils.h" />
