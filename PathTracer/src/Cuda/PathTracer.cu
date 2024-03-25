@@ -42,7 +42,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		{
 			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
-			float3 direction = Random::RandomOnHemisphere(rngState, normal);
+			float3 direction = normal + Random::RandomUnitVector(rngState);
 			currentRay = Ray(hitPoint + normal * 0.001f, direction);
 			currentAttenuation *= 0.5f;
 		}
@@ -108,6 +108,10 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumb
 
 void SendCameraDataToDevice(Camera* camera)
 {
+	unsigned int seed = 0;
+	float a = Random::Rand(seed);
+	a = Random::Rand(seed);
+	a = Random::Rand(seed);
 	float3 position = camera->GetPosition();
 	float3 forwardDirection = camera->GetForwardDirection();
 	float3 rightDirection = camera->GetRightDirection();

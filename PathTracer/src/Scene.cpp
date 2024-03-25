@@ -1,5 +1,5 @@
 #include "Scene.h"
-#include "Renderer/renderer.cuh"
+#include "../Cuda/Pathtracer.cuh"
 #include "Utils/cuda_math.h"
 
 Scene::Scene(uint32_t width, uint32_t height)

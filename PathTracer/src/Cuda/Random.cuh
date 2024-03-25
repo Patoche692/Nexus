@@ -12,6 +12,7 @@ public:
 	static inline __host__ __device__ unsigned int InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber);
 	static inline __host__ __device__ float Rand(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomUnitVector(unsigned int& rngState);
+	static inline __host__ __device__ float3 RandomInUnitSphere(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
 };
 
@@ -67,6 +68,8 @@ inline __host__ __device__ float uintToFloat(unsigned int x)
 inline __host__ __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber)
 {
 	unsigned int rngState = dot(pixel, make_uint2(1, resolution.x)) ^ jenkinsHash(frameNumber);
+	if (rngState == 0)
+		rngState = 1;
 	return jenkinsHash(rngState);
 }
 
@@ -75,10 +78,20 @@ inline __host__ __device__ float Random::Rand(unsigned int& rngState)
 	return uintToFloat(xorShift(rngState));
 }
 
+inline __host__ __device__ float3 Random::RandomInUnitSphere(unsigned int& rngState)
+{
+	float3 p;
+	do {
+		p = 2.0f * (make_float3(Rand(rngState), Rand(rngState), Rand(rngState)) - 0.5f);
+	} while (length(p) >= 1.0f);
+	return p;
+}
+
 inline __host__ __device__ float3 Random::RandomUnitVector(unsigned int& rngState)
 {
-	return normalize(make_float3(Rand(rngState), Rand(rngState), Rand(rngState)));
+	return normalize(RandomInUnitSphere(rngState));
 }
+
 
 inline __host__ __device__ float3 Random::RandomOnHemisphere(unsigned int& rngState, float3& normal)
 {
