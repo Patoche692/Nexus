@@ -14,5 +14,5 @@ class Hitable
 {
 public:
 	__host__ __device__ Hitable() { };
-	__host__ __device__ virtual bool Hit(const Ray& r, float& t) const = 0;
+	virtual inline __host__ __device__ bool Hit(const Ray& r, float& t) = 0;
 };

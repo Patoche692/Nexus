@@ -108,8 +108,8 @@ void Renderer::RenderUI(Scene& scene)
 			MaterialManager& materialManager = scene.GetMaterialManager();
 			Material& material = materialManager.GetMaterialForPtr(sphere.material);
 
-			if (ImGui::ColorEdit3("Material", (float*)&material.color))
-				materialManager.Invalidate(material.id);
+			//if (ImGui::ColorEdit3("Material", (float*)&material.color))
+			//	materialManager.Invalidate(material.id);
 
 		}
 		ImGui::PopID();

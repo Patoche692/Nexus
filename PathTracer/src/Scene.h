@@ -19,8 +19,8 @@ public:
 
 	void AddSphere();
 	void AddSphere(Sphere sphere);
-	void AddMaterial(Material material);
-	std::vector<Material>& GetMaterials() { return m_MaterialManager.GetMaterials(); };
+	void AddMaterial(Material* material);
+	std::vector<Material*>& GetMaterials() { return m_MaterialManager.GetMaterials(); };
 	MaterialManager& GetMaterialManager() { return m_MaterialManager; };
 
 	void SendDataToDevice();

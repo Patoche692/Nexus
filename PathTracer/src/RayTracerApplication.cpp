@@ -1,17 +1,18 @@
 #include "RayTracerApplication.h"
+#include "Geometry/Materials/Lambertian.h"
 
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
-	Material material(make_float3(0.0f, 1.0f, 1.0f));
-	m_Scene.AddMaterial(material);
-	material = Material( make_float3(0.35f, 0.35f, 0.35f));
-	m_Scene.AddMaterial(material);
-	material = Material(make_float3(0.0f, 1.0f, 0.0f));
-	m_Scene.AddMaterial(material);
+	MaterialManager& materialManager = m_Scene.GetMaterialManager();
+	Lambertian *material = new Lambertian(make_float3(0.0f, 1.0f, 1.0f));
+	materialManager.AddMaterial(material);
+	material = new Lambertian(make_float3(0.35f, 0.35f, 0.35f));
+	materialManager.AddMaterial(material);
+	material = new Lambertian(make_float3(0.0f, 1.0f, 0.0f));
+	materialManager.AddMaterial(material);
 
-	MaterialManager materialManager = m_Scene.GetMaterialManager();
-	std::vector<Material>& materials = materialManager.GetMaterials();
+	std::vector<Material*>& materials = materialManager.GetMaterials();
 
 	Sphere sphere = {
 		0.5f,

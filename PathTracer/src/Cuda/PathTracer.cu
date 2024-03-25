@@ -3,6 +3,7 @@
 #include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
 #include "../Camera.h"
+#include "../Geometry/Materials/Lambertian.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
@@ -21,7 +22,7 @@ inline __device__ uint32_t toColorUInt(float3 color)
 inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
-	float currentAttenuation = 1.0f;
+	float3 currentAttenuation = make_float3(1.0f);
 
 	for (int j = 0; j < 10; j++)
 	{
@@ -42,6 +43,15 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		{
 			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
+			//uint32_t id = closestSphere->material->id;
+			
+			//Material *mat = closestSphere->material;
+			//if (id == 2)
+			//	printf("yes\n");
+			//mat->albedo.x = 1.0f;
+			//if (mat->id == 0)
+			//	printf("%f\n", mat->albedo.y);
+			//mat->Scatter(hitPoint, currentAttenuation, normal, currentRay, rngState);
 			float3 direction = normal + Random::RandomUnitVector(rngState);
 			currentRay = Ray(hitPoint + normal * 0.001f, direction);
 			currentAttenuation *= 0.4f;

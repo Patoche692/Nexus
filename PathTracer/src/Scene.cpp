@@ -24,7 +24,7 @@ void Scene::AddSphere(Sphere sphere)
 	m_Invalid = true;
 }
 
-void Scene::AddMaterial(Material material)
+void Scene::AddMaterial(Material* material)
 {
 	m_MaterialManager.AddMaterial(material);
 }
