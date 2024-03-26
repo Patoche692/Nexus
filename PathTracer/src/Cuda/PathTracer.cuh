@@ -5,6 +5,7 @@
 #include <glm.hpp>
 #include "../OpenGL/PixelBuffer.h"
 #include "../Scene.h"
+#include "../Geometry/Materials/Lambertian.h"
 
 struct CameraData
 {
@@ -22,6 +23,7 @@ struct SceneData
 	Sphere spheres[MAX_SPHERES];
 };
 
+void instanciateMaterial(Material* dst, Material& material);
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
 void SendCameraDataToDevice(Camera *camera);
 void SendSceneDataToDevice(Scene* scene);

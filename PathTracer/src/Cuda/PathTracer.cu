@@ -24,7 +24,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	Ray currentRay = r;
 	float3 currentAttenuation = make_float3(1.0f);
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 2; j++)
 	{
 		Sphere* closestSphere = nullptr;
 		float hitDistance = FLT_MAX;
@@ -43,18 +43,12 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		{
 			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
-			//uint32_t id = closestSphere->material->id;
 			
-			//Material *mat = closestSphere->material;
-			//if (id == 2)
-			//	printf("yes\n");
-			//mat->albedo.x = 1.0f;
-			//if (mat->id == 0)
-			//	printf("%f\n", mat->albedo.y);
-			//mat->Scatter(hitPoint, currentAttenuation, normal, currentRay, rngState);
-			float3 direction = normal + Random::RandomUnitVector(rngState);
-			currentRay = Ray(hitPoint + normal * 0.001f, direction);
-			currentAttenuation *= 0.4f;
+			Material *mat = closestSphere->material;
+			mat->Scatter(hitPoint, currentAttenuation, normal, currentRay, rngState);
+			//float3 scatterDirection = normal + Random::RandomUnitVector(rngState);
+			//currentRay = Ray(hitPoint + normal * 0.001f, scatterDirection);
+			//currentAttenuation *= mat->albedo;
 		}
 		else
 		{
@@ -155,6 +149,25 @@ void SendSceneDataToDevice(Scene* scene)
 		data.spheres[i] = spheres[i];
 	}
 	// TODO: change the size of copy
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres));
+	size_t size = sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres;
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(SceneData)));
 }
 
+template<typename Mat>
+__global__ void instanciateMaterialKernel(Mat* dst, Mat material)
+{
+	Lambertian* mat0 = new (dst) Mat(material);
+}
+
+
+void instanciateMaterial(Material* dst, Material& material)
+{
+	if (typeid(material) == typeid(Lambertian))
+	{
+		Lambertian* lambMaterialPtr = dynamic_cast<Lambertian*>(&material);
+		Lambertian* dstPtr = (Lambertian*)dst;
+		Lambertian lambMaterial = *lambMaterialPtr;
+		instanciateMaterialKernel<Lambertian><<<1, 1>>>(dstPtr, lambMaterial);
+	}
+	checkCudaErrors(cudaDeviceSynchronize());
+}

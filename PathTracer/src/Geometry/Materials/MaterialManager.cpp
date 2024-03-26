@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 #include "../../Utils/Utils.h"
 #include "MaterialManager.h"
+#include "../../Cuda/PathTracer.cuh"
 
 
 MaterialManager::~MaterialManager()
@@ -38,7 +39,8 @@ bool MaterialManager::SendDataToDevice()
 	for (uint32_t id : m_InvalidMaterials)
 	{
 		invalid = true;
-		checkCudaErrors(cudaMemcpy((void*)m_DevicePtr[id], (void*)m_Materials[id], m_Materials[id]->GetSize(), cudaMemcpyHostToDevice));
+		instanciateMaterial(m_DevicePtr[id], *m_Materials[id]);
+		//checkCudaErrors(cudaMemcpy((void*)m_DevicePtr[id], (void*)m_Materials[id], m_Materials[id]->GetSize(), cudaMemcpyHostToDevice));
 	}
 	m_InvalidMaterials.clear();
 	return invalid;

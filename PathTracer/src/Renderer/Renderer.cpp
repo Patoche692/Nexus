@@ -52,14 +52,15 @@ void Renderer::Render(Scene& scene, float deltaTime)
 		m_FrameNumber = 0;
 	}
 
-	if (scene.GetMaterialManager().SendDataToDevice())
-		m_FrameNumber = 0;
-
 	if (scene.IsInvalid())
 	{
 		scene.SendDataToDevice();
 		m_FrameNumber = 0;
 	}
+
+	if (scene.GetMaterialManager().SendDataToDevice())
+		m_FrameNumber = 0;
+
 
 	m_FrameNumber++;
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
