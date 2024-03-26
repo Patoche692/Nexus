@@ -7,6 +7,7 @@
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
+extern __device__ MaterialType* materialTypes;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {
@@ -24,7 +25,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	Ray currentRay = r;
 	float3 currentAttenuation = make_float3(1.0f);
 
-	for (int j = 0; j < 2; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		Sphere* closestSphere = nullptr;
 		float hitDistance = FLT_MAX;
@@ -158,7 +159,6 @@ __global__ void instanciateMaterialKernel(Mat* dst, Mat material)
 {
 	Lambertian* mat0 = new (dst) Mat(material);
 }
-
 
 void instanciateMaterial(Material* dst, Material& material)
 {

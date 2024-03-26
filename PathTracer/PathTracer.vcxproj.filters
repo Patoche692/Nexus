@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
+    <CudaCompile Include="src\Cuda\Material.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -163,6 +164,7 @@
     <ClInclude Include="src\Geometry\Materials\MaterialManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Cuda\Material.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

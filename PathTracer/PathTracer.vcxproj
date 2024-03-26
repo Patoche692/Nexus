@@ -116,7 +116,7 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
-      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -140,7 +140,7 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
-      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -169,9 +169,14 @@
     <ClCompile Include="src\Vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\Cuda\PathTracer.cu" />
+    <CudaCompile Include="src\Cuda\Material.cu" />
+    <CudaCompile Include="src\Cuda\PathTracer.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Cuda\Material.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Hitable.h" />
     <ClInclude Include="src\Geometry\Materials\Lambertian.h" />

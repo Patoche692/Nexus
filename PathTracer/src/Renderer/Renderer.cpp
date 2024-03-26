@@ -107,10 +107,10 @@ void Renderer::RenderUI(Scene& scene)
 				scene.Invalidate();
 
 			MaterialManager& materialManager = scene.GetMaterialManager();
-			Material& material = materialManager.GetMaterialForPtr(sphere.material);
+			Lambertian* material = (Lambertian*)&materialManager.GetMaterialForPtr(sphere.material);
 
-			//if (ImGui::ColorEdit3("Material", (float*)&material.color))
-			//	materialManager.Invalidate(material.id);
+			if (ImGui::ColorEdit3("Material", (float*)&material->albedo))
+				materialManager.Invalidate(material->id);
 
 		}
 		ImGui::PopID();

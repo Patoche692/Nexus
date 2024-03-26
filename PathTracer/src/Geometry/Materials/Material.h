@@ -10,5 +10,3 @@ struct Material {
 
 	uint32_t id;
 };
-
-//template<typename T>
