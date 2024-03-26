@@ -5,6 +5,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "../Geometry/Materials/Lambertian.h"
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)

@@ -3,7 +3,7 @@
 #include <cuda_runtime_api.h>
 
 
-enum struct MaterialType : char
+enum struct CMaterialType : char
 {
 	LIGHT,
 	DIFFUSE,
@@ -12,10 +12,8 @@ enum struct MaterialType : char
 	CONDUCTOR
 };
 
-//union Material {
-//	struct {
-//		float3 albedo;
-//	} diffuse;
-//};
-
-//__device__ Material* materials;
+union CMaterial {
+	struct {
+		float3 albedo;
+	} diffuse;
+};
