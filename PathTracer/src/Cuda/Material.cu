@@ -1,52 +1,50 @@
 #include "Material.cuh"
 #include <vector>
 #include "../Utils/Utils.h"
+#include "Random.cuh"
+#include "../Geometry/Ray.h"
 
-__constant__ __device__ CMaterialType* materialTypes;
-__constant__ __device__ CMaterial* materials;
+__constant__ __device__ Material* materials;
 
 
-void addMaterialsToDevice(std::vector<CMaterial>& m)
+void addMaterialsToDevice(std::vector<Material>& m)
 {
-	CMaterial* materialsPtr;
+	Material* materialsPtr;
 	checkCudaErrors(cudaGetSymbolAddress((void**)&materialsPtr, materials));
-	checkCudaErrors(cudaMalloc((void**)&materialsPtr, sizeof(CMaterial) * m.size()));
-	checkCudaErrors(cudaMemcpy(materialsPtr, &m[0], sizeof(CMaterial) * m.size(), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMalloc((void**)&materialsPtr, sizeof(Material) * m.size()));
+	checkCudaErrors(cudaMemcpy(materialsPtr, &m[0], sizeof(Material) * m.size(), cudaMemcpyHostToDevice));
 }
 
-void addMaterialToDevice(CMaterial& m, CMaterialType mType, uint32_t size)
+void newDeviceMaterial(Material& m, uint32_t size)
 {
-	CMaterial* materialsPtr;
-	CMaterial* materialsCpy = new CMaterial[size];
+	Material** materialsPtr;
+	Material* materialsCpy = new Material[size];
 
 	checkCudaErrors(cudaGetSymbolAddress((void**)&materialsPtr, materials));
 
-	checkCudaErrors(cudaMemcpyFromSymbol(materialsCpy, materials, size - 1));
+	checkCudaErrors(cudaMemcpy(materialsCpy, *materialsPtr, size - 1, cudaMemcpyDeviceToHost));
 	materialsCpy[size - 1] = m;
 
-	if (size > 0)
-		checkCudaErrors(cudaFree(materialsPtr));
+	if (size > 1)
+		checkCudaErrors(cudaFree(*materialsPtr));
 
-	checkCudaErrors(cudaMalloc((void**)&materialsPtr, size));
+	Material* temp;
+	checkCudaErrors(cudaMalloc((void**)&temp, size));
 
-	checkCudaErrors(cudaMemcpyToSymbol(materials, materialsCpy, size));
+	checkCudaErrors(cudaMemcpyToSymbol(materials, temp, sizeof(Material*)));
 
 	delete[] materialsCpy;
+}
 
-	CMaterialType* materialTypesPtr;
-	CMaterialType* materialTypesCpy = new CMaterialType[size];
+void changeDeviceMaterial(Material& m, uint32_t id)
+{
+	checkCudaErrors(cudaMemcpyToSymbol(materials, &m, sizeof(Material)));
+}
 
-	checkCudaErrors(cudaGetSymbolAddress((void**)&materialTypesPtr, materialTypes));
-
-	checkCudaErrors(cudaMemcpyFromSymbol(materialTypesCpy, materialTypes, size - 1));
-	materialTypesCpy[size - 1] = mType;
-
-	if (size > 0)
-		checkCudaErrors(cudaFree(materialTypesPtr));
-
-	checkCudaErrors(cudaMalloc((void**)&materialTypesPtr, size));
-
-	checkCudaErrors(cudaMemcpyToSymbol(materialTypes, materialTypesCpy, size));
-
-	delete[] materialTypesCpy;
+inline __device__ bool diffuseScatter(Material& material, float3& p, float3& attenuation, float3& normal, Ray& scattered, uint32_t& rngState)
+{
+	float3 scatterDirection = normal + Random::RandomUnitVector(rngState);
+	scattered = Ray(p + normal * 0.001f, scatterDirection);
+	attenuation *= material.diffuse.albedo;
+	return true;
 }

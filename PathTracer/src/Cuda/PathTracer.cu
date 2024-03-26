@@ -3,12 +3,10 @@
 #include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
 #include "../Camera.h"
-#include "../Geometry/Materials/Lambertian.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
-extern __constant__ __device__ CMaterialType* materialTypes;
-extern __constant__ __device__ CMaterial* materials;
+extern __constant__ __device__ Material* materials;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {
@@ -46,8 +44,8 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 			
-			Material *mat = closestSphere->material;
-			mat->Scatter(hitPoint, currentAttenuation, normal, currentRay, rngState);
+			Material mat = materials[closestSphere->materialId];
+			//diffuseScatter(mat, hitPoint, currentAttenuation, normal, currentRay, rngState);
 			//float3 scatterDirection = normal + Random::RandomUnitVector(rngState);
 			//currentRay = Ray(hitPoint + normal * 0.001f, scatterDirection);
 			//currentAttenuation *= mat->albedo;
@@ -155,20 +153,20 @@ void SendSceneDataToDevice(Scene* scene)
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(SceneData)));
 }
 
-template<typename Mat>
-__global__ void instanciateMaterialKernel(Mat* dst, Mat material)
-{
-	Lambertian* mat0 = new (dst) Mat(material);
-}
-
-void instanciateMaterial(Material* dst, Material& material)
-{
-	if (typeid(material) == typeid(Lambertian))
-	{
-		Lambertian* lambMaterialPtr = dynamic_cast<Lambertian*>(&material);
-		Lambertian* dstPtr = (Lambertian*)dst;
-		Lambertian lambMaterial = *lambMaterialPtr;
-		instanciateMaterialKernel<Lambertian><<<1, 1>>>(dstPtr, lambMaterial);
-	}
-	checkCudaErrors(cudaDeviceSynchronize());
-}
+//template<typename Mat>
+//__global__ void instanciateMaterialKernel(Mat* dst, Mat material)
+//{
+//	Lambertian* mat0 = new (dst) Mat(material);
+//}
+//
+//void instanciateMaterial(Material* dst, Material& material)
+//{
+//	if (typeid(material) == typeid(Lambertian))
+//	{
+//		Lambertian* lambMaterialPtr = dynamic_cast<Lambertian*>(&material);
+//		Lambertian* dstPtr = (Lambertian*)dst;
+//		Lambertian lambMaterial = *lambMaterialPtr;
+//		instanciateMaterialKernel<Lambertian><<<1, 1>>>(dstPtr, lambMaterial);
+//	}
+//	checkCudaErrors(cudaDeviceSynchronize());
+//}

@@ -107,11 +107,11 @@ void Renderer::RenderUI(Scene& scene)
 			if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
 				scene.Invalidate();
 
-			MaterialManager& materialManager = scene.GetMaterialManager();
-			Lambertian* material = (Lambertian*)&materialManager.GetMaterialForPtr(sphere.material);
+			//MaterialManager& materialManager = scene.GetMaterialManager();
+			//Lambertian* material = (Lambertian*)&materialManager.GetMaterialForPtr(sphere.material);
 
-			if (ImGui::ColorEdit3("Material", (float*)&material->albedo))
-				materialManager.Invalidate(material->id);
+			//if (ImGui::ColorEdit3("Material", (float*)&material->albedo))
+			//	materialManager.Invalidate(material->id);
 
 		}
 		ImGui::PopID();

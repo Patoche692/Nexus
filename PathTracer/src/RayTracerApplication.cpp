@@ -5,11 +5,13 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
 	MaterialManager& materialManager = m_Scene.GetMaterialManager();
-	Lambertian *material = new Lambertian(make_float3(0.0f, 1.0f, 1.0f));
+	Material material;
+	material.materialType = MaterialType::DIFFUSE;
+	material.diffuse.albedo = make_float3(0.0f, 1.0f, 1.0f);
 	materialManager.AddMaterial(material);
-	material = new Lambertian(make_float3(0.35f, 0.35f, 0.35f));
+	material.diffuse.albedo = make_float3(0.35f, 0.35f, 0.35f);
 	materialManager.AddMaterial(material);
-	material = new Lambertian(make_float3(0.0f, 1.0f, 0.0f));
+	material.diffuse.albedo = make_float3(0.0f, 1.0f, 0.0f);
 	materialManager.AddMaterial(material);
 
 	std::vector<Material*>& materials = materialManager.GetMaterials();
@@ -17,21 +19,21 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	Sphere sphere = {
 		0.5f,
 		make_float3(-0.8f, 0.0f, 0.0f),
-		materialManager.GetDevicePtr(0)
+		0
 	};
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
 		999.3f,
 		make_float3(0.0f, -1000.0f, 0.0f),
-		materialManager.GetDevicePtr(1)
+		1
 	};
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
 		0.5f,
 		make_float3(0.8f, 0.0f, 0.0f),
-		materialManager.GetDevicePtr(2)
+		2
 	};
 	m_Scene.AddSphere(sphere);
 }
