@@ -26,7 +26,7 @@ int main(void)
 
     Input::Init(window);
     // Disable vsync (frame rate / screen refresh rate synchronization)
-    //glfwSwapInterval(0);
+    glfwSwapInterval(0);
 
     if (glewInit() != GLEW_OK)
         std::cout << "Error initializing GLEW" << std::endl;

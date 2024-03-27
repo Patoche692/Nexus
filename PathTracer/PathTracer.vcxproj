@@ -116,7 +116,7 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
-      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -128,6 +128,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;GLEW_STATICNDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)PathTracer\src\Vendor;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,8 +140,9 @@
     </Link>
     <CudaCompile>
       <FastMath>true</FastMath>
-      <Optimization>InheritFromHost</Optimization>
+      <Optimization>O3</Optimization>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <DebugInformationFormat>InheritFromHost</DebugInformationFormat>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -169,7 +171,10 @@
     <ClCompile Include="src\Vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\Cuda\Material.cu" />
+    <CudaCompile Include="src\Cuda\Material.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </CudaCompile>
     <CudaCompile Include="src\Cuda\PathTracer.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>

@@ -45,7 +45,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
 			
 			Material mat = materials[closestSphere->materialId];
-			//diffuseScatter(mat, hitPoint, currentAttenuation, normal, currentRay, rngState);
+			diffuseScatter(mat, hitPoint, currentAttenuation, normal, currentRay, rngState);
 			//float3 scatterDirection = normal + Random::RandomUnitVector(rngState);
 			//currentRay = Ray(hitPoint + normal * 0.001f, scatterDirection);
 			//currentAttenuation *= mat->albedo;
@@ -61,7 +61,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	return make_float3(0.0f);
 }
 
-__global__ void traceRay(uint32_t *outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
+__global__ void traceRay(uint32_t * outBufferPtr, uint32_t frameNumber, float3 * accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;

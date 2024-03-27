@@ -34,9 +34,9 @@ void newDeviceMaterial(Material& m, uint32_t size)
 		checkCudaErrors(cudaFree(materialsPtr));
 
 	Material* temp;
-	checkCudaErrors(cudaMalloc((void**)&temp, sizeof(Material) * size));
+	checkCudaErrors(cudaMalloc((void**)&temp, size));
 
-	checkCudaErrors(cudaMemcpy(temp, materialsCpy, sizeof(Material) * size, cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(temp, materialsCpy, size, cudaMemcpyHostToDevice));
 	checkCudaErrors(cudaMemcpyToSymbol(materials, &temp, sizeof(Material*)));
 
 	delete[] materialsCpy;
