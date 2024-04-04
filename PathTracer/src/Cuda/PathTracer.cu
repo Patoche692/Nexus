@@ -47,9 +47,6 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			
 			Material mat = materials[closestSphere->materialId];
 			diffuseScatter(mat, hitPoint, currentAttenuation, normal, currentRay, rngState);
-			//float3 scatterDirection = normal + Random::RandomUnitVector(rngState);
-			//currentRay = Ray(hitPoint + normal * 0.001f, scatterDirection);
-			//currentAttenuation *= mat->albedo;
 		}
 		else
 		{
@@ -62,7 +59,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	return make_float3(0.0f);
 }
 
-__global__ void traceRay(uint32_t * outBufferPtr, uint32_t frameNumber, float3 * accumulationBuffer)
+__global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -154,20 +151,3 @@ void SendSceneDataToDevice(Scene* scene)
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(SceneData)));
 }
 
-//template<typename Mat>
-//__global__ void instanciateMaterialKernel(Mat* dst, Mat material)
-//{
-//	Lambertian* mat0 = new (dst) Mat(material);
-//}
-//
-//void instanciateMaterial(Material* dst, Material& material)
-//{
-//	if (typeid(material) == typeid(Lambertian))
-//	{
-//		Lambertian* lambMaterialPtr = dynamic_cast<Lambertian*>(&material);
-//		Lambertian* dstPtr = (Lambertian*)dst;
-//		Lambertian lambMaterial = *lambMaterialPtr;
-//		instanciateMaterialKernel<Lambertian><<<1, 1>>>(dstPtr, lambMaterial);
-//	}
-//	checkCudaErrors(cudaDeviceSynchronize());
-//}

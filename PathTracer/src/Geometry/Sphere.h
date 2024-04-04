@@ -42,7 +42,7 @@ struct Sphere
 
 	float radius;
 	float3 position;
-	uint32_t materialId;
+	int materialId;
 };
 
 

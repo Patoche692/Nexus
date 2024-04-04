@@ -99,11 +99,15 @@ void Renderer::RenderUI(Scene& scene)
 
 	MaterialManager& materialManager = scene.GetMaterialManager();
 	std::vector<Sphere>& spheres = scene.GetSpheres();
+	std::vector<Material>& materials = materialManager.GetMaterials();
+	std::string materialsString = materialManager.GetMaterialsString();
+
 	for (int i = 0; i < spheres.size(); i++)
 	{
 		Sphere& sphere = spheres[i];
 		ImGui::PushID(i);
 
+		//ImGui::ShowDemoWindow();
 		if (ImGui::CollapsingHeader("Sphere"))
 		{
 			if (ImGui::DragFloat3("Position", (float*)&sphere.position, 0.1f, -10000.0f, 10000.0f))
@@ -111,10 +115,18 @@ void Renderer::RenderUI(Scene& scene)
 			if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
 				scene.Invalidate();
 
-			Material* material = materialManager.GetMaterials()[sphere.materialId];
+			if (ImGui::TreeNode("Material"))
+			{
+				if (ImGui::Combo("Material id", &sphere.materialId, materialsString.c_str()))
+					scene.Invalidate();
 
-			if (ImGui::ColorEdit3("Material", (float*)&material->diffuse))
-				materialManager.Invalidate(sphere.materialId);
+				Material& material = materials[sphere.materialId];
+
+				if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+					materialManager.Invalidate(sphere.materialId);
+				ImGui::TreePop();
+				ImGui::Spacing();
+			}
 
 		}
 		ImGui::PopID();
@@ -124,7 +136,10 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Separator();
 
 	if (ImGui::Button("Add a sphere"))
-		scene.AddSphere();
+	{
+		materialManager.AddMaterial();
+		scene.AddSphere(materialManager.GetMaterials().size() - 1);
+	}
 
 	ImGui::End();
 
