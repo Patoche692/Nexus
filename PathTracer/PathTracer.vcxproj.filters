@@ -165,6 +165,7 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\Material.cuh" />
+    <ClInclude Include="src\Cuda\BRDF.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

@@ -106,6 +106,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;GLEW_STATIC_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)PathTracer\src\Vendor;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,7 +117,8 @@
     <CudaCompile>
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
-      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <DebugInformationFormat>InheritFromHost</DebugInformationFormat>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -181,6 +183,7 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\Material.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Hitable.h" />

@@ -1,5 +1,6 @@
 #include "PathTracer.cuh"
-#include "../Cuda/Random.cuh"
+#include "Random.cuh"
+#include "BRDF.cuh"
 #include "../Utils/cuda_math.h"
 #include "../Utils/Utils.h"
 #include "../Camera.h"
