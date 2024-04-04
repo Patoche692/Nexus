@@ -96,9 +96,13 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::End();
 
 	ImGui::Begin("Scene");
-	for (Sphere& sphere : scene.GetSpheres())
+
+	MaterialManager& materialManager = scene.GetMaterialManager();
+	std::vector<Sphere>& spheres = scene.GetSpheres();
+	for (int i = 0; i < spheres.size(); i++)
 	{
-		ImGui::PushID(&sphere);
+		Sphere& sphere = spheres[i];
+		ImGui::PushID(i);
 
 		if (ImGui::CollapsingHeader("Sphere"))
 		{
@@ -107,11 +111,10 @@ void Renderer::RenderUI(Scene& scene)
 			if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
 				scene.Invalidate();
 
-			//MaterialManager& materialManager = scene.GetMaterialManager();
-			//Lambertian* material = (Lambertian*)&materialManager.GetMaterialForPtr(sphere.material);
+			Material* material = materialManager.GetMaterials()[sphere.materialId];
 
-			//if (ImGui::ColorEdit3("Material", (float*)&material->albedo))
-			//	materialManager.Invalidate(material->id);
+			if (ImGui::ColorEdit3("Material", (float*)&material->diffuse))
+				materialManager.Invalidate(sphere.materialId);
 
 		}
 		ImGui::PopID();

@@ -44,7 +44,16 @@ void newDeviceMaterial(Material& m, uint32_t size)
 
 void changeDeviceMaterial(Material& m, uint32_t id)
 {
-	checkCudaErrors(cudaMemcpyToSymbol(materials, &m, sizeof(Material)));
+	Material** materialsSymbolAddress;
+	Material* materialsPtr;
+
+	// Retreive the address of materials
+	checkCudaErrors(cudaGetSymbolAddress((void**)&materialsSymbolAddress, materials));
+
+	// Retrieve the address pointed to by materials
+	checkCudaErrors(cudaMemcpy(&materialsPtr, materialsSymbolAddress, sizeof(Material*), cudaMemcpyDeviceToHost));
+
+	checkCudaErrors(cudaMemcpy(materialsPtr + id, &m, sizeof(Material), cudaMemcpyHostToDevice));
 }
 
 

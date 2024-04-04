@@ -30,7 +30,6 @@ bool MaterialManager::SendDataToDevice()
 	for (uint32_t id : m_InvalidMaterials)
 	{
 		invalid = true;
-		//instanciateMaterial(m_DevicePtr[id], *m_Materials[id]);
 		changeDeviceMaterial(*m_Materials[id], id);
 	}
 	m_InvalidMaterials.clear();
