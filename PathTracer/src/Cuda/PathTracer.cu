@@ -56,6 +56,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			case Material::Type::PLASTIC:
 				plasticScattter(hitResult, currentAttenuation, currentRay, rngState);
 				break;
+			case Material::Type::DIELECTRIC:
+				dielectricScattter(hitResult, currentAttenuation, currentRay, rngState);
+				break;
 			default:
 				break;
 			}

@@ -117,14 +117,16 @@ void Renderer::RenderUI(Scene& scene)
 
 			if (ImGui::TreeNode("Material"))
 			{
-				if (ImGui::Combo("Material id", &sphere.materialId, materialsString.c_str()))
+				if (ImGui::Combo("Id", &sphere.materialId, materialsString.c_str()))
 					scene.Invalidate();
 
 				Material& material = materials[sphere.materialId];
 				int type = (int)material.type;
 
-				if (ImGui::Combo("Material type", &type, materialTypes.c_str()))
+				if (ImGui::Combo("Type", &type, materialTypes.c_str()))
+				{
 					materialManager.Invalidate(sphere.materialId);
+				}
 
 				material.type = (Material::Type)type;
 
@@ -138,6 +140,13 @@ void Renderer::RenderUI(Scene& scene)
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 						materialManager.Invalidate(sphere.materialId);
 					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+						materialManager.Invalidate(sphere.materialId);
+				}
+				else if (material.type == Material::Type::DIELECTRIC)
+				{
+					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+						materialManager.Invalidate(sphere.materialId);
+					if (ImGui::DragFloat("Refraction index", &material.dielectric.ir, 0.01f, 1.3f, 2.5f))
 						materialManager.Invalidate(sphere.materialId);
 				}
 				ImGui::TreePop();

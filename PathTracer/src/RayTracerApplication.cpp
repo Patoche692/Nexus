@@ -8,11 +8,13 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.0f, 0.1f, 0.1f);
 	materialManager.AddMaterial(material);
-	material.diffuse.albedo = make_float3(1.0f, 0.2f, 0.0f);
 	material.type = Material::Type::PLASTIC;
+	material.plastic.albedo = make_float3(1.0f, 0.2f, 0.0f);
 	material.plastic.roughness = 0.9f;
 	materialManager.AddMaterial(material);
-	material.diffuse.albedo = make_float3(0.21f, 0.27f, 0.65f);
+	material.type = Material::Type::DIELECTRIC;
+	material.dielectric.ir = 1.5f;
+	material.dielectric.roughness = 0.9f;
 	materialManager.AddMaterial(material);
 
 	Sphere sphere = {

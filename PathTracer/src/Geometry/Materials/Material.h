@@ -20,6 +20,10 @@ struct Material {
 			float3 albedo;
 			float roughness;
 		} plastic;
+		struct {
+			float ir;
+			float roughness;
+		} dielectric;
 	};
 
 	Type type;
