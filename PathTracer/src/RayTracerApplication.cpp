@@ -1,15 +1,16 @@
 #include "RayTracerApplication.h"
-#include "Geometry/Materials/Lambertian.h"
 
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
 	MaterialManager& materialManager = m_Scene.GetMaterialManager();
 	Material material;
-	material.materialType = Material::Type::DIFFUSE;
+	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.0f, 0.1f, 0.1f);
 	materialManager.AddMaterial(material);
 	material.diffuse.albedo = make_float3(1.0f, 0.2f, 0.0f);
+	material.type = Material::Type::PLASTIC;
+	material.plastic.roughness = 0.9f;
 	materialManager.AddMaterial(material);
 	material.diffuse.albedo = make_float3(0.21f, 0.27f, 0.65f);
 	materialManager.AddMaterial(material);

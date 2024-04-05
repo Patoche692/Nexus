@@ -42,11 +42,23 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		if (closestSphere)
 		{
-			float3 hitPoint = currentRay.origin + currentRay.direction * hitDistance;
-			float3 normal = (hitPoint - closestSphere->position) / closestSphere->radius;
+			HitResult hitResult;
+			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
+			hitResult.rIn = currentRay;
+			hitResult.normal = (hitResult.p - closestSphere->position) / closestSphere->radius;
+			hitResult.material = materials[closestSphere->materialId];
 			
-			Material mat = materials[closestSphere->materialId];
-			diffuseScatter(mat, hitPoint, currentAttenuation, normal, currentRay, rngState);
+			switch (hitResult.material.type)
+			{
+			case Material::Type::DIFFUSE:
+				diffuseScatter(hitResult, currentAttenuation, currentRay, rngState);
+				break;
+			case Material::Type::PLASTIC:
+				plasticScattter(hitResult, currentAttenuation, currentRay, rngState);
+				break;
+			default:
+				break;
+			}
 		}
 		else
 		{

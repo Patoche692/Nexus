@@ -1,7 +1,6 @@
 #pragma once
 #include "Materials/Material.h"
 #include "../Utils/cuda_math.h"
-#include "Hitable.h"
 
 #define MAX_SPHERES 50
 

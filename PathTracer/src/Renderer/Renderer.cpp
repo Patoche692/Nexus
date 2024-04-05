@@ -5,7 +5,6 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-#include "../Geometry/Materials/Lambertian.h"
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
@@ -101,6 +100,7 @@ void Renderer::RenderUI(Scene& scene)
 	std::vector<Sphere>& spheres = scene.GetSpheres();
 	std::vector<Material>& materials = materialManager.GetMaterials();
 	std::string materialsString = materialManager.GetMaterialsString();
+	std::string materialTypes = materialManager.GetMaterialTypesString();
 
 	for (int i = 0; i < spheres.size(); i++)
 	{
@@ -121,9 +121,25 @@ void Renderer::RenderUI(Scene& scene)
 					scene.Invalidate();
 
 				Material& material = materials[sphere.materialId];
+				int type = (int)material.type;
 
-				if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+				if (ImGui::Combo("Material type", &type, materialTypes.c_str()))
 					materialManager.Invalidate(sphere.materialId);
+
+				material.type = (Material::Type)type;
+
+				if (material.type == Material::Type::DIFFUSE)
+				{
+					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+						materialManager.Invalidate(sphere.materialId);
+				}
+				else if (material.type == Material::Type::PLASTIC)
+				{
+					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+						materialManager.Invalidate(sphere.materialId);
+					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+						materialManager.Invalidate(sphere.materialId);
+				}
 				ImGui::TreePop();
 				ImGui::Spacing();
 			}

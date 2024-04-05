@@ -2,8 +2,8 @@
 #include "../../Utils/cuda_math.h"
 #include "../Ray.h"
 
-
 struct Material {
+
 	enum struct Type : char {
 		LIGHT,
 		DIFFUSE,
@@ -11,6 +11,7 @@ struct Material {
 		DIELECTRIC,
 		CONDUCTOR
 	};
+
 	union {
 		struct {
 			float3 albedo;
@@ -20,6 +21,15 @@ struct Material {
 			float roughness;
 		} plastic;
 	};
-	Type materialType;
+
+	Type type;
+};
+
+struct HitResult
+{
+	float3 p;
+	Ray rIn;
+	float3 normal;
+	Material material;
 };
 

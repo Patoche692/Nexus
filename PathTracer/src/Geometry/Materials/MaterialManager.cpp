@@ -8,7 +8,7 @@
 void MaterialManager::AddMaterial()
 {
 	Material material;
-	material.materialType = Material::Type::DIFFUSE;
+	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.2f, 0.2f, 0.2f);
 	AddMaterial(material);
 }
@@ -47,5 +47,21 @@ std::string MaterialManager::GetMaterialsString()
 		materialsString.push_back('\0');
 	}
 	return materialsString;
+}
+
+std::string MaterialManager::GetMaterialTypesString()
+{
+	std::string materialTypes;
+	materialTypes.append("Light");
+	materialTypes.push_back('\0');
+	materialTypes.append("Diffuse");
+	materialTypes.push_back('\0');
+	materialTypes.append("Plastic");
+	materialTypes.push_back('\0');
+	materialTypes.append("Dielectric");
+	materialTypes.push_back('\0');
+	materialTypes.append("Conductor");
+	materialTypes.push_back('\0');
+	return materialTypes;
 }
 

@@ -16,6 +16,7 @@ public:
 	void Invalidate(uint32_t id);
 	bool SendDataToDevice();
 	std::string GetMaterialsString();
+	std::string GetMaterialTypesString();
 
 private:
 	std::vector<Material> m_Materials;
