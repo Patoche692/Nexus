@@ -184,8 +184,6 @@
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\Material.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
-    <ClInclude Include="src\Geometry\Hitable.h" />
-    <ClInclude Include="src\Geometry\Materials\Lambertian.h" />
     <ClInclude Include="src\Geometry\Materials\Material.h" />
     <ClInclude Include="src\Geometry\Materials\MaterialManager.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
