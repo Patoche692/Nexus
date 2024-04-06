@@ -89,7 +89,11 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::Text("Camera");
-	if (ImGui::SliderFloat("Camera FOV", &scene.GetCamera()->GetVerticalFOV(), 1.0f, 180.0f))
+	if (ImGui::SliderFloat("Field of view", &scene.GetCamera()->GetVerticalFOV(), 1.0f, 180.0f))
+		scene.GetCamera()->Invalidate();
+	if (ImGui::DragFloat("Focus distance", &scene.GetCamera()->GetFocusDist(), 0.02f, 0.01f, 1000.0f))
+		scene.GetCamera()->Invalidate();
+	if (ImGui::DragFloat("Defocus angle", &scene.GetCamera()->GetDefocusAngle(), 0.2f, 0.0f, 180.0f))
 		scene.GetCamera()->Invalidate();
 
 	ImGui::End();

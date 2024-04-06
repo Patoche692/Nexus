@@ -10,10 +10,12 @@
 struct CameraData
 {
 	float3 position;
-	float3 forwardDirection;
+	float3 right;
+	float3 up;
+	float lensRadius;
 	float3 lowerLeftCorner;
-	float3 horizontal;
-	float3 vertical;
+	float3 viewportX;
+	float3 viewportY;
 	uint2 resolution;
 };
 

@@ -37,6 +37,7 @@ inline __device__ bool refract(const float3& v, const float3& n, float niOverNt,
 		refracted = niOverNt * (uv - n * dt) - n * sqrt(discriminant);
 		return true;
 	}
+	// Cannot refract, then reflect
 	return false;
 }
 

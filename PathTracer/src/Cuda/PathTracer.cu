@@ -74,6 +74,11 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	return make_float3(0.0f);
 }
 
+inline __device__ float3 defocusDiskSample()
+{
+
+}
+
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -82,18 +87,22 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 	uint2 pixel = make_uint2(i, j);
 
 	uint2 resolution = cameraData.resolution;
+
+	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
+		return;
+
 	unsigned int rngState = Random::InitRNG(pixel, resolution, frameNumber);
 
 	// Avoid using modulo, it significantly impacts performance
 	float x = (pixel.x + Random::Rand(rngState)) / (float)resolution.x;
 	float y = (pixel.y + Random::Rand(rngState)) / (float)resolution.y;
 
-	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
-		return;
+	float2 rd = cameraData.lensRadius * Random::RandomInUnitDisk(rngState);
+	float3 offset = cameraData.right * rd.x + cameraData.up * rd.y;
 
 	Ray ray(
-		cameraData.position,
-		cameraData.lowerLeftCorner + x * cameraData.horizontal + y * cameraData.vertical - cameraData.position
+		cameraData.position + offset,
+		cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset
 	);
 
 	float3 c = color(ray, rngState);
@@ -134,19 +143,23 @@ void SendCameraDataToDevice(Camera* camera)
 	float3 upDirection = cross(rightDirection, forwardDirection);
 
 	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
-	float halfHeight = tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
+	float halfHeight = camera->GetFocusDist() * tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
 	float halfWidth = aspectRatio * halfHeight;
 
-	float3 lowerLeftCorner = position - halfWidth * rightDirection - halfHeight * upDirection + forwardDirection;
-	float3 horizontal = 2 * halfWidth * rightDirection;
-	float3 vertical = 2 * halfHeight * upDirection;
+	float3 viewportX = 2 * halfWidth * rightDirection;
+	float3 viewportY = 2 * halfHeight * upDirection;
+	float3 lowerLeftCorner = position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera->GetFocusDist();
+
+	float lensRadius = camera->GetFocusDist() * tanf(camera->GetDefocusAngle() / 2.0f * M_PI / 180.0f);
 
 	CameraData data = {
 		position,
-		forwardDirection,
+		rightDirection,
+		upDirection,
+		lensRadius,
 		lowerLeftCorner,
-		horizontal,
-		vertical,
+		viewportX,
+		viewportY,
 		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
 	};
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));

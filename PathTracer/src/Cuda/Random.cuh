@@ -14,6 +14,7 @@ public:
 	static inline __host__ __device__ float3 RandomUnitVector(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomInUnitSphere(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
+	static inline __host__ __device__ float2 RandomInUnitDisk(unsigned int& rngState);
 };
 
 inline __host__ __device__ unsigned int jenkinsHash(unsigned int x)
@@ -100,4 +101,13 @@ inline __host__ __device__ float3 Random::RandomOnHemisphere(unsigned int& rngSt
 		return r;
 	else
 		return -r;
+}
+
+inline __host__ __device__ float2 Random::RandomInUnitDisk(unsigned int& rngState)
+{
+	float2 p;
+	do {
+		p = 2.0f * (make_float2(Rand(rngState), Rand(rngState)) - 0.5f);
+	} while (length(p) >= 1.0f);
+	return p;
 }
