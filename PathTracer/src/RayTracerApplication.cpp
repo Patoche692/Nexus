@@ -5,15 +5,24 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 {
 	MaterialManager& materialManager = m_Scene.GetMaterialManager();
 	Material material;
-	material.type = Material::Type::DIFFUSE;
-	material.diffuse.albedo = make_float3(0.0f, 0.1f, 0.1f);
+	material.type = Material::Type::PLASTIC;
+	material.plastic.albedo = make_float3(0.07f, 0.07f, 0.07f);
+	material.plastic.roughness = 0.3f;
 	materialManager.AddMaterial(material);
 	material.type = Material::Type::PLASTIC;
 	material.plastic.albedo = make_float3(1.0f, 0.2f, 0.0f);
 	material.plastic.roughness = 0.9f;
 	materialManager.AddMaterial(material);
+	material.type = Material::Type::DIFFUSE;
+	material.plastic.albedo = make_float3(0.5f, 0.0f, 0.5f);
+	material.plastic.roughness = 0.5f;
+	materialManager.AddMaterial(material);
+	material.type = Material::Type::PLASTIC;
+	material.plastic.albedo = make_float3(1.0f, 1.0f, 1.0f);
+	material.plastic.roughness = 0.2f;
+	materialManager.AddMaterial(material);
 	material.type = Material::Type::DIELECTRIC;
-	material.dielectric.ir = 1.5f;
+	material.dielectric.ir = 1.3f;
 	material.dielectric.roughness = 0.9f;
 	materialManager.AddMaterial(material);
 
@@ -40,17 +49,18 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 
 	sphere = {
 		0.5f,
-		make_float3(0.0f, 0.5f, 1.4f),
-		1
+		make_float3(-1.4f, 0.5f, 0.0f),
+		3
 	};
 	m_Scene.AddSphere(sphere);
 
 	sphere = {
 		0.5f,
-		make_float3(-1.4f, 0.5f, 0.0f),
-		1
+		make_float3(0.0f, 0.5f, 1.4f),
+		4
 	};
 	m_Scene.AddSphere(sphere);
+
 }
 
 void RayTracerApplication::Update(float deltaTime)

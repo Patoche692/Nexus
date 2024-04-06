@@ -146,7 +146,7 @@ void Renderer::RenderUI(Scene& scene)
 				{
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
 						materialManager.Invalidate(sphere.materialId);
-					if (ImGui::DragFloat("Refraction index", &material.dielectric.ir, 0.01f, 1.3f, 2.5f))
+					if (ImGui::DragFloat("Refraction index", &material.dielectric.ir, 0.01f, 1.0f, 2.5f))
 						materialManager.Invalidate(sphere.materialId);
 				}
 				ImGui::TreePop();
