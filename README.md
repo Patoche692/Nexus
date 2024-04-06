@@ -1,4 +1,5 @@
 # PathTracer
+![Capture d'écran 2024-04-06 104311](https://github.com/Patoche692/PathTracer/assets/54531293/b32c1231-24f4-4f1d-9f69-fe43778713a2)
 
 # Resources
 - [Ray Tracing in one weekend series](https://raytracing.github.io)
