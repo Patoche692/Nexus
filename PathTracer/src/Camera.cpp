@@ -26,12 +26,11 @@ Camera::Camera(float verticalFOV, uint32_t width, uint32_t height)
 	m_RightDirection = make_float3(1.0f, 0.0f, 0.0f);
 }
 
-Camera::Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height)
-	:m_Position(position), m_ForwardDirection(forward), m_VerticalFOV(verticalFOV), m_ViewportWidth(width),
-	m_ViewportHeight(height), m_RightDirection(cross(m_ForwardDirection, make_float3(0.0f, 1.0f, 0.0f)))
+Camera::Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height, float focusDistance, float defocusAngle)
+	:m_Position(position), m_ForwardDirection(forward), m_VerticalFOV(verticalFOV), m_ViewportWidth(width), m_ViewportHeight(height),
+	m_RightDirection(cross(m_ForwardDirection, make_float3(0.0f, 1.0f, 0.0f))), m_FocusDist(focusDistance), m_DefocusAngle(defocusAngle)
 {
-	m_DefocusAngle = 10.0f;
-	m_FocusDist = 5.0f;
+
 }
 
 

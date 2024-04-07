@@ -8,7 +8,7 @@ class Camera
 {
 public:
 	Camera(float verticalFOV, uint32_t width, uint32_t height);
-	Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height);
+	Camera(float3 position, float3 forward, float verticalFOV, uint32_t width, uint32_t height, float focusDistance, float defocusAngle);
 
 	void OnUpdate(float ts);
 	void OnResize(uint32_t width, uint32_t height);
