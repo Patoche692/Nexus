@@ -3,6 +3,9 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
+	AssetManager& assetManager = m_Scene.GetAssetManager();
+	assetManager.AddMesh("assets/models/floor.obj");
+
 	MaterialManager& materialManager = m_Scene.GetMaterialManager();
 	Material material;
 	material.type = Material::Type::PLASTIC;
