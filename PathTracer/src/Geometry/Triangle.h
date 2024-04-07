@@ -15,6 +15,8 @@ struct Triangle
 	float3 texCoord1;
 	float3 texCoord2;
 
+	__device__ __host__ Triangle() = default;
+
 	__device__ __host__ Triangle(float3 p0, float3 p1, float3 p2)
 		:pos0(p0), pos1(p1), pos2(p2), normal0(make_float3(0.0f)), normal1(make_float3(0.0f)),
 		normal2(make_float3(0.0f)), texCoord0(make_float3(0.0f)), texCoord1(make_float3(0.0f)), texCoord2(make_float3(0.0f)) { }

@@ -4,10 +4,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "../Geometry/Triangle.h"
+
 class OBJLoader
 {
 public:
-	static void LoadOBJ(const std::string& filename);
+	static std::vector<Triangle> LoadOBJ(const std::string& filename);
 
 private:
 	static Assimp::Importer m_Importer;
