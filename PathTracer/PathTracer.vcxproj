@@ -105,13 +105,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;GLEW_STATIC_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)PathTracer\src\Vendor;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)PathTracer\src\Vendor;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\GLEW\include;$(SolutionDir)dependencies\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\GLFW\lib;$(SolutionDir)dependencies\GLEW\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\GLFW\lib;$(SolutionDir)dependencies\GLEW\lib\Release\x64;C:\Users\Patrick\Documents\Computer Graphics\PathTracer\dependencies\Assimp\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;glew32s.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <FastMath>true</FastMath>
@@ -146,8 +146,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Assets\OBJLoader.cpp" />
     <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp" />
-    <ClCompile Include="src\Geometry\Sphere.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL\PixelBuffer.cpp" />
@@ -181,12 +181,14 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Assets\OBJLoader.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\Material.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Materials\Material.h" />
     <ClInclude Include="src\Geometry\Materials\MaterialManager.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
+    <ClInclude Include="src\Geometry\Triangle.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\OpenGL\Framebuffer.h" />

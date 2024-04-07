@@ -66,10 +66,10 @@
     <ClCompile Include="src\Scene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry\Sphere.cpp">
+    <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp">
+    <ClCompile Include="src\Assets\OBJLoader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -160,6 +160,12 @@
     </ClInclude>
     <ClInclude Include="src\Cuda\Material.cuh" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
+    <ClInclude Include="src\Geometry\Triangle.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assets\OBJLoader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
