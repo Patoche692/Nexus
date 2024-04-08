@@ -37,12 +37,13 @@ struct Triangle
 
 		float3 n = cross(edge0, edge1);
 
-		if (dot(n, r.direction) < 1.0e-6)
+		float nDotRayDir = dot(n, r.direction);
+		if (nDotRayDir < 1.0e-6 && nDotRayDir > -1.0e-6)
 			return false;
 
-		float d = dot(-n, pos0);
+		float d = -dot(n, pos0);
 
-		t = -(dot(n, r.origin) + d);
+		t = -(dot(n, r.origin) + d) / nDotRayDir;
 
 		if (t < 0)
 			return false;
@@ -70,5 +71,12 @@ struct Triangle
 			return false;
 
 		return true;
+	}
+	inline __host__ __device__ float3 Normal()
+	{
+		float3 edge0 = pos1 - pos0;
+		float3 edge1 = pos2 - pos0;
+
+		return -cross(edge0, edge1);
 	}
 };

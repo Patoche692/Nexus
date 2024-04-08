@@ -22,6 +22,7 @@ struct CameraData
 struct SceneData
 {
 	unsigned int nSpheres;
+	unsigned int nMeshes;
 	Sphere spheres[MAX_SPHERES];
 };
 

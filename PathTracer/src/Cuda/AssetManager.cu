@@ -25,7 +25,7 @@ void newDeviceMesh(Mesh& mesh, uint32_t size)
 
 	CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
 
-	CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, mesh);
+	CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, newMesh);
 }
 
 void newDeviceMaterial(Material& material, uint32_t size)

@@ -65,7 +65,7 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 				texCoord[1],
 				texCoord[2]
 			);
-			triangles.push_back(triangle);
+			triangles[j] = triangle;
 		}
 	}
 
