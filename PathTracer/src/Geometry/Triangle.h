@@ -72,11 +72,12 @@ struct Triangle
 
 		return true;
 	}
+
 	inline __host__ __device__ float3 Normal()
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
-		return -cross(edge0, edge1);
+		return cross(edge0, edge1);
 	}
 };

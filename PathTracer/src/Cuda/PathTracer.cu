@@ -28,58 +28,33 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 	for (int j = 0; j < 10; j++)
 	{
-		Sphere* closestSphere = nullptr;
-		Triangle* closestTriangle = nullptr;
+		int closestTriangleIndex = -1;
+		int closestMeshIndex = -1;
 		float hitDistance = FLT_MAX;
 		float t;
 
 		for (int i = 0; i < sceneData.nMeshes; i++)
 		{
-			//if (sceneData.spheres[i].Hit(currentRay, t) && t < hitDistance)
-			//{
-			//	hitDistance = t;
-			//	closestSphere = &sceneData.spheres[i];
-			//}
 			for (int k = 0; k < meshes[i].nTriangles; k++)
 			{
 				if (meshes[i].triangles[k].Hit(currentRay, t) && t < hitDistance)
 				{
 					hitDistance = t;
-					closestTriangle = &meshes[i].triangles[k];
+					closestTriangleIndex = k;
+					closestMeshIndex = i;
 				}
 			}
 		}
 
-		//if (closestSphere)
-		//{
-		//	HitResult hitResult;
-		//	hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
-		//	hitResult.rIn = currentRay;
-		//	hitResult.normal = (hitResult.p - closestSphere->position) / closestSphere->radius;
-		//	hitResult.material = materials[closestSphere->materialId];
-		//	
-		//	switch (hitResult.material.type)
-		//	{
-		//	case Material::Type::DIFFUSE:
-		//		diffuseScatter(hitResult, currentAttenuation, currentRay, rngState);
-		//		break;
-		//	case Material::Type::PLASTIC:
-		//		plasticScattter(hitResult, currentAttenuation, currentRay, rngState);
-		//		break;
-		//	case Material::Type::DIELECTRIC:
-		//		dielectricScattter(hitResult, currentAttenuation, currentRay, rngState);
-		//		break;
-		//	default:
-		//		break;
-		//	}
-		//}
-		if (closestTriangle)
+		if (closestTriangleIndex != -1)
 		{
 			HitResult hitResult;
 			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
 			hitResult.rIn = currentRay;
-			hitResult.normal = closestTriangle->Normal();
-			hitResult.material = materials[0];
+			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
+			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+			//	hitResult.normal = -hitResult.normal;
+			hitResult.material = materials[closestMeshIndex];
 			
 			switch (hitResult.material.type)
 			{

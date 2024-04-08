@@ -5,7 +5,8 @@ Assimp::Importer OBJLoader::m_Importer;
 
 std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 {
-	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate);
+	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
+		| aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_FixInfacingNormals);
 	
 	std::vector<Triangle> triangles;
 
