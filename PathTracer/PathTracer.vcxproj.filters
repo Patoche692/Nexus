@@ -78,7 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
-    <CudaCompile Include="src\Cuda\Material.cu" />
+    <CudaCompile Include="src\Cuda\AssetManager.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -161,7 +161,7 @@
     <ClInclude Include="src\Geometry\Materials\MaterialManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cuda\Material.cuh" />
+    <ClInclude Include="src\Cuda\AssetManager.cuh" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Geometry\Triangle.h">
       <Filter>Fichiers d%27en-tête</Filter>
@@ -172,6 +172,10 @@
     <ClInclude Include="src\Assets\AssetManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Geometry\Mesh.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cuda\MemoryHelper.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

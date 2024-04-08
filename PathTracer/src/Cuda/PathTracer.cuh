@@ -5,7 +5,7 @@
 #include <glm.hpp>
 #include "../OpenGL/PixelBuffer.h"
 #include "../Scene.h"
-#include "Material.cuh"
+#include "AssetManager.cuh"
 
 struct CameraData
 {

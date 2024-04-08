@@ -172,7 +172,7 @@
     <ClCompile Include="src\Vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\Cuda\Material.cu">
+    <CudaCompile Include="src\Cuda\AssetManager.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>
@@ -185,10 +185,12 @@
     <ClInclude Include="src\Assets\AssetManager.h" />
     <ClInclude Include="src\Assets\OBJLoader.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
-    <ClInclude Include="src\Cuda\Material.cuh" />
+    <ClInclude Include="src\Cuda\AssetManager.cuh" />
+    <ClInclude Include="src\Cuda\MemoryHelper.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Materials\Material.h" />
     <ClInclude Include="src\Geometry\Materials\MaterialManager.h" />
+    <ClInclude Include="src\Geometry\Mesh.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Geometry\Triangle.h" />
     <ClInclude Include="src\Input.h" />
