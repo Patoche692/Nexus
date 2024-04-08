@@ -36,7 +36,7 @@ void Scene::AddSphere(int materialId)
 
 void Scene::AddMaterial(Material* material)
 {
-	m_MaterialManager.AddMaterial(*material);
+	m_AssetManager.AddMaterial(*material);
 }
 
 

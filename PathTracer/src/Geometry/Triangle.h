@@ -1,6 +1,6 @@
 #pragma once
 #include "../Utils/cuda_math.h"
-#include "Materials/Material.h"
+#include "Material.h"
 
 struct Triangle
 {

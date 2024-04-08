@@ -66,9 +66,6 @@
     <ClCompile Include="src\Scene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Assets\OBJLoader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -152,13 +149,10 @@
     <ClInclude Include="src\Geometry\Sphere.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Geometry\Materials\Material.h">
+    <ClInclude Include="src\Geometry\Material.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\Random.cuh">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Geometry\Materials\MaterialManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\AssetManager.cuh" />
@@ -175,7 +169,7 @@
     <ClInclude Include="src\Geometry\Mesh.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cuda\MemoryHelper.cuh" />
+    <ClInclude Include="src\Cuda\CudaMemory.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

@@ -4,7 +4,6 @@
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
-#include "Geometry/Materials/MaterialManager.h"
 #include "Assets/AssetManager.h"
 
 class Scene
@@ -22,8 +21,7 @@ public:
 	void AddSphere(Sphere sphere);
 	void AddSphere(int materialId);
 	void AddMaterial(Material* material);
-	std::vector<Material>& GetMaterials() { return m_MaterialManager.GetMaterials(); }
-	MaterialManager& GetMaterialManager() { return m_MaterialManager; }
+	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	void AddMesh(const std::string& filename) { m_AssetManager.AddMesh(filename); }
 
@@ -34,6 +32,5 @@ private:
 	std::shared_ptr<Camera> m_Camera;
 	std::vector<Sphere> m_Spheres;
 
-	MaterialManager m_MaterialManager;
 	AssetManager m_AssetManager;
 };

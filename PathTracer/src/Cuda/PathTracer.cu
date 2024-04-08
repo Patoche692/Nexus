@@ -8,6 +8,7 @@
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
+extern __constant__ __device__ Mesh* meshes;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {

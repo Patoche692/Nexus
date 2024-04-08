@@ -10,5 +10,6 @@ struct Mesh
 	__host__ __device__ Mesh() = default;
 
 	Triangle* triangles;
+	uint32_t nTriangles;
 	uint32_t materialId;
 };

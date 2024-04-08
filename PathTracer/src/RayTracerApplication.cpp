@@ -3,31 +3,30 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
+
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 	assetManager.AddMesh("assets/models/floor.obj");
-
-	MaterialManager& materialManager = m_Scene.GetMaterialManager();
 	Material material;
 	material.type = Material::Type::PLASTIC;
 	material.plastic.albedo = make_float3(0.07f, 0.07f, 0.07f);
 	material.plastic.roughness = 0.3f;
-	materialManager.AddMaterial(material);
+	assetManager.AddMaterial(material);
 	material.type = Material::Type::PLASTIC;
 	material.plastic.albedo = make_float3(1.0f, 0.2f, 0.0f);
 	material.plastic.roughness = 0.9f;
-	materialManager.AddMaterial(material);
+	assetManager.AddMaterial(material);
 	material.type = Material::Type::DIFFUSE;
 	material.plastic.albedo = make_float3(0.5f, 0.0f, 0.5f);
 	material.plastic.roughness = 0.5f;
-	materialManager.AddMaterial(material);
+	assetManager.AddMaterial(material);
 	material.type = Material::Type::PLASTIC;
 	material.plastic.albedo = make_float3(1.0f, 1.0f, 1.0f);
 	material.plastic.roughness = 0.2f;
-	materialManager.AddMaterial(material);
+	assetManager.AddMaterial(material);
 	material.type = Material::Type::DIELECTRIC;
 	material.dielectric.ir = 1.3f;
 	material.dielectric.roughness = 0.9f;
-	materialManager.AddMaterial(material);
+	assetManager.AddMaterial(material);
 
 	Sphere sphere = {
 		1000.0f,

@@ -1,25 +1,31 @@
 #include "AssetManager.cuh"
 #include <vector>
 
-#include "MemoryHelper.cuh"
+#include "CudaMemory.cuh"
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "../Geometry/Ray.h"
-#include "../Geometry/Mesh.h"
 
 __constant__ __device__ Material* materials;
 __constant__ __device__ Mesh* meshes;
+
 
 void newDeviceMesh(Mesh& mesh, uint32_t size)
 {
 	Mesh** meshesSymbolAddress;
 
-	// Retreive the address of materials
+	// Retreive the address of meshes
 	checkCudaErrors(cudaGetSymbolAddress((void**)&meshesSymbolAddress, meshes));
 
-	MemoryHelper::ResizeDeviceArray(meshesSymbolAddress, size);
+	Triangle* triangles = CudaMemory::Allocate<Triangle>(mesh.nTriangles);
+	CudaMemory::MemCpy(triangles, mesh.triangles, mesh.nTriangles, cudaMemcpyHostToDevice);
 
-	MemoryHelper::SetToIndex(meshesSymbolAddress, size - 1, mesh);
+	Mesh newMesh = mesh;
+	newMesh.triangles = triangles;
+
+	CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
+
+	CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, mesh);
 }
 
 void newDeviceMaterial(Material& material, uint32_t size)
@@ -29,9 +35,9 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	// Retreive the address of materials
 	checkCudaErrors(cudaGetSymbolAddress((void**)&materialsSymbolAddress, materials));
 
-	MemoryHelper::ResizeDeviceArray(materialsSymbolAddress, size);
+	CudaMemory::ResizeDeviceArray(materialsSymbolAddress, size);
 
-	MemoryHelper::SetToIndex(materialsSymbolAddress, size - 1, material);
+	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
 }
 
 void changeDeviceMaterial(Material& m, uint32_t id)
@@ -41,7 +47,21 @@ void changeDeviceMaterial(Material& m, uint32_t id)
 	// Retreive the address of materials
 	checkCudaErrors(cudaGetSymbolAddress((void**)&materialsSymbolAddress, materials));
 
-	MemoryHelper::SetToIndex(materialsSymbolAddress, id, m);
+	CudaMemory::SetToIndex(materialsSymbolAddress, id, m);
+}
+
+Material** getMaterialSymbolAddress()
+{
+	Material** materialSymbolAddress;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&materialSymbolAddress, materials));
+	return materialSymbolAddress;
+}
+
+Mesh** getMeshSymbolAddress()
+{
+	Mesh** meshSymbolAddress;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&meshSymbolAddress, meshes));
+	return meshSymbolAddress;
 }
 
 
