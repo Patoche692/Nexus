@@ -4,17 +4,17 @@
 
 ## Prerequisites
 - Having Microsoft Visual Studio installed
-- Having Nvidia's ![CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) installed
+- Having Nvidia's [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) installed
 
 ## Build
 The project should compile and run as is by pressing F5.
 
 ## Dependencies
-- ![GLFW](https://www.glfw.org) and ![GLEW](https://glew.sourceforge.net)
-- ![glm](https://github.com/g-truc/glm)
-- ![CUDA](https://developer.nvidia.com/cuda-downloads) 12.4
-- ![Assimp](https://github.com/assimp/assimp) for model loading
-- ![ImGui](https://github.com/ocornut/imgui) for user interface
+- [GLFW](https://www.glfw.org) and [GLEW](https://glew.sourceforge.net)
+- [glm](https://github.com/g-truc/glm)
+- [CUDA](https://developer.nvidia.com/cuda-downloads) 12.4
+- [Assimp](https://github.com/assimp/assimp) for model loading
+- [ImGui](https://github.com/ocornut/imgui) for user interface
 
 
 ## Resources
