@@ -1,6 +1,9 @@
 # PathTracer
 
-| [Prerequisites](#prerequisites) - [Build](#build) - [Dependencies](#dependencies) - [Resources](#resources) |
+- [Prerequisites](#prerequisites)
+- [Build](#build)
+- [Dependencies](#dependencies)
+- [Resources](#resources)
 
 ![Capture d'écran 2024-04-06 194314](https://github.com/Patoche692/PathTracer/assets/54531293/4b5813a6-61ea-45bc-a2c7-5e110d82e9d8)
 ![PathTracerThumbnail](https://github.com/Patoche692/PathTracer/assets/54531293/ba648d76-125d-458c-849b-08f99fdf6da8)
@@ -10,7 +13,11 @@
 - Having Nvidia's [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) installed
 
 ## Build
-The project should compile and run as is by pressing F5.
+- Clone the repo
+   ```sh
+   git clone https://github.com/Patoche692/PathTracer
+   ```
+- The project should compile and run as is by pressing F5.
 
 ## Dependencies
 - [GLFW](https://www.glfw.org) and [GLEW](https://glew.sourceforge.net)
