@@ -139,7 +139,7 @@ void Renderer::RenderUI(Scene& scene)
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 						assetManager.InvalidateMaterial(sphere.materialId);
 				}
-				else if (material.type == Material::Type::PLASTIC)
+				else if (material.type == Material::Type::METAL)
 				{
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 						assetManager.InvalidateMaterial(sphere.materialId);
@@ -150,7 +150,7 @@ void Renderer::RenderUI(Scene& scene)
 				{
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
 						assetManager.InvalidateMaterial(sphere.materialId);
-					if (ImGui::DragFloat("Refraction index", &material.dielectric.ir, 0.01f, 1.0f, 2.5f))
+					if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
 						assetManager.InvalidateMaterial(sphere.materialId);
 				}
 				ImGui::TreePop();

@@ -7,7 +7,7 @@ struct Material {
 	enum struct Type : char {
 		LIGHT,
 		DIFFUSE,
-		PLASTIC,
+		METAL,
 		DIELECTRIC,
 		CONDUCTOR
 	};
@@ -21,7 +21,7 @@ struct Material {
 			float roughness;
 		} plastic;
 		struct {
-			float ir;
+			float ior;
 			float roughness;
 		} dielectric;
 	};

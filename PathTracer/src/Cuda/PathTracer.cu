@@ -51,13 +51,14 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			HitResult hitResult;
 			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
 			hitResult.rIn = currentRay;
-			if (closestMeshIndex == 1)
-				int a = 0;
 			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
+
+			// Normal flipping
 			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 			//	hitResult.normal = -hitResult.normal;
+
 			hitResult.material = materials[closestMeshIndex];
-			float3 attenuation;
+			float3 attenuation = make_float3(1.0f);
 			Ray ray = currentRay;
 			
 			switch (hitResult.material.type)
@@ -69,7 +70,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 					currentRay = ray;
 				}
 				break;
-			case Material::Type::PLASTIC:
+			case Material::Type::METAL:
 				if (plasticScattter(hitResult, attenuation, ray, rngState))
 				{
 					currentAttenuation *= attenuation;

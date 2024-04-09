@@ -175,6 +175,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>
+    <CudaCompile Include="src\Cuda\BVH.cu" />
     <CudaCompile Include="src\Cuda\PathTracer.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -185,9 +186,11 @@
     <ClInclude Include="src\Assets\OBJLoader.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\AssetManager.cuh" />
+    <ClInclude Include="src\Cuda\BVH.cuh" />
     <ClInclude Include="src\Cuda\CudaMemory.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
     <ClInclude Include="src\Geometry\Material.h" />
+    <ClInclude Include="src\Geometry\Medium.h" />
     <ClInclude Include="src\Geometry\Mesh.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Geometry\Triangle.h" />

@@ -9,11 +9,15 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	assetManager.AddMesh("assets/models/cube.obj");
 	assetManager.AddMesh("assets/models/cube2.obj");
 	Material material;
-	material.type = Material::Type::PLASTIC;
+	material.type = Material::Type::METAL;
 	material.plastic.albedo = make_float3(0.07f, 0.07f, 0.07f);
 	material.plastic.roughness = 0.3f;
 	assetManager.AddMaterial(material);
-	material.type = Material::Type::PLASTIC;
+	material.type = Material::Type::DIELECTRIC;
+	material.dielectric.ior = 1.3f;
+	material.dielectric.roughness = 0.9f;
+	assetManager.AddMaterial(material);
+	material.type = Material::Type::METAL;
 	material.plastic.albedo = make_float3(1.0f, 0.2f, 0.0f);
 	material.plastic.roughness = 0.9f;
 	assetManager.AddMaterial(material);
@@ -21,13 +25,9 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	material.plastic.albedo = make_float3(0.5f, 0.0f, 0.5f);
 	material.plastic.roughness = 0.5f;
 	assetManager.AddMaterial(material);
-	material.type = Material::Type::PLASTIC;
+	material.type = Material::Type::METAL;
 	material.plastic.albedo = make_float3(1.0f, 1.0f, 1.0f);
 	material.plastic.roughness = 0.2f;
-	assetManager.AddMaterial(material);
-	material.type = Material::Type::DIELECTRIC;
-	material.dielectric.ir = 1.3f;
-	material.dielectric.roughness = 0.9f;
 	assetManager.AddMaterial(material);
 
 	Sphere sphere = {

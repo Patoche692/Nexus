@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/cuda_math.h"
+#include "Medium.h"
 
 // Make it a struct so that its properties are publicly available to CUDA without setters / getters
 
@@ -13,4 +14,7 @@ struct Ray
 
 	float3 origin;
 	float3 direction;
+
+	Medium medium;
+	bool transmitted;
 };
