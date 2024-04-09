@@ -1,5 +1,7 @@
 # PathTracer
 
+A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
+
 - [Screenshots](#screenshots)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
