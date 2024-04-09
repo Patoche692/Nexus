@@ -30,47 +30,41 @@ struct Triangle
 		:pos0(p0), pos1(p1), pos2(p2), normal0(n0), normal1(n1),
 		normal2(n2), texCoord0(t0), texCoord1(t1), texCoord2(t2) { }
 
+
+	// Möller-Trumbore intersection algorithm. See https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+
 	inline __host__ __device__ bool Hit(const Ray& r, float& t)
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
-		float3 n = cross(edge0, edge1);
+		float3 rayCrossEdge1 = cross(r.direction, edge1);
+		float det = dot(edge0, rayCrossEdge1);
 
-		float nDotRayDir = dot(n, r.direction);
-		if (nDotRayDir < 1.0e-6 && nDotRayDir > -1.0e-6)
+		if (det < 1.0e-6 && det > -1.0e-6)
 			return false;
 
-		float d = -dot(n, pos0);
+		float invDet = 1.0f / det;
 
-		t = -(dot(n, r.origin) + d) / nDotRayDir;
+		float3 s = r.origin - pos0;
+		
+		float u = invDet * dot(s, rayCrossEdge1);
 
-		if (t < 0)
+		if (u < 0.0f || u > 1.0f)
 			return false;
 
-		float3 p = r.origin + t * r.direction;
+		float3 sCrossEdge0 = cross(s, edge0);
+		float v = invDet * dot(r.direction, sCrossEdge0);
 
-		float3 vp0 = p - pos0;
-		float3 c = cross(edge0, vp0);
-
-		if (dot(n, c) < 0.0f)
+		if (v < 0.0f || u + v > 1.0f)
 			return false;
 
-		edge1 = pos2 - pos1;
-		float3 vp1 = p - pos1;
-		c = cross(edge1, vp1);
+		t = invDet * dot(edge1, sCrossEdge0);
 
-		if (dot(n, c) < 0.0f)
-			return false;
+		if (t > 0.0f)
+			return true;
 
-		float3 edge2 = pos0 - pos2;
-		float3 vp2 = p - pos2;
-		c = cross(edge2, vp2);
-
-		if (dot(n, c) < 0.0f)
-			return false;
-
-		return true;
+		return false;
 	}
 
 	inline __host__ __device__ float3 Normal()
