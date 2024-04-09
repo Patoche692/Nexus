@@ -78,6 +78,6 @@ struct Triangle
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
-		return cross(edge0, edge1);
+		return normalize(cross(edge0, edge1));
 	}
 };

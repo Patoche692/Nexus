@@ -7,6 +7,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 	assetManager.AddMesh("assets/models/floor.obj");
 	assetManager.AddMesh("assets/models/cube.obj");
+	assetManager.AddMesh("assets/models/cube2.obj");
 	Material material;
 	material.type = Material::Type::PLASTIC;
 	material.plastic.albedo = make_float3(0.07f, 0.07f, 0.07f);

@@ -51,21 +51,37 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			HitResult hitResult;
 			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
 			hitResult.rIn = currentRay;
+			if (closestMeshIndex == 1)
+				int a = 0;
 			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
 			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 			//	hitResult.normal = -hitResult.normal;
 			hitResult.material = materials[closestMeshIndex];
+			float3 attenuation;
+			Ray ray = currentRay;
 			
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
-				diffuseScatter(hitResult, currentAttenuation, currentRay, rngState);
+				if (diffuseScatter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
 			case Material::Type::PLASTIC:
-				plasticScattter(hitResult, currentAttenuation, currentRay, rngState);
+				if (plasticScattter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
 			case Material::Type::DIELECTRIC:
-				dielectricScattter(hitResult, currentAttenuation, currentRay, rngState);
+				if (dielectricScattter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
 			default:
 				break;
