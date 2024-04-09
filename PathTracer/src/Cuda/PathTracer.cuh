@@ -3,9 +3,9 @@
 #include <device_launch_parameters.h>
 #include <iostream>
 #include <glm.hpp>
-#include "../OpenGL/PixelBuffer.h"
-#include "../Scene.h"
-#include "Material.cuh"
+#include "OpenGL/PixelBuffer.h"
+#include "Scene.h"
+#include "AssetManager.cuh"
 
 struct CameraData
 {
@@ -22,6 +22,7 @@ struct CameraData
 struct SceneData
 {
 	unsigned int nSpheres;
+	unsigned int nMeshes;
 	Sphere spheres[MAX_SPHERES];
 };
 

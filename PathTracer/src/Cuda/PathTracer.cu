@@ -1,13 +1,14 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
 #include "BRDF.cuh"
-#include "../Utils/cuda_math.h"
-#include "../Utils/Utils.h"
-#include "../Camera.h"
+#include "Utils/cuda_math.h"
+#include "Utils/Utils.h"
+#include "Camera.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
+extern __constant__ __device__ Mesh* meshes;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {
@@ -27,37 +28,61 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 	for (int j = 0; j < 10; j++)
 	{
-		Sphere* closestSphere = nullptr;
+		int closestTriangleIndex = -1;
+		int closestMeshIndex = -1;
 		float hitDistance = FLT_MAX;
 		float t;
 
-		for (int i = 0; i < sceneData.nSpheres; i++)
+		for (int i = 0; i < sceneData.nMeshes; i++)
 		{
-			if (sceneData.spheres[i].Hit(currentRay, t) && t < hitDistance)
+			for (int k = 0; k < meshes[i].nTriangles; k++)
 			{
-				hitDistance = t;
-				closestSphere = &sceneData.spheres[i];
+				if (meshes[i].triangles[k].Hit(currentRay, t) && t < hitDistance)
+				{
+					hitDistance = t;
+					closestTriangleIndex = k;
+					closestMeshIndex = i;
+				}
 			}
 		}
 
-		if (closestSphere)
+		if (closestTriangleIndex != -1)
 		{
 			HitResult hitResult;
 			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
 			hitResult.rIn = currentRay;
-			hitResult.normal = (hitResult.p - closestSphere->position) / closestSphere->radius;
-			hitResult.material = materials[closestSphere->materialId];
+			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
+
+			// Normal flipping
+			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+			//	hitResult.normal = -hitResult.normal;
+
+			hitResult.material = materials[closestMeshIndex];
+			float3 attenuation = make_float3(1.0f);
+			Ray ray = currentRay;
 			
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
-				diffuseScatter(hitResult, currentAttenuation, currentRay, rngState);
+				if (diffuseScatter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
-			case Material::Type::PLASTIC:
-				plasticScattter(hitResult, currentAttenuation, currentRay, rngState);
+			case Material::Type::METAL:
+				if (plasticScattter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
 			case Material::Type::DIELECTRIC:
-				dielectricScattter(hitResult, currentAttenuation, currentRay, rngState);
+				if (dielectricScattter(hitResult, attenuation, ray, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = ray;
+				}
 				break;
 			default:
 				break;
@@ -102,7 +127,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 
 	Ray ray(
 		cameraData.position + offset,
-		cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset
+		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
 	float3 c = color(ray, rngState);
@@ -170,6 +195,7 @@ void SendSceneDataToDevice(Scene* scene)
 	SceneData data;
 	std::vector<Sphere> spheres = scene->GetSpheres();
 	data.nSpheres = spheres.size();
+	data.nMeshes = scene->GetAssetManager().GetMeshes().size();
 	for (int i = 0; i < spheres.size(); i++)
 	{
 		data.spheres[i] = spheres[i];

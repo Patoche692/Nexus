@@ -8,7 +8,7 @@
 #include <gtx/quaternion.hpp>
 #include <math.h>
 
-#include "../Utils/Utils.h"
+#include "Utils/Utils.h"
 #include "Utils/cuda_math.h"
 #include "Input.h"
 #include "Cuda/PathTracer.cuh"

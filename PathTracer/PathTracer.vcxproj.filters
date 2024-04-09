@@ -66,16 +66,17 @@
     <ClCompile Include="src\Scene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry\Sphere.cpp">
+    <ClCompile Include="src\Assets\OBJLoader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry\Materials\MaterialManager.cpp">
+    <ClCompile Include="src\Assets\AssetManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
-    <CudaCompile Include="src\Cuda\Material.cu" />
+    <CudaCompile Include="src\Cuda\AssetManager.cu" />
+    <CudaCompile Include="src\Cuda\BVH.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -149,17 +150,31 @@
     <ClInclude Include="src\Geometry\Sphere.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Geometry\Materials\Material.h">
+    <ClInclude Include="src\Geometry\Material.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\Random.cuh">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Geometry\Materials\MaterialManager.h">
+    <ClInclude Include="src\Cuda\AssetManager.cuh" />
+    <ClInclude Include="src\Cuda\BRDF.cuh" />
+    <ClInclude Include="src\Geometry\Triangle.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cuda\Material.cuh" />
-    <ClInclude Include="src\Cuda\BRDF.cuh" />
+    <ClInclude Include="src\Assets\OBJLoader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assets\AssetManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Geometry\Mesh.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cuda\CudaMemory.cuh" />
+    <ClInclude Include="src\Geometry\Medium.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cuda\BVH.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

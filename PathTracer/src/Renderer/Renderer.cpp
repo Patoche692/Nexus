@@ -1,7 +1,7 @@
 #include <gtc/type_ptr.hpp>
 #include "Renderer.h"
-#include "../Cuda/PathTracer.cuh"
-#include "../Utils/Utils.h"
+#include "Cuda/PathTracer.cuh"
+#include "Utils/Utils.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -58,7 +58,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 		m_FrameNumber = 0;
 	}
 
-	if (scene.GetMaterialManager().SendDataToDevice())
+	if (scene.GetAssetManager().SendDataToDevice())
 		m_FrameNumber = 0;
 
 
@@ -100,11 +100,11 @@ void Renderer::RenderUI(Scene& scene)
 
 	ImGui::Begin("Scene");
 
-	MaterialManager& materialManager = scene.GetMaterialManager();
+	AssetManager& assetManager = scene.GetAssetManager();
 	std::vector<Sphere>& spheres = scene.GetSpheres();
-	std::vector<Material>& materials = materialManager.GetMaterials();
-	std::string materialsString = materialManager.GetMaterialsString();
-	std::string materialTypes = materialManager.GetMaterialTypesString();
+	std::vector<Material>& materials = assetManager.GetMaterials();
+	std::string materialsString = assetManager.GetMaterialsString();
+	std::string materialTypes = assetManager.GetMaterialTypesString();
 
 	for (int i = 0; i < spheres.size(); i++)
 	{
@@ -129,7 +129,7 @@ void Renderer::RenderUI(Scene& scene)
 
 				if (ImGui::Combo("Type", &type, materialTypes.c_str()))
 				{
-					materialManager.Invalidate(sphere.materialId);
+					assetManager.InvalidateMaterial(sphere.materialId);
 				}
 
 				material.type = (Material::Type)type;
@@ -137,21 +137,21 @@ void Renderer::RenderUI(Scene& scene)
 				if (material.type == Material::Type::DIFFUSE)
 				{
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						materialManager.Invalidate(sphere.materialId);
+						assetManager.InvalidateMaterial(sphere.materialId);
 				}
-				else if (material.type == Material::Type::PLASTIC)
+				else if (material.type == Material::Type::METAL)
 				{
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						materialManager.Invalidate(sphere.materialId);
+						assetManager.InvalidateMaterial(sphere.materialId);
 					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-						materialManager.Invalidate(sphere.materialId);
+						assetManager.InvalidateMaterial(sphere.materialId);
 				}
 				else if (material.type == Material::Type::DIELECTRIC)
 				{
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-						materialManager.Invalidate(sphere.materialId);
-					if (ImGui::DragFloat("Refraction index", &material.dielectric.ir, 0.01f, 1.0f, 2.5f))
-						materialManager.Invalidate(sphere.materialId);
+						assetManager.InvalidateMaterial(sphere.materialId);
+					if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+						assetManager.InvalidateMaterial(sphere.materialId);
 				}
 				ImGui::TreePop();
 				ImGui::Spacing();
@@ -166,8 +166,8 @@ void Renderer::RenderUI(Scene& scene)
 
 	if (ImGui::Button("Add a sphere"))
 	{
-		materialManager.AddMaterial();
-		scene.AddSphere(materialManager.GetMaterials().size() - 1);
+		assetManager.AddMaterial();
+		scene.AddSphere(assetManager.GetMaterials().size() - 1);
 	}
 
 	ImGui::End();
