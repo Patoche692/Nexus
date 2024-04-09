@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
-#include "../Geometry/Material.h"
-#include "../Geometry/Mesh.h"
+#include "Geometry/Material.h"
+#include "Geometry/Mesh.h"
 
 
 void newDeviceMesh(Mesh& mesh, uint32_t size);

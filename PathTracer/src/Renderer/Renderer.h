@@ -4,10 +4,10 @@
 #include <cuda_runtime_api.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "../Camera.h"
-#include "../OpenGL/PixelBuffer.h"
-#include "../OpenGL/Texture.h"
-#include "../Scene.h"
+#include "Camera.h"
+#include "OpenGL/PixelBuffer.h"
+#include "OpenGL/Texture.h"
+#include "Scene.h"
 
 class Renderer
 {

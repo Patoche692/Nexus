@@ -1,7 +1,7 @@
 #include <gtc/type_ptr.hpp>
 #include "Renderer.h"
-#include "../Cuda/PathTracer.cuh"
-#include "../Utils/Utils.h"
+#include "Cuda/PathTracer.cuh"
+#include "Utils/Utils.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"

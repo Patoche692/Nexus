@@ -1,6 +1,6 @@
 #pragma once
 #include <cuda_runtime_api.h>
-#include "../Utils/cuda_math.h"
+#include "Utils/cuda_math.h"
 
 /**
  * Fast random number generator based on Ray Tracing Gems 2 book (cf page 169)

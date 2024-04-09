@@ -1,9 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include "../Geometry/Mesh.h"
-#include "../Cuda/AssetManager.cuh"
-#include "../Geometry/Material.h"
+#include "Geometry/Mesh.h"
+#include "Cuda/AssetManager.cuh"
+#include "Geometry/Material.h"
 
 class AssetManager
 {

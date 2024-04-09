@@ -2,7 +2,7 @@
 
 #include <cuda_runtime_api.h>
 #include "Random.cuh"
-#include "../Geometry/Material.h"
+#include "Geometry/Material.h"
 
 inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState)
 {

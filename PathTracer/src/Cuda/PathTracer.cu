@@ -1,9 +1,9 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
 #include "BRDF.cuh"
-#include "../Utils/cuda_math.h"
-#include "../Utils/Utils.h"
-#include "../Camera.h"
+#include "Utils/cuda_math.h"
+#include "Utils/Utils.h"
+#include "Camera.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;

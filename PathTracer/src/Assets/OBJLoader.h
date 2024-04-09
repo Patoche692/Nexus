@@ -4,7 +4,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "../Geometry/Triangle.h"
+#include "Geometry/Triangle.h"
 
 class OBJLoader
 {
