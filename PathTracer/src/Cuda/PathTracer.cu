@@ -27,7 +27,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentAttenuation = make_float3(1.0f);
 	const float russianRouProb = 0.7f;				// low number = earlier break up
 
-	for (int j = 0; j < 100; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		int closestTriangleIndex = -1;
 		int closestMeshIndex = -1;
@@ -55,8 +55,8 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
 
 			// Normal flipping
-			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-			//	hitResult.normal = -hitResult.normal;
+			if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+				hitResult.normal = -hitResult.normal;
 
 			hitResult.material = materials[closestMeshIndex];
 			float3 attenuation = make_float3(1.0f);
@@ -85,19 +85,23 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 					currentRay = scatterRay;
 				}
 				break;
+			case Material::Type::LIGHT:
+				return currentAttenuation * hitResult.material.light.emission;
+				break;
 			default:
 				break;
 			}
 
-			float randNr = Random::Rand(rngState);
-			if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
+			//float randNr = Random::Rand(rngState);
+			//if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
 
 		}
 		else
 		{
-			float3 unitDirection = normalize(currentRay.direction);
-			float t = 0.5 * (unitDirection.y + 1.0f);
-			return currentAttenuation * ((1.0 - t) * make_float3(1.0f) + t * make_float3(0.5f, 0.7f, 1.0f));
+			//float3 unitDirection = normalize(currentRay.direction);
+			//float t = 0.5 * (unitDirection.y + 1.0f);
+			//return currentAttenuation * ((1.0 - t) * make_float3(1.0f) + t * make_float3(0.5f, 0.7f, 1.0f));
+			return make_float3(0.0f, 0.0f, 0.0f);
 		}
 	}
 

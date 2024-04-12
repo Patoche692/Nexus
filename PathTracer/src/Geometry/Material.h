@@ -14,6 +14,9 @@ struct Material {
 
 	union {
 		struct {
+			float3 emission;
+		} light;
+		struct {
 			float3 albedo;
 		} diffuse;
 		struct {
