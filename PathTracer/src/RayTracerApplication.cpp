@@ -28,7 +28,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	material.diffuse.albedo = make_float3(0.73f, 0.73f, 0.73f);
 	assetManager.AddMaterial(material);
 	material.type = Material::Type::LIGHT;
-	material.light.emission = make_float3(6.0f, 6.0f, 6.0f);
+	material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
 	assetManager.AddMaterial(material);
 	material.type = Material::Type::DIFFUSE;
 	material.plastic.albedo = make_float3(0.5f, 0.0f, 0.5f);
