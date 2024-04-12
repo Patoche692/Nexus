@@ -13,7 +13,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	assetManager.AddMesh("assets/models/light.obj");
 	Material material;
 	material.type = Material::Type::DIFFUSE;
-	material.diffuse.albedo = make_float3(1.0f, 0.93f, 0.93f);
+	material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
 	assetManager.AddMaterial(material);
 	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.85f, 0.05f, 0.05f);
