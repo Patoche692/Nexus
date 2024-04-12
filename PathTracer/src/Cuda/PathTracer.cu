@@ -25,8 +25,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
 	float3 currentAttenuation = make_float3(1.0f);
+	const float russianRouProb = 0.7f;				// low number = earlier break up
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 100; j++)
 	{
 		int closestTriangleIndex = -1;
 		int closestMeshIndex = -1;
@@ -59,34 +60,38 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 			hitResult.material = materials[closestMeshIndex];
 			float3 attenuation = make_float3(1.0f);
-			Ray ray = currentRay;
+			Ray scatterRay = currentRay;
 			
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
-				if (diffuseScatter(hitResult, attenuation, ray, rngState))
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
-					currentRay = ray;
+					currentRay = scatterRay;
 				}
 				break;
 			case Material::Type::METAL:
-				if (plasticScattter(hitResult, attenuation, ray, rngState))
+				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
-					currentRay = ray;
+					currentRay = scatterRay;
 				}
 				break;
 			case Material::Type::DIELECTRIC:
-				if (dielectricScattter(hitResult, attenuation, ray, rngState))
+				if (dielectricScattter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
-					currentRay = ray;
+					currentRay = scatterRay;
 				}
 				break;
 			default:
 				break;
 			}
+
+			float randNr = Random::Rand(rngState);
+			if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
+
 		}
 		else
 		{
