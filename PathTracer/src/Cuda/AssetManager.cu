@@ -40,6 +40,26 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
 }
 
+__global__ void freeMeshesKernel(int meshesCount)
+{
+	for (int i = 0; i < meshesCount; i++)
+	{
+		free(meshes[i].triangles);
+	}
+	free(meshes);
+}
+
+void freeDeviceMeshes(int meshesCount)
+{
+	freeMeshesKernel<<<1, 1>>>(meshesCount);
+	checkCudaErrors(cudaDeviceSynchronize());
+}
+
+void freeDeviceMaterials()
+{
+	CudaMemory::Free(materials);
+}
+
 void changeDeviceMaterial(Material& m, uint32_t id)
 {
 	Material** materialsSymbolAddress;

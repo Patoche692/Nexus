@@ -9,6 +9,8 @@ AssetManager::AssetManager()
 
 AssetManager::~AssetManager()
 {
+	freeDeviceMaterials();
+	freeDeviceMeshes(m_Meshes.size());
 	for (Mesh& mesh : m_Meshes)
 	{
 		delete[] mesh.triangles;
