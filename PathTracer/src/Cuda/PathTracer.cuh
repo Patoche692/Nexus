@@ -21,9 +21,7 @@ struct CameraData
 
 struct SceneData
 {
-	unsigned int nSpheres;
 	unsigned int nMeshes;
-	Sphere spheres[MAX_SPHERES];
 };
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);

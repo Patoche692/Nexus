@@ -101,57 +101,56 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Begin("Scene");
 
 	AssetManager& assetManager = scene.GetAssetManager();
-	std::vector<Sphere>& spheres = scene.GetSpheres();
+	//std::vector<Sphere>& spheres = scene.GetSpheres();
 	std::vector<Material>& materials = assetManager.GetMaterials();
+	std::vector<Mesh>& meshes = assetManager.GetMeshes();
 	std::string materialsString = assetManager.GetMaterialsString();
 	std::string materialTypes = assetManager.GetMaterialTypesString();
 
-	for (int i = 0; i < spheres.size(); i++)
+	for (int i = 0; i < meshes.size(); i++)
 	{
-		Sphere& sphere = spheres[i];
+		Mesh& mesh = meshes[i];
 		ImGui::PushID(i);
 
 		//ImGui::ShowDemoWindow();
-		if (ImGui::CollapsingHeader("Sphere"))
+		if (ImGui::CollapsingHeader("Mesh"))
 		{
-			if (ImGui::DragFloat3("Position", (float*)&sphere.position, 0.1f, -10000.0f, 10000.0f))
-				scene.Invalidate();
-			if (ImGui::DragFloat("Radius", &sphere.radius, 0.02f, 0.01f, 10000.0f))
-				scene.Invalidate();
 
 			if (ImGui::TreeNode("Material"))
 			{
-				if (ImGui::Combo("Id", &sphere.materialId, materialsString.c_str()))
+				if (ImGui::Combo("Id", &mesh.materialId, materialsString.c_str()))
 					scene.Invalidate();
 
-				Material& material = materials[sphere.materialId];
+				Material& material = materials[mesh.materialId];
 				int type = (int)material.type;
 
 				if (ImGui::Combo("Type", &type, materialTypes.c_str()))
 				{
-					assetManager.InvalidateMaterial(sphere.materialId);
+					assetManager.InvalidateMaterial(mesh.materialId);
 				}
 
 				material.type = (Material::Type)type;
 
-				if (material.type == Material::Type::DIFFUSE)
+				switch (material.type)
 				{
+				case Material::Type::LIGHT:
+					if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+						assetManager.InvalidateMaterial(mesh.materialId);
+					break;
+				case Material::Type::DIFFUSE:
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(sphere.materialId);
-				}
-				else if (material.type == Material::Type::METAL)
-				{
+						assetManager.InvalidateMaterial(mesh.materialId);
+					break;
+				case Material::Type::METAL:
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(sphere.materialId);
-					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(sphere.materialId);
-				}
-				else if (material.type == Material::Type::DIELECTRIC)
-				{
+						assetManager.InvalidateMaterial(mesh.materialId);
+					break;
+				case Material::Type::DIELECTRIC:
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(sphere.materialId);
+						assetManager.InvalidateMaterial(mesh.materialId);
 					if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-						assetManager.InvalidateMaterial(sphere.materialId);
+						assetManager.InvalidateMaterial(mesh.materialId);
+					break;
 				}
 				ImGui::TreePop();
 				ImGui::Spacing();
@@ -163,12 +162,6 @@ void Renderer::RenderUI(Scene& scene)
 
 	ImGui::Spacing();
 	ImGui::Separator();
-
-	if (ImGui::Button("Add a sphere"))
-	{
-		assetManager.AddMaterial();
-		scene.AddSphere(assetManager.GetMaterials().size() - 1);
-	}
 
 	ImGui::End();
 

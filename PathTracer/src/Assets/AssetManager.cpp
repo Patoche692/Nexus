@@ -15,7 +15,7 @@ AssetManager::~AssetManager()
 	}
 }
 
-void AssetManager::AddMesh(const std::string& filename)
+void AssetManager::AddMesh(const std::string& filename, int materialId)
 {
 	Mesh mesh;
 	std::vector<Triangle> triangles = OBJLoader::LoadOBJ(filename);
@@ -26,13 +26,24 @@ void AssetManager::AddMesh(const std::string& filename)
 	mesh.triangles = ptr;
 	mesh.nTriangles = triangles.size();
 
+	if (materialId != -1)
+		mesh.materialId = materialId;
+
 	m_Meshes.push_back(mesh);
 	newDeviceMesh(mesh, m_Meshes.size());
 }
 
 void AssetManager::InvalidateMesh(uint32_t index)
 {
-	m_InvalidMeshes.push_back(index);
+	m_InvalidMeshes.insert(index);
+}
+
+void AssetManager::InvalidateMeshes()
+{
+	for (int i = 0; i < m_Meshes.size(); i++)
+	{
+		m_InvalidMeshes.insert(i);
+	}
 }
 
 void AssetManager::AddMaterial()
@@ -52,7 +63,7 @@ void AssetManager::AddMaterial(const Material& material)
 
 void AssetManager::InvalidateMaterial(uint32_t index)
 {
-	m_InvalidMaterials.push_back(index);
+	m_InvalidMaterials.insert(index);
 }
 
 std::string AssetManager::GetMaterialsString()

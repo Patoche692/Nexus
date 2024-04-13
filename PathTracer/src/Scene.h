@@ -14,13 +14,9 @@ public:
 	bool IsInvalid() const { return m_Invalid; }
 	void Invalidate() { m_Invalid = true; }
 
-	std::vector<Sphere>& GetSpheres() { return m_Spheres; }
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; }
 
-	void AddSphere();
-	void AddSphere(Sphere sphere);
-	void AddSphere(int materialId);
-	void AddMaterial(Material* material);
+	void AddMaterial(Material& material);
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	void AddMesh(const std::string& filename) { m_AssetManager.AddMesh(filename); }
@@ -30,7 +26,6 @@ public:
 private:
 	bool m_Invalid = true;
 	std::shared_ptr<Camera> m_Camera;
-	std::vector<Sphere> m_Spheres;
 
 	AssetManager m_AssetManager;
 };

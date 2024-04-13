@@ -58,7 +58,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 				hitResult.normal = -hitResult.normal;
 
-			hitResult.material = materials[closestMeshIndex];
+			hitResult.material = materials[meshes[closestMeshIndex].materialId];
 			float3 attenuation = make_float3(1.0f);
 			Ray scatterRay = currentRay;
 			
@@ -98,9 +98,6 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		}
 		else
 		{
-			//float3 unitDirection = normalize(currentRay.direction);
-			//float t = 0.5 * (unitDirection.y + 1.0f);
-			//return currentAttenuation * ((1.0 - t) * make_float3(1.0f) + t * make_float3(0.5f, 0.7f, 1.0f));
 			return make_float3(0.0f, 0.0f, 0.0f);
 		}
 	}
@@ -202,15 +199,8 @@ void SendCameraDataToDevice(Camera* camera)
 void SendSceneDataToDevice(Scene* scene)
 {
 	SceneData data;
-	std::vector<Sphere> spheres = scene->GetSpheres();
-	data.nSpheres = spheres.size();
 	data.nMeshes = scene->GetAssetManager().GetMeshes().size();
-	for (int i = 0; i < spheres.size(); i++)
-	{
-		data.spheres[i] = spheres[i];
-	}
 	// TODO: change the size of copy
-	size_t size = sizeof(unsigned int) + sizeof(Sphere) * data.nSpheres;
 	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(SceneData)));
 }
 

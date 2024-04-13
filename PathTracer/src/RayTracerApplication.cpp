@@ -5,12 +5,12 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 {
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
-	assetManager.AddMesh("assets/models/box_grey_faces.obj");
-	assetManager.AddMesh("assets/models/box_red_face.obj");
-	assetManager.AddMesh("assets/models/box_green_face.obj");
-	assetManager.AddMesh("assets/models/cube.obj");
-	assetManager.AddMesh("assets/models/cube2.obj");
-	assetManager.AddMesh("assets/models/light.obj");
+	assetManager.AddMesh("assets/models/box_grey_faces.obj", 0);
+	assetManager.AddMesh("assets/models/box_red_face.obj", 1);
+	assetManager.AddMesh("assets/models/box_green_face.obj", 2);
+	assetManager.AddMesh("assets/models/cube.obj", 3);
+	assetManager.AddMesh("assets/models/cube2.obj", 4);
+	assetManager.AddMesh("assets/models/light.obj", 5);
 	Material material;
 	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
@@ -30,50 +30,6 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	material.type = Material::Type::LIGHT;
 	material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
 	assetManager.AddMaterial(material);
-	material.type = Material::Type::DIFFUSE;
-	material.plastic.albedo = make_float3(0.5f, 0.0f, 0.5f);
-	material.plastic.roughness = 0.5f;
-	assetManager.AddMaterial(material);
-	material.type = Material::Type::METAL;
-	material.plastic.albedo = make_float3(1.0f, 1.0f, 1.0f);
-	material.plastic.roughness = 0.2f;
-	assetManager.AddMaterial(material);
-
-	Sphere sphere = {
-		1000.0f,
-		make_float3(0.0f, -1000.0f, 0.0f),
-		0
-	};
-	m_Scene.AddSphere(sphere);
-
-	sphere = {
-		0.9f,
-		make_float3(0.0f, 0.9f, 0.0f),
-		1
-	};
-	m_Scene.AddSphere(sphere);
-
-	sphere = {
-		0.62f,
-		make_float3(1.4f, 0.5f, 0.0f),
-		2
-	};
-	m_Scene.AddSphere(sphere);
-
-	sphere = {
-		0.5f,
-		make_float3(-1.4f, 0.5f, 0.0f),
-		3
-	};
-	m_Scene.AddSphere(sphere);
-
-	sphere = {
-		0.5f,
-		make_float3(0.0f, 0.5f, 1.4f),
-		4
-	};
-	m_Scene.AddSphere(sphere);
-
 }
 
 void RayTracerApplication::Update(float deltaTime)

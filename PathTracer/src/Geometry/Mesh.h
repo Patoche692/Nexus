@@ -9,7 +9,7 @@ struct Mesh
 {
 	__host__ __device__ Mesh() = default;
 
-	Triangle* triangles;
-	uint32_t nTriangles;
-	uint32_t materialId;
+	Triangle* triangles = nullptr;
+	uint32_t nTriangles = 0;
+	int materialId = -1;
 };
