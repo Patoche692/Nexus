@@ -41,11 +41,11 @@ private:
 	void UpdateNodeBounds(uint32_t nodeIdx);
 	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
 
-	Triangle* m_Triangles = nullptr;
-	uint32_t* m_TriangleIdx = nullptr;
-	uint32_t m_NodesUsed, m_TriCount;
-
 public:
+	Triangle* triangles = nullptr;
+	uint32_t* triangleIdx = nullptr;
+	uint32_t nodesUsed, triCount;
+
 	BVHNode* nodes = nullptr;
 
 	// Ray intersection (executed on the GPU)
@@ -59,7 +59,7 @@ public:
 			if (node->IsLeaf())
 			{
 				for (uint32_t i = 0; i < node->triCount; i++)
-					m_Triangles[i].Hit(ray, instanceIdx, m_TriangleIdx[i]);
+					triangles[i].Hit(ray, instanceIdx, triangleIdx[i]);
 
 				if (stackPtr == 0)
 					break;

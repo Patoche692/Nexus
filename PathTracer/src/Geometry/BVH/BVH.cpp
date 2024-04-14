@@ -2,28 +2,28 @@
 #include "Geometry/AABB.h"
 #include "Utils/Utils.h"
 
-BVH::BVH(std::vector<Triangle> triangles)
+BVH::BVH(std::vector<Triangle> tri)
 {
-	m_TriCount = triangles.size();
-	m_Triangles = new Triangle[m_TriCount];
-	nodes = new BVHNode[2 * m_TriCount];
-	m_TriangleIdx = new uint32_t[m_TriCount];
+	triCount = tri.size();
+	triangles = new Triangle[triCount];
+	nodes = new BVHNode[2 * triCount];
+	triangleIdx = new uint32_t[triCount];
 
-	memcpy(m_Triangles, triangles.data(), m_TriCount * sizeof(Triangle));
+	memcpy(triangles, tri.data(), triCount * sizeof(Triangle));
 
 	Build();
 }
 
 void BVH::Build()
 {
-	m_NodesUsed = 2;
+	nodesUsed = 2;
 
-	for (uint32_t i = 0; i < m_TriCount; i++)
-		m_TriangleIdx[i] = i;
+	for (uint32_t i = 0; i < triCount; i++)
+		triangleIdx[i] = i;
 
 	BVHNode& root = nodes[0];
 	root.leftNode = 0;
-	root.triCount = m_TriCount;
+	root.triCount = triCount;
 
 	UpdateNodeBounds(0);
 	Subdivide(0);
@@ -45,19 +45,19 @@ void BVH::Subdivide(uint32_t nodeIdx)
 
 	while (i <= j)
 	{
-		float centroidCoord = *((float*)&m_Triangles[m_TriangleIdx[i]].centroid + axis);
+		float centroidCoord = *((float*)&triangles[triangleIdx[i]].centroid + axis);
 		if (centroidCoord < splitPos)
 			i++;
 		else
-			Utils::Swap(m_TriangleIdx[i], m_TriangleIdx[j--]);
+			Utils::Swap(triangleIdx[i], triangleIdx[j--]);
 	}
 	
 	int leftCount = i - node.firstTriIdx;
 	if (leftCount == 0 || leftCount == node.triCount)
 		return;
 
-	int leftChildIdx = m_NodesUsed++;
-	int rightChildIdx = m_NodesUsed++;
+	int leftChildIdx = nodesUsed++;
+	int rightChildIdx = nodesUsed++;
 
 	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
 	nodes[leftChildIdx].triCount = leftCount;
@@ -80,8 +80,8 @@ void BVH::UpdateNodeBounds(uint32_t nodeIdx)
 	node.aabbMax = make_float3(-1e30f);
 	for (uint32_t first = node.firstTriIdx, i = 0; i < node.triCount; i++)
 	{
-		uint32_t leafTriIdx = m_TriangleIdx[first + i];
-		Triangle& leafTri = m_Triangles[leafTriIdx];
+		uint32_t leafTriIdx = triangleIdx[first + i];
+		Triangle& leafTri = triangles[leafTriIdx];
 		node.aabbMin = fminf(node.aabbMin, leafTri.pos0);
 		node.aabbMin = fminf(node.aabbMin, leafTri.pos1);
 		node.aabbMin = fminf(node.aabbMin, leafTri.pos2);
@@ -99,7 +99,7 @@ float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 		float boundsMin = 1e30f, boundsMax = -1e30f;
 		for (uint32_t i = 0; i < node.triCount; i++)
 		{
-			Triangle& triangle = m_Triangles[m_TriangleIdx[node.firstTriIdx + i]];
+			Triangle& triangle = triangles[triangleIdx[node.firstTriIdx + i]];
 			boundsMin = fmin(boundsMin, *((float*)&triangle.centroid + a));
 			boundsMax = fmax(boundsMax, *((float*)&triangle.centroid + a));
 		}
@@ -111,7 +111,7 @@ float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 
 		for (uint32_t i = 0; i < node.triCount; i++)
 		{
-			Triangle& triangle = m_Triangles[m_TriangleIdx[node.firstTriIdx + i]];
+			Triangle& triangle = triangles[triangleIdx[node.firstTriIdx + i]];
 			float centroidCoord = *((float*)&triangle.centroid + a);
 			int binIdx = min((int)(BINS - 1), (int)((centroidCoord - boundsMin) * scale));
 			bins[binIdx].triCount++;

@@ -16,7 +16,7 @@ struct TLASNode
 class TLAS
 {
 public:
-	TLAS() {};
+	TLAS() = default;
 	TLAS(BVHInstance* bvhList, int N);
 	void Build();
 
