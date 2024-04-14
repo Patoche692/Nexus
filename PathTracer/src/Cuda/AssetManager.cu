@@ -47,6 +47,7 @@ __global__ void freeMeshesKernel(int meshesCount)
 		free(meshes[i].triangles);
 	}
 	free(meshes);
+	printf("%d", sizeof(Triangle));
 }
 
 void freeDeviceMeshes(int meshesCount)

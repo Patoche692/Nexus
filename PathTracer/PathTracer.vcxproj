@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="src\Assets\AssetManager.cpp" />
     <ClCompile Include="src\Assets\OBJLoader.cpp" />
+    <ClCompile Include="src\Geometry\BVH\TLAS.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL\PixelBuffer.cpp" />
@@ -175,7 +176,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="src\Cuda\BVH.cu" />
+    <CudaCompile Include="src\Geometry\BVH\BVH.c" />
     <CudaCompile Include="src\Cuda\PathTracer.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -186,9 +187,11 @@
     <ClInclude Include="src\Assets\OBJLoader.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\AssetManager.cuh" />
-    <ClInclude Include="src\Cuda\BVH.cuh" />
+    <ClInclude Include="src\Geometry\AABB.h" />
+    <ClInclude Include="src\Geometry\BVH\BVH.h" />
     <ClInclude Include="src\Cuda\CudaMemory.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
+    <ClInclude Include="src\Geometry\BVH\TLAS.h" />
     <ClInclude Include="src\Geometry\Material.h" />
     <ClInclude Include="src\Geometry\Medium.h" />
     <ClInclude Include="src\Geometry\Mesh.h" />

@@ -72,11 +72,14 @@
     <ClCompile Include="src\Assets\AssetManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Geometry\BVH\TLAS.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
     <CudaCompile Include="src\Cuda\AssetManager.cu" />
-    <CudaCompile Include="src\Cuda\BVH.cu" />
+    <CudaCompile Include="src\Geometry\BVH\BVH.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -174,7 +177,13 @@
     <ClInclude Include="src\Geometry\Medium.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cuda\BVH.cuh" />
+    <ClInclude Include="src\Geometry\BVH\BVH.h" />
+    <ClInclude Include="src\Geometry\BVH\TLAS.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Geometry\AABB.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
