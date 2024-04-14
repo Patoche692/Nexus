@@ -148,8 +148,10 @@
   <ItemGroup>
     <ClCompile Include="src\Assets\AssetManager.cpp" />
     <ClCompile Include="src\Assets\OBJLoader.cpp" />
+    <ClCompile Include="src\Geometry\BVH\BVHInstance.cpp" />
     <ClCompile Include="src\Geometry\BVH\TLAS.cpp" />
     <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\Math\Mat4.cpp" />
     <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL\PixelBuffer.cpp" />
     <ClCompile Include="src\OpenGL\Texture.cpp" />

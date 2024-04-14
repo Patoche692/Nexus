@@ -36,3 +36,5 @@ struct Ray
 
 	inline __host__ __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
 };
+
+

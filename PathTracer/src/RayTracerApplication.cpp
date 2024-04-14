@@ -11,6 +11,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	assetManager.AddMesh("assets/models/cube.obj", 3);
 	assetManager.AddMesh("assets/models/cube2.obj", 4);
 	assetManager.AddMesh("assets/models/light.obj", 5);
+	assetManager.BuildTLAS();
 	Material material;
 	material.type = Material::Type::DIFFUSE;
 	material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);

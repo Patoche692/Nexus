@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/cuda_math.h"
+#include "Ray.h"
 
 struct AABB
 {
@@ -22,7 +23,7 @@ struct AABB
 	}
 
 	// Return the area of three faces (thus the actual aabb area divided by 2,
-	// it just avoids an unnecessary multiplication for the surface area heuristic)
+	// it avoids an unnecessary multiplication for the surface area heuristic)
 	float Area()
 	{
 		float3 diff = bMax - bMin;
@@ -37,7 +38,7 @@ struct AABB
 		tmin = max(tmin, min(ty1, ty2)), tmax = min(tmax, max(ty1, ty2));
 		float tz1 = (bMin.z - ray.origin.z) * ray.invDirection.z, tz2 = (bMax.z - ray.origin.z) * ray.invDirection.z;
 		tmin = max(tmin, min(tz1, tz2)), tmax = min(tmax, max(tz1, tz2));
-		if (tmax >= tmin && tmin < ray.t && tmax > 0) return tmin; else return 1e30f;
+		if (tmax >= tmin && tmin < ray.hit.t && tmax > 0) return tmin; else return 1e30f;
 	}
 };
 
