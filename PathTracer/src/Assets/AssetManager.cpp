@@ -33,6 +33,11 @@ void AssetManager::AddMesh(const std::string& filename, int materialId)
 
 	m_Meshes.push_back(mesh);
 	newDeviceMesh(mesh, m_Meshes.size());
+
+	BVH bvh(triangles);
+	m_Blas.push_back(bvh);
+	BVHInstance instance(&m_Blas[m_Blas.size() - 1]);
+	m_BVHInstances.push_back(instance);
 }
 
 void AssetManager::InvalidateMesh(uint32_t index)
@@ -78,6 +83,11 @@ std::string AssetManager::GetMaterialsString()
 		materialsString.push_back('\0');
 	}
 	return materialsString;
+}
+
+void AssetManager::BuildTLAS()
+{
+	m_Tlas = TLAS(m_BVHInstances.data(), m_Blas.size());
 }
 
 std::string AssetManager::GetMaterialTypesString()

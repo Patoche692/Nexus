@@ -4,11 +4,13 @@
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
+#include "Geometry/BVH/TLAS.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Mesh* meshes;
+extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {
@@ -38,12 +40,12 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		{
 			for (int k = 0; k < meshes[i].nTriangles; k++)
 			{
-				if (meshes[i].triangles[k].Hit(currentRay, t) && t < hitDistance)
-				{
-					hitDistance = t;
-					closestTriangleIndex = k;
-					closestMeshIndex = i;
-				}
+				meshes[i].triangles[k].Hit(currentRay, 0, 0);
+				//{
+				//	hitDistance = t;
+				//	closestTriangleIndex = k;
+				//	closestMeshIndex = i;
+				//}
 			}
 		}
 

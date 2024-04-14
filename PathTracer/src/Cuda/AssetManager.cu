@@ -5,9 +5,13 @@
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
+#include "Geometry/BVH/BVH.h"
+#include "Geometry/BVH/BVHInstance.h"
+#include "Geometry/BVH/TLAS.h"
 
 __constant__ __device__ Material* materials;
 __constant__ __device__ Mesh* meshes;
+__constant__ __device__ TLAS tlas;
 
 
 void newDeviceMesh(Mesh& mesh, uint32_t size)
@@ -47,7 +51,6 @@ __global__ void freeMeshesKernel(int meshesCount)
 		free(meshes[i].triangles);
 	}
 	free(meshes);
-	printf("%d", sizeof(Triangle));
 }
 
 void freeDeviceMeshes(int meshesCount)
