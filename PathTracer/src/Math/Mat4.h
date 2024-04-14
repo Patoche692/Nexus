@@ -24,12 +24,12 @@ public:
 		return *this;
 	}
 
-	inline __host__ __device__ bool operator==( const Mat4& m )
+	inline __host__ __device__ bool operator==(const Mat4& m)
 	{
 		for (int i = 0; i < 16; i++) if (m.cell[i] != cell[i]) return false; return true;
 	}
 
-	inline __host__ __device__ float3 GetTranslation() const { return make_float3( cell[3], cell[7], cell[11] ); }
+	inline __host__ __device__ float3 GetTranslation() const { return make_float3(cell[3], cell[7], cell[11]); }
 
 	inline __host__ __device__ static Mat4 FromColumnMajor(const Mat4& T)
 	{
@@ -43,23 +43,23 @@ public:
 
 	inline __host__ __device__ constexpr static Mat4 Identity() { return Mat4{}; }
 
-	inline __host__ __device__ static Mat4 ZeroMatrix() { Mat4 r; memset( r.cell, 0, 64 ); return r; }
+	inline __host__ __device__ static Mat4 ZeroMatrix() { Mat4 r; memset(r.cell, 0, 64); return r; }
 
-	inline __host__ __device__ static Mat4 RotateX( const float a ) { Mat4 r; r.cell[5] = cosf( a ); r.cell[6] = -sinf( a ); r.cell[9] = sinf( a ); r.cell[10] = cosf( a ); return r; };
+	inline __host__ __device__ static Mat4 RotateX(const float a) { Mat4 r; r.cell[5] = cosf(a); r.cell[6] = -sinf(a); r.cell[9] = sinf(a); r.cell[10] = cosf(a); return r; };
 
-	inline __host__ __device__ static Mat4 RotateY( const float a ) { Mat4 r; r.cell[0] = cosf( a ); r.cell[2] = sinf( a ); r.cell[8] = -sinf( a ); r.cell[10] = cosf( a ); return r; };
+	inline __host__ __device__ static Mat4 RotateY(const float a) { Mat4 r; r.cell[0] = cosf(a); r.cell[2] = sinf(a); r.cell[8] = -sinf(a); r.cell[10] = cosf(a); return r; };
 
-	inline __host__ __device__ static Mat4 RotateZ( const float a ) { Mat4 r; r.cell[0] = cosf( a ); r.cell[1] = -sinf( a ); r.cell[4] = sinf( a ); r.cell[5] = cosf( a ); return r; };
+	inline __host__ __device__ static Mat4 RotateZ(const float a) { Mat4 r; r.cell[0] = cosf(a); r.cell[1] = -sinf(a); r.cell[4] = sinf(a); r.cell[5] = cosf(a); return r; };
 
-	inline __host__ __device__ static Mat4 Scale( const float s ) { Mat4 r; r.cell[0] = r.cell[5] = r.cell[10] = s; return r; }
+	inline __host__ __device__ static Mat4 Scale(const float s) { Mat4 r; r.cell[0] = r.cell[5] = r.cell[10] = s; return r; }
 
-	inline __host__ __device__ static Mat4 Scale( const float3 s ) { Mat4 r; r.cell[0] = s.x, r.cell[5] = s.y, r.cell[10] = s.z; return r; }
+	inline __host__ __device__ static Mat4 Scale(const float3 s) { Mat4 r; r.cell[0] = s.x, r.cell[5] = s.y, r.cell[10] = s.z; return r; }
 
-	inline __host__ __device__ static Mat4 Scale( const float4 s ) { Mat4 r; r.cell[0] = s.x, r.cell[5] = s.y, r.cell[10] = s.z, r.cell[15] = s.w; return r; }
+	inline __host__ __device__ static Mat4 Scale(const float4 s) { Mat4 r; r.cell[0] = s.x, r.cell[5] = s.y, r.cell[10] = s.z, r.cell[15] = s.w; return r; }
 
-	inline __host__ __device__ static Mat4 Rotate( const float3& u, const float a ) { return Rotate( u.x, u.y, u.z, a ); }
+	inline __host__ __device__ static Mat4 Rotate(const float3& u, const float a) { return Rotate(u.x, u.y, u.z, a); }
 
-	inline __host__ __device__ static Mat4 Rotate( const float x, const float y, const float z, const float a )
+	inline __host__ __device__ static Mat4 Rotate(const float x, const float y, const float z, const float a)
 	{
 		const float c = cosf( a ), l_c = 1 - c, s = sinf( a );
 		// row major
@@ -71,7 +71,7 @@ public:
 		return m;
 	}
 
-	inline __host__ __device__ static Mat4 LookAt( const float3 P, const float3 T )
+	inline __host__ __device__ static Mat4 LookAt(const float3 P, const float3 T)
 	{
 		const float3 z = normalize( T - P );
 		const float3 x = normalize( cross( z, make_float3( 0, 1, 0 ) ) );
@@ -83,7 +83,7 @@ public:
 		return M;
 	}
 
-	inline __host__ __device__ static Mat4 LookAt( const float3& pos, const float3& look, const float3& up )
+	inline __host__ __device__ static Mat4 LookAt(const float3& pos, const float3& look, const float3& up)
 	{
 		// PBRT's lookat
 		Mat4 cameraToWorld;
@@ -116,9 +116,9 @@ public:
 		return cameraToWorld.Inverted();
 	}
 
-	inline __host__ __device__ static Mat4 Translate( const float x, const float y, const float z ) { Mat4 r; r.cell[3] = x; r.cell[7] = y; r.cell[11] = z; return r; };
+	inline __host__ __device__ static Mat4 Translate(const float x, const float y, const float z) { Mat4 r; r.cell[3] = x; r.cell[7] = y; r.cell[11] = z; return r; };
 
-	inline __host__ __device__ static Mat4 Translate( const float3 P ) { Mat4 r; r.cell[3] = P.x; r.cell[7] = P.y; r.cell[11] = P.z; return r; };
+	inline __host__ __device__ static Mat4 Translate(const float3 P) { Mat4 r; r.cell[3] = P.x; r.cell[7] = P.y; r.cell[11] = P.z; return r; };
 
 	inline __host__ __device__ float Trace3() const { return cell[0] + cell[5] + cell[10]; }
 
@@ -197,14 +197,14 @@ public:
 		return R;
 	}
 
-	inline __host__ __device__ inline float3 TransformVector( const float3& v ) const
+	inline __host__ __device__ inline float3 TransformVector(const float3& v) const
 	{
 		return make_float3( cell[0] * v.x + cell[1] * v.y + cell[2] * v.z,
 			cell[4] * v.x + cell[5] * v.y + cell[6] * v.z,
 			cell[8] * v.x + cell[9] * v.y + cell[10] * v.z );
 	}
 
-	inline __host__ __device__ inline float3 TransformPoint( const float3& v ) const
+	inline __host__ __device__ inline float3 TransformPoint(const float3& v) const
 	{
 		const float3 res = make_float3(
 			cell[0] * v.x + cell[1] * v.y + cell[2] * v.z + cell[3],
@@ -225,5 +225,5 @@ inline __host__ __device__ bool operator != (const Mat4& a, const Mat4& b);
 inline __host__ __device__ float4 operator * (const Mat4& a, const float4& b);
 inline __host__ __device__ float4 operator * (const float4& a, const Mat4& b);
 
-inline __host__ __device__ float3 TransformPosition( const float3& a, const Mat4& M );
-inline __host__ __device__ float3 TransformVector( const float3& a, const Mat4& M );
+float3 TransformPosition(const float3& a, const Mat4& M);
+float3 TransformVector(const float3& a, const Mat4& M);
