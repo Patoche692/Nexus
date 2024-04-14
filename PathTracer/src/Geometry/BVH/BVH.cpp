@@ -1,5 +1,6 @@
 #include "BVH.h"
 #include "Geometry/AABB.h"
+#include "Utils/Utils.h"
 
 BVH::BVH(std::vector<Triangle> triangles)
 {
@@ -48,7 +49,7 @@ void BVH::Subdivide(uint32_t nodeIdx)
 		if (centroidCoord < splitPos)
 			i++;
 		else
-			Swap(m_TriangleIdx[i], m_TriangleIdx[j--]);
+			Utils::Swap(m_TriangleIdx[i], m_TriangleIdx[j--]);
 	}
 	
 	int leftCount = i - node.firstTriIdx;
@@ -100,7 +101,7 @@ float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 		{
 			Triangle& triangle = m_Triangles[m_TriangleIdx[node.firstTriIdx + i]];
 			boundsMin = fmin(boundsMin, *((float*)&triangle.centroid + a));
-			boundsMin = fmin(boundsMin, *((float*)&triangle.centroid + a));
+			boundsMax = fmax(boundsMax, *((float*)&triangle.centroid + a));
 		}
 		if (boundsMin == boundsMax)
 			continue;
@@ -112,7 +113,7 @@ float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 		{
 			Triangle& triangle = m_Triangles[m_TriangleIdx[node.firstTriIdx + i]];
 			float centroidCoord = *((float*)&triangle.centroid + a);
-			int binIdx = min(BINS - 1, (int)(centroidCoord - boundsMin) * scale);
+			int binIdx = min((int)(BINS - 1), (int)((centroidCoord - boundsMin) * scale));
 			bins[binIdx].triCount++;
 			bins[binIdx].bounds.Grow(triangle.pos0);
 			bins[binIdx].bounds.Grow(triangle.pos1);

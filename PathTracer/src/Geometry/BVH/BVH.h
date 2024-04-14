@@ -1,4 +1,6 @@
 #pragma once
+#include "Utils/Utils.h"
+#include "Geometry/AABB.h"
 #include "Geometry/Mesh.h"
 #include "Geometry/Ray.h"
 
@@ -73,8 +75,8 @@ public:
 
 			if (dist1 > dist2)
 			{
-				Swap(dist1, dist2);
-				Swap(child1, child2);
+				Utils::Swap(dist1, dist2);
+				Utils::Swap(child1, child2);
 			}
 			
 			if (dist1 == 1e30f)
@@ -92,13 +94,6 @@ public:
 			}
 
 		}
-	}
-
-	template<typename T>
-	inline __host__ __device__ void Swap(T& a, T& b) {
-		T c = a;
-		a = b;
-		b = c;
 	}
 };
 
