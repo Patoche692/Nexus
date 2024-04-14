@@ -35,7 +35,7 @@ public:
 		ray.invDirection = 1 / ray.direction;
 
 		TLASNode* node = &nodes[0], * stack[32];
-		uint32_t stackPtr;
+		uint32_t stackPtr = 0;
 
 		while (1)
 		{

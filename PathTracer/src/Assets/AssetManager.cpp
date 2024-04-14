@@ -15,6 +15,8 @@ AssetManager::~AssetManager()
 	{
 		delete[] mesh.triangles;
 	}
+	for (BVH* bvh : m_Blas)
+		delete bvh;
 }
 
 void AssetManager::AddMesh(const std::string& filename, int materialId)
@@ -34,9 +36,9 @@ void AssetManager::AddMesh(const std::string& filename, int materialId)
 	m_Meshes.push_back(mesh);
 	newDeviceMesh(mesh, m_Meshes.size());
 
-	BVH bvh(triangles);
+	BVH* bvh = new BVH(triangles);
 	m_Blas.push_back(bvh);
-	BVHInstance instance(&m_Blas[m_Blas.size() - 1]);
+	BVHInstance instance(m_Blas[m_Blas.size() - 1]);
 	m_BVHInstances.push_back(instance);
 }
 
@@ -88,6 +90,7 @@ std::string AssetManager::GetMaterialsString()
 void AssetManager::BuildTLAS()
 {
 	m_Tlas = TLAS(m_BVHInstances.data(), m_Blas.size());
+	CopyTLASData(m_Tlas);
 }
 
 std::string AssetManager::GetMaterialTypesString()

@@ -6,9 +6,6 @@
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
-#include "Geometry/BVH/BVH.h"
-#include "Geometry/BVH/BVHInstance.h"
-#include "Geometry/BVH/TLAS.h"
 
 __constant__ __device__ Material* materials;
 __constant__ __device__ Mesh* meshes;

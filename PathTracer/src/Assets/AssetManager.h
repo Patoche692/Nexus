@@ -35,7 +35,7 @@ private:
 	std::set<uint32_t> m_InvalidMeshes;
 	std::vector<Material> m_Materials;
 	std::set<uint32_t> m_InvalidMaterials;
-	std::vector<BVH> m_Blas;
+	std::vector<BVH*> m_Blas;
 	std::vector<BVHInstance> m_BVHInstances;
 	std::set<uint32_t> m_InvalidInstances;
 	TLAS m_Tlas;
