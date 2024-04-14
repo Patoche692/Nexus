@@ -32,11 +32,3 @@ struct Material {
 	Type type;
 };
 
-struct HitResult
-{
-	float3 p;
-	Ray rIn;
-	float3 normal;
-	Material material;
-};
-

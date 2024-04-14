@@ -79,7 +79,7 @@
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
     <CudaCompile Include="src\Cuda\AssetManager.cu" />
-    <CudaCompile Include="src\Geometry\BVH\BVH.c" />
+    <CudaCompile Include="src\Geometry\BVH\BVH.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utils\Utils.h">
@@ -182,6 +182,12 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Geometry\AABB.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Geometry\BVH\BVHInstance.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Math\Mat4.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

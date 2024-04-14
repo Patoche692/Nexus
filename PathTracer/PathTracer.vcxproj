@@ -176,7 +176,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="src\Geometry\BVH\BVH.c" />
+    <CudaCompile Include="src\Geometry\BVH\BVH.cpp" />
     <CudaCompile Include="src\Cuda\PathTracer.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -191,6 +191,7 @@
     <ClInclude Include="src\Geometry\BVH\BVH.h" />
     <ClInclude Include="src\Cuda\CudaMemory.cuh" />
     <ClInclude Include="src\Cuda\Random.cuh" />
+    <ClInclude Include="src\Geometry\BVH\BVHInstance.h" />
     <ClInclude Include="src\Geometry\BVH\TLAS.h" />
     <ClInclude Include="src\Geometry\Material.h" />
     <ClInclude Include="src\Geometry\Medium.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="src\Geometry\Triangle.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Math\Mat4.h" />
     <ClInclude Include="src\OpenGL\Framebuffer.h" />
     <ClInclude Include="src\OpenGL\PixelBuffer.h" />
     <ClInclude Include="src\OpenGL\Texture.h" />
