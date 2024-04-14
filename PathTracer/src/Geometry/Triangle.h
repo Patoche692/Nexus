@@ -2,6 +2,7 @@
 #include "Utils/cuda_math.h"
 #include "Material.h"
 
+
 struct Triangle
 {
 	// Positions
@@ -33,7 +34,7 @@ struct Triangle
 
 	// Möller-Trumbore intersection algorithm. See https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
-	inline __host__ __device__ bool Hit(const Ray& r, float& t)
+	inline __host__ __device__ void Hit(Ray& r, const uint32_t instIdx, const uint32_t primIdx)
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
@@ -41,8 +42,8 @@ struct Triangle
 		float3 rayCrossEdge1 = cross(r.direction, edge1);
 		float det = dot(edge0, rayCrossEdge1);
 
-		if (det < 1.0e-6 && det > -1.0e-6)
-			return false;
+		if (det < 1.0e-5 && det > -1.0e-5)
+			return;
 
 		float invDet = 1.0f / det;
 
@@ -51,20 +52,24 @@ struct Triangle
 		float u = invDet * dot(s, rayCrossEdge1);
 
 		if (u < 0.0f || u > 1.0f)
-			return false;
+			return;
 
-		float3 sCrossEdge0 = cross(s, edge0);
-		float v = invDet * dot(r.direction, sCrossEdge0);
+		const float3 sCrossEdge0 = cross(s, edge0);
+		const float v = invDet * dot(r.direction, sCrossEdge0);
 
 		if (v < 0.0f || u + v > 1.0f)
-			return false;
+			return;
 
-		t = invDet * dot(edge1, sCrossEdge0);
+		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0f)
-			return true;
-
-		return false;
+		if (t > 0.0001f && t < r.hit.t)
+		{
+			r.hit.t = t;
+			r.hit.u = u;
+			r.hit.v = v;
+			r.hit.instanceIdx = instIdx;
+			r.hit.triIdx = primIdx;
+		}
 	}
 
 	inline __host__ __device__ float3 Normal()

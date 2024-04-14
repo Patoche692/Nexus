@@ -2,6 +2,18 @@
 #include "Utils/cuda_math.h"
 #include "Medium.h"
 
+
+struct Intersection
+{
+	// Ray hit distance
+	float t;
+	// Barycentric coordinates;
+	float u, v;
+
+	uint32_t triIdx;
+	uint32_t instanceIdx;
+};
+
 struct Ray
 {
 	__host__ __device__ Ray() = default;
@@ -17,8 +29,7 @@ struct Ray
 	// Ray inverse direction (reduce divisions for optimization)
 	float3 invDirection = make_float3(0.0f, 0.0f, 1.0f);
 
-	// Ray hit distance
-	float t = 0.0f;
+	Intersection hit;
 
 	// Medium
 	Medium medium = { 1.0f };
