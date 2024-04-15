@@ -65,7 +65,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.AddMaterial(material);
 		material.type = Material::Type::METAL;
 		material.plastic.albedo = make_float3(1.0f);
-		material.plastic.roughness = 0.05f;
+		material.plastic.roughness = 0.0f;
 		assetManager.AddMaterial(material);
 		material.type = Material::Type::LIGHT;
 		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
@@ -103,13 +103,12 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.type = Material::Type::DIFFUSE;
 		material.diffuse.albedo = make_float3(0.12f, 0.75f, 0.15f);
 		assetManager.AddMaterial(material);
+		material.type = Material::Type::DIELECTRIC;
+		material.dielectric.ior = 1.5f;
+		assetManager.AddMaterial(material);
 		material.type = Material::Type::METAL;
 		material.plastic.albedo = make_float3(1.0f, 0.5f, 0.0f);
 		material.plastic.roughness = 0.15f;
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::METAL;
-		material.plastic.albedo = make_float3(1.0f);
-		material.plastic.roughness = 0.05f;
 		assetManager.AddMaterial(material);
 		material.type = Material::Type::LIGHT;
 		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
@@ -125,9 +124,9 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.CreateInstance(0, transform);
 		assetManager.CreateInstance(1, transform);
 		assetManager.CreateInstance(2, transform);
-		transform = Mat4::Translate(make_float3(-0.5f, 1.2f, 0.0f)) * Mat4::RotateY(1.57f) * Mat4::Scale(4.0f);
+		transform = Mat4::Translate(make_float3(1.5f, 1.2f, 0.8f)) * Mat4::RotateY(1.8f) * Mat4::Scale(4.0f);
 		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Translate(make_float3(-10.4f, 1.0f, -0.6f)) * Mat4::RotateY(1.57) * Mat4::Scale(3.0f);
+		transform = Mat4::Translate(make_float3(-1.5f, 1.0f, -0.8f)) * Mat4::RotateY(-1.8) * Mat4::Scale(3.0f);
 		assetManager.CreateInstance(3, transform);
 		transform = Mat4::Identity();
 		assetManager.CreateInstance(4, transform);

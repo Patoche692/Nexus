@@ -35,3 +35,5 @@ public:
 		ray = backupRay;
 	}
 };
+
+typedef BVHInstance MeshInstance;
