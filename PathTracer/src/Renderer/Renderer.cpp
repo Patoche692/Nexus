@@ -144,6 +144,8 @@ void Renderer::RenderUI(Scene& scene)
 				case Material::Type::METAL:
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 						assetManager.InvalidateMaterial(mesh.materialId);
+					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+						assetManager.InvalidateMaterial(mesh.materialId);
 					break;
 				case Material::Type::DIELECTRIC:
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))

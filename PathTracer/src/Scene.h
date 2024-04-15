@@ -6,6 +6,13 @@
 #include "Geometry/Sphere.h"
 #include "Assets/AssetManager.h"
 
+enum struct SceneType
+{
+	CORNELL_BOX,
+	CORNELL_BOX_SPHERES,
+	DRAGON
+};
+
 class Scene
 {
 public:

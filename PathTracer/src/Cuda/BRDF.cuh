@@ -7,7 +7,7 @@
 inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState)
 {
 	float3 scatterDirection = hitResult.normal + Random::RandomUnitVector(rngState);
-	scattered = Ray(hitResult.p + hitResult.normal * 0.001f, normalize(scatterDirection));
+	scattered = Ray(hitResult.p, normalize(scatterDirection));
 	attenuation = hitResult.material.diffuse.albedo;
 	return true;
 }
@@ -15,7 +15,7 @@ inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation,
 inline __device__ bool plasticScattter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState)
 {
 	float3 reflected = reflect(normalize(hitResult.rIn.direction), hitResult.normal);
-	scattered = Ray(hitResult.p + hitResult.normal * 0.001f, normalize(reflected + hitResult.material.plastic.roughness * Random::RandomUnitVector(rngState)));
+	scattered = Ray(hitResult.p, normalize(reflected + hitResult.material.plastic.roughness * Random::RandomUnitVector(rngState)));
 	attenuation = hitResult.material.diffuse.albedo;
 	return dot(scattered.direction, hitResult.normal) > 0.0f;
 }
@@ -70,11 +70,11 @@ inline __device__ bool dielectricScattter(HitResult& hitResult, float3& attenuat
 
 	if (Random::Rand(rngState) < reflectProb)
 	{
-		scattered = Ray(hitResult.p + outwardNormal * 0.001f, reflected);
+		scattered = Ray(hitResult.p, reflected);
 	}
 	else
 	{
-		scattered = Ray(hitResult.p - outwardNormal * 0.001f, refracted);
+		scattered = Ray(hitResult.p, refracted);
 	}
 	return true;
 }

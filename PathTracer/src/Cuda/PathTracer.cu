@@ -4,11 +4,13 @@
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
+#include "Geometry/BVH/TLAS.h"
 
 __device__ __constant__ CameraData cameraData;
 __device__ __constant__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Mesh* meshes;
+extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
 {
@@ -29,39 +31,31 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 	for (int j = 0; j < 10; j++)
 	{
-		int closestTriangleIndex = -1;
-		int closestMeshIndex = -1;
-		float hitDistance = FLT_MAX;
-		float t;
-
-		for (int i = 0; i < sceneData.nMeshes; i++)
-		{
-			for (int k = 0; k < meshes[i].nTriangles; k++)
-			{
-				if (meshes[i].triangles[k].Hit(currentRay, t) && t < hitDistance)
-				{
-					hitDistance = t;
-					closestTriangleIndex = k;
-					closestMeshIndex = i;
-				}
-			}
-		}
-
-		if (closestTriangleIndex != -1)
+		currentRay.hit.t = 1e30f;
+		currentRay.invDirection = 1 / currentRay.direction;
+		tlas.Intersect(currentRay);
+		if (currentRay.hit.t != 1e30f)
 		{
 			HitResult hitResult;
-			hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
+			hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
 			hitResult.rIn = currentRay;
-			hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
+			Triangle& triangle = tlas.blas[currentRay.hit.instanceIdx].bvh->triangles[currentRay.hit.triIdx];
+			float u = currentRay.hit.u, v = currentRay.hit.v;
+
+			// Interpolating and rotating the normal
+			hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
+			hitResult.normal = normalize(tlas.blas[currentRay.hit.instanceIdx].transform.TransformVector(hitResult.normal));
+
+			hitResult.material = materials[currentRay.hit.instanceIdx];
+
 
 			// Normal flipping
-			if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-				hitResult.normal = -hitResult.normal;
+			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+			//	hitResult.normal = -hitResult.normal;
 
-			hitResult.material = materials[meshes[closestMeshIndex].materialId];
 			float3 attenuation = make_float3(1.0f);
 			Ray scatterRay = currentRay;
-			
+
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
@@ -94,12 +88,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 			//float randNr = Random::Rand(rngState);
 			//if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
-
 		}
 		else
-		{
-			return make_float3(0.0f, 0.0f, 0.0f);
-		}
+			return make_float3(0.0f);
 	}
 
 	return make_float3(0.0f);
