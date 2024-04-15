@@ -10,7 +10,7 @@ struct TLASNode
 	float3 aabbMax;
 	uint32_t leftRight;
 	uint32_t BLAS;
-	bool IsLeaf() { return leftRight == 0; }
+	inline __host__ __device__ bool IsLeaf() { return leftRight == 0; }
 };
 
 class TLAS
@@ -32,14 +32,12 @@ public:
 
 	inline __host__ __device__ void Intersect(Ray& ray)
 	{
-		ray.invDirection = 1 / ray.direction;
-
 		TLASNode* node = &nodes[0], * stack[32];
 		uint32_t stackPtr = 0;
 
 		while (1)
 		{
-			if (node->leftRight == 0)
+			if (node->IsLeaf())
 			{
 				blas[node->BLAS].Intersect(ray, node->BLAS);
 

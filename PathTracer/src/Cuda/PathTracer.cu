@@ -29,67 +29,65 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentAttenuation = make_float3(1.0f);
 	const float russianRouProb = 0.7f;				// low number = earlier break up
 
-	//for (int j = 0; j < 10; j++)
-	//{
-	currentRay.hit.t = 1e30f;
+	for (int j = 0; j < 10; j++)
+	{
+		currentRay.hit.t = 1e30f;
+		currentRay.invDirection = 1 / currentRay.direction;
 		tlas.Intersect(currentRay);
 		if (currentRay.hit.t != 1e30f)
-			return make_float3(1.0f);
+		{
+			HitResult hitResult;
+			hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
+			hitResult.rIn = currentRay;
+			Triangle& triangle = tlas.blas[currentRay.hit.instanceIdx].bvh->triangles[currentRay.hit.triIdx];
+			float u = currentRay.hit.u, v = currentRay.hit.v;
+			hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
+			hitResult.material = materials[currentRay.hit.instanceIdx];
 
-		//if (closestTriangleIndex != -1)
-		//{
-		//	HitResult hitResult;
-		//	hitResult.p = currentRay.origin + currentRay.direction * hitDistance;
-		//	hitResult.rIn = currentRay;
-		//	hitResult.normal = meshes[closestMeshIndex].triangles[closestTriangleIndex].Normal();
 
-		//	// Normal flipping
-		//	if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-		//		hitResult.normal = -hitResult.normal;
+			// Normal flipping
+			//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+			//	hitResult.normal = -hitResult.normal;
 
-		//	hitResult.material = materials[meshes[closestMeshIndex].materialId];
-		//	float3 attenuation = make_float3(1.0f);
-		//	Ray scatterRay = currentRay;
-		//	
-		//	switch (hitResult.material.type)
-		//	{
-		//	case Material::Type::DIFFUSE:
-		//		if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
-		//		{
-		//			currentAttenuation *= attenuation;
-		//			currentRay = scatterRay;
-		//		}
-		//		break;
-		//	case Material::Type::METAL:
-		//		if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
-		//		{
-		//			currentAttenuation *= attenuation;
-		//			currentRay = scatterRay;
-		//		}
-		//		break;
-		//	case Material::Type::DIELECTRIC:
-		//		if (dielectricScattter(hitResult, attenuation, scatterRay, rngState))
-		//		{
-		//			currentAttenuation *= attenuation;
-		//			currentRay = scatterRay;
-		//		}
-		//		break;
-		//	case Material::Type::LIGHT:
-		//		return currentAttenuation * hitResult.material.light.emission;
-		//		break;
-		//	default:
-		//		break;
-		//	}
+			float3 attenuation = make_float3(1.0f);
+			Ray scatterRay = currentRay;
+
+			switch (hitResult.material.type)
+			{
+			case Material::Type::DIFFUSE:
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = scatterRay;
+				}
+				break;
+			case Material::Type::METAL:
+				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = scatterRay;
+				}
+				break;
+			case Material::Type::DIELECTRIC:
+				if (dielectricScattter(hitResult, attenuation, scatterRay, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = scatterRay;
+				}
+				break;
+			case Material::Type::LIGHT:
+				return currentAttenuation * hitResult.material.light.emission;
+				break;
+			default:
+				break;
+			}
 
 			//float randNr = Random::Rand(rngState);
 			//if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
-
-		//}
-		else
-		{
-			return make_float3(0.0f);
 		}
-	//}
+		else
+			return make_float3(0.0f);
+	}
 
 	return make_float3(0.0f);
 }

@@ -8,7 +8,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	assetManager.AddMesh("assets/models/box_grey_faces.obj", 0);
 	assetManager.AddMesh("assets/models/box_red_face.obj", 1);
 	assetManager.AddMesh("assets/models/box_green_face.obj", 2);
-	assetManager.AddMesh("assets/models/cube.obj", 3);
+	assetManager.AddMesh("assets/models/sphere.obj", 3);
 	assetManager.AddMesh("assets/models/cube2.obj", 4);
 	assetManager.AddMesh("assets/models/light.obj", 5);
 	assetManager.BuildTLAS();

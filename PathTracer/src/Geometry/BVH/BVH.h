@@ -51,7 +51,7 @@ public:
 	// Ray intersection (executed on the GPU)
 	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
 	{
-		BVHNode* node = nodes, * stack[32];
+		BVHNode* node = &nodes[0], * stack[32];
 		uint32_t stackPtr = 0;
 
 		while (1)
@@ -59,7 +59,7 @@ public:
 			if (node->IsLeaf())
 			{
 				for (uint32_t i = 0; i < node->triCount; i++)
-					triangles[i].Hit(ray, instanceIdx, triangleIdx[i]);
+					triangles[triangleIdx[node->leftNode + i]].Hit(ray, instanceIdx, triangleIdx[node->leftNode + i]);
 
 				if (stackPtr == 0)
 					break;
