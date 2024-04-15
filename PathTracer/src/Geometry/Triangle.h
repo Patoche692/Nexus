@@ -42,7 +42,7 @@ struct Triangle
 		float3 rayCrossEdge1 = cross(r.direction, edge1);
 		float det = dot(edge0, rayCrossEdge1);
 
-		if (det < 1.0e-5 && det > -1.0e-5)
+		if (det < 1.0e-8 && det > -1.0e-8)
 			return;
 
 		float invDet = 1.0f / det;
