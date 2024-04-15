@@ -27,6 +27,7 @@ public:
 	std::string GetMaterialsString();
 
 	void BuildTLAS();
+	BVHInstance& CreateInstance(uint32_t meshId, Mat4 transform);
 
 	bool SendDataToDevice();
 

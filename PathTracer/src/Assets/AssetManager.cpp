@@ -38,8 +38,6 @@ void AssetManager::AddMesh(const std::string& filename, int materialId)
 
 	BVH* bvh = new BVH(triangles);
 	m_Blas.push_back(bvh);
-	BVHInstance instance(m_Blas[m_Blas.size() - 1]);
-	m_BVHInstances.push_back(instance);
 }
 
 void AssetManager::InvalidateMesh(uint32_t index)
@@ -91,6 +89,14 @@ void AssetManager::BuildTLAS()
 {
 	m_Tlas = TLAS(m_BVHInstances.data(), m_Blas.size());
 	CopyTLASData(m_Tlas);
+}
+
+BVHInstance& AssetManager::CreateInstance(uint32_t meshId, Mat4 transform)
+{
+	BVHInstance instance(m_Blas[meshId]);
+	instance.SetTransform(transform);
+	m_BVHInstances.push_back(instance);
+	return m_BVHInstances[m_BVHInstances.size() - 1];
 }
 
 std::string AssetManager::GetMaterialTypesString()
