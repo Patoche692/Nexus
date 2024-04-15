@@ -105,6 +105,7 @@ void CopyTLASData(TLAS& tl)
 	CudaMemory::MemCpy(tlasNodes, tl.nodes, tl.blasCount * 2, cudaMemcpyHostToDevice);
 	CudaMemory::MemCpy(nodesIdx, tl.nodesIdx, tl.blasCount, cudaMemcpyHostToDevice);
 
+	// Map from cpu memory to device memory
 	std::map<BVH*, BVH*> bvhMap;
 	for (int i = 0; i < tl.blasCount; i++)
 	{

@@ -14,12 +14,12 @@ public:
 		Mat4 m;
 		SetTransform(m); 
 	}
-	void SetTransform(Mat4& transform);
+	void SetTransform(Mat4& t);
 
-private:
 public:
 	BVH* bvh = nullptr;
 	Mat4 invTransform;
+	Mat4 transform;
 	AABB bounds;
 
 	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)

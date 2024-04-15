@@ -216,14 +216,14 @@ public:
 	}
 };
 
-inline __host__ __device__ Mat4 operator * (const Mat4& a, const Mat4& b);
-inline __host__ __device__ Mat4 operator + (const Mat4& a, const Mat4& b);
-inline __host__ __device__ Mat4 operator * (const Mat4& a, const float s);
-inline __host__ __device__ Mat4 operator * (const float s, const Mat4& a);
-inline __host__ __device__ bool operator == (const Mat4& a, const Mat4& b);
-inline __host__ __device__ bool operator != (const Mat4& a, const Mat4& b);
-inline __host__ __device__ float4 operator * (const Mat4& a, const float4& b);
-inline __host__ __device__ float4 operator * (const float4& a, const Mat4& b);
+Mat4 operator * (const Mat4& a, const Mat4& b);
+Mat4 operator + (const Mat4& a, const Mat4& b);
+Mat4 operator * (const Mat4& a, const float s);
+Mat4 operator * (const float s, const Mat4& a);
+bool operator == (const Mat4& a, const Mat4& b);
+bool operator != (const Mat4& a, const Mat4& b);
+float4 operator * (const Mat4& a, const float4& b);
+float4 operator * (const float4& a, const Mat4& b);
 
 float3 TransformPosition(const float3& a, const Mat4& M);
 float3 TransformVector(const float3& a, const Mat4& M);

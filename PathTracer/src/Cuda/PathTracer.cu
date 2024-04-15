@@ -41,7 +41,11 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.rIn = currentRay;
 			Triangle& triangle = tlas.blas[currentRay.hit.instanceIdx].bvh->triangles[currentRay.hit.triIdx];
 			float u = currentRay.hit.u, v = currentRay.hit.v;
+
+			// Interpolating and rotating the normal
 			hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
+			hitResult.normal = normalize(tlas.blas[currentRay.hit.instanceIdx].transform.TransformVector(hitResult.normal));
+
 			hitResult.material = materials[currentRay.hit.instanceIdx];
 
 

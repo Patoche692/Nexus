@@ -87,7 +87,7 @@ std::string AssetManager::GetMaterialsString()
 
 void AssetManager::BuildTLAS()
 {
-	m_Tlas = TLAS(m_BVHInstances.data(), m_Blas.size());
+	m_Tlas = TLAS(m_BVHInstances.data(), m_BVHInstances.size());
 	CopyTLASData(m_Tlas);
 }
 
