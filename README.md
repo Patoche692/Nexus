@@ -5,6 +5,7 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 - [Screenshots](#screenshots)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
+- [Usage](#usage)
 - [Dependencies](#dependencies)
 - [Resources](#resources)
 
@@ -19,13 +20,18 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ## Prerequisites
 - Having Microsoft Visual Studio installed
 - Having Nvidia's [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) installed
+- Having [Git LFS](https://git-lfs.com) installed
 
 ## Build
 - Clone the repo
    ```sh
    git clone https://github.com/Patoche692/PathTracer
    ```
-- The project should compile and run as is by pressing F5.
+- The project should compile and run as is by pressing F5 in Visual Studio.
+
+## Usage
+- Controls: hold right click and use WASD keys to move and the mouse to change the camera orientation
+- You can change the meshes and camera properties in the UI
 
 ## Dependencies
 - [GLFW](https://www.glfw.org) and [GLEW](https://glew.sourceforge.net)
