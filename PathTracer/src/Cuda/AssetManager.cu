@@ -129,6 +129,26 @@ void CopyTLASData(TLAS& tl)
 
 }
 
+__global__ void freeDeviceTLASKernel()
+{
+	for (int i = 0; i < tlas.blasCount; i++)
+	{
+		BVH* bvh = tlas.blas[i].bvh;
+		free(bvh->nodes);
+		free(bvh->triangles);
+		free(bvh->triangleIdx);
+	}
+	free(tlas.blas);
+	free(tlas.nodes);
+	free(tlas.nodesIdx);
+}
+
+void freeDeviceTLAS()
+{
+	freeDeviceTLASKernel<<<1, 1>>>();
+	checkCudaErrors(cudaDeviceSynchronize());
+}
+
 Material** getMaterialSymbolAddress()
 {
 	Material** materialSymbolAddress;

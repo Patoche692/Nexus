@@ -13,5 +13,6 @@ void freeDeviceMeshes(int meshesCount);
 void freeDeviceMaterials();
 void changeDeviceMaterial(Material& m, uint32_t id);
 void CopyTLASData(TLAS& tl);
+void freeDeviceTLAS();
 Material** getMaterialSymbolAddress();
 Mesh** getMeshSymbolAddress();
