@@ -12,8 +12,30 @@ void Scene::AddMaterial(Material& material)
 	m_AssetManager.AddMaterial(material);
 }
 
-void Scene::SendDataToDevice()
+void Scene::BuildTLAS()
 {
-	m_Invalid = false;
-	SendSceneDataToDevice(this);
+	m_Tlas = TLAS(m_MeshInstances.data(), m_MeshInstances.size());
+	m_Tlas.Build();
+	newDeviceTLAS(m_Tlas);
+}
+
+MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
+{
+	BVHInstance instance(m_AssetManager.GetBVH()[meshId]);
+	m_MeshInstances.push_back(instance);
+	return m_MeshInstances[m_MeshInstances.size() - 1];
+}
+
+void Scene::InvalidateMeshInstance(uint32_t instanceId)
+{
+	m_InvalidInstances.insert(instanceId);
+}
+
+bool Scene::SendDataToDevice()
+{
+	if (m_InvalidInstances.size() != 0)
+	{
+		m_Tlas.Build();
+		updateDeviceTLAS(m_Tlas);
+	}
 }

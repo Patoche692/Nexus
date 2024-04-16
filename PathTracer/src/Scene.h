@@ -28,11 +28,19 @@ public:
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	void AddMesh(const std::string& filename) { m_AssetManager.AddMesh(filename); }
 
-	void SendDataToDevice();
+	void BuildTLAS();
+	MeshInstance& CreateMeshInstance(uint32_t meshId);
+	void InvalidateMeshInstance(uint32_t instanceId);
+
+	bool SendDataToDevice();
 
 private:
 	bool m_Invalid = true;
 	std::shared_ptr<Camera> m_Camera;
+
+	std::vector<MeshInstance> m_MeshInstances;
+	std::set<uint32_t> m_InvalidInstances;
+	TLAS m_Tlas;
 
 	AssetManager m_AssetManager;
 };
