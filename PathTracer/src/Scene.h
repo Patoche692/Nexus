@@ -18,9 +18,6 @@ class Scene
 public:
 	Scene(uint32_t width, uint32_t height);
 
-	bool IsInvalid() const { return m_Invalid; }
-	void Invalidate() { m_Invalid = true; }
-
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; }
 
 	void AddMaterial(Material& material);
@@ -30,12 +27,12 @@ public:
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
+	std::vector<MeshInstance>& GetMeshInstances() { return m_MeshInstances; }
 	void InvalidateMeshInstance(uint32_t instanceId);
 
 	bool SendDataToDevice();
 
 private:
-	bool m_Invalid = true;
 	std::shared_ptr<Camera> m_Camera;
 
 	std::vector<MeshInstance> m_MeshInstances;

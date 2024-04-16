@@ -33,9 +33,21 @@ void Scene::InvalidateMeshInstance(uint32_t instanceId)
 
 bool Scene::SendDataToDevice()
 {
+	bool invalid = false;
+
 	if (m_InvalidInstances.size() != 0)
 	{
 		m_Tlas.Build();
 		updateDeviceTLAS(m_Tlas);
+		m_InvalidInstances.clear();
+		invalid = true;
 	}
+
+	if (m_Camera->SendDataToDevice())
+		invalid = true;
+
+	if (m_AssetManager.SendDataToDevice())
+		invalid = true;
+
+	return invalid;
 }
