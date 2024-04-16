@@ -3,11 +3,11 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
-	SceneType scene = SceneType::CORNELL_BOX_SPHERES;
+	SceneType sceneType = SceneType::CORNELL_BOX_SPHERES;
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
-	if (scene == SceneType::CORNELL_BOX)
+	if (sceneType == SceneType::CORNELL_BOX)
 	{
 		Material material;
 		material.type = Material::Type::DIFFUSE;
@@ -29,26 +29,36 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
 		assetManager.AddMaterial(material);
 
-		assetManager.AddMesh("assets/models/box_grey_faces.obj", 0);
-		assetManager.AddMesh("assets/models/box_red_face.obj", 1);
-		assetManager.AddMesh("assets/models/box_green_face.obj", 2);
-		assetManager.AddMesh("assets/models/cube.obj", 3);
-		assetManager.AddMesh("assets/models/light.obj", 5);
+		assetManager.AddMesh("assets/models/box_grey_faces.obj");
+		assetManager.AddMesh("assets/models/box_red_face.obj");
+		assetManager.AddMesh("assets/models/box_green_face.obj");
+		assetManager.AddMesh("assets/models/cube.obj");
+		assetManager.AddMesh("assets/models/light.obj");
 
-		Mat4 transform = Mat4::Identity();
-		assetManager.CreateInstance(0, transform);
-		assetManager.CreateInstance(1, transform);
-		assetManager.CreateInstance(2, transform);
-		transform = Mat4::Scale(1.2f) * Mat4::Translate(make_float3(1.1f, 1.0f, 1.1f)) * Mat4::RotateY(-0.3f);
-		assetManager.CreateInstance(3, transform);
-		transform =  Mat4::Scale(make_float3(1.2f, 2.4f, 1.2f)) * Mat4::Translate(make_float3(-1.1f, 1.0f, -0.8f)) * Mat4::RotateY(0.3f);
-		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Identity();
-		assetManager.CreateInstance(4, transform);
+		m_Scene.CreateMeshInstance(0);
+		m_Scene.CreateMeshInstance(1);
+		m_Scene.CreateMeshInstance(2);
 
-		assetManager.BuildTLAS();
+		MeshInstance& instance = m_Scene.CreateMeshInstance(3);
+		instance.Scale(1.2f);
+		instance.Translate(make_float3(1.1f, 1.0f, 1.1f));
+		instance.RotateY(-18.0f);
+
+		instance = m_Scene.CreateMeshInstance(3);
+		instance.Scale(make_float3(1.2f, 2.4f, 1.2f));
+		instance.Translate(make_float3(-1.1f, 1.0f, -0.8f));
+		instance.RotateY(18.0f);
+
+		m_Scene.CreateMeshInstance(4);
+
+		//transform = Mat4::Scale(1.2f) * Mat4::Translate(make_float3(1.1f, 1.0f, 1.1f)) * Mat4::RotateY(-0.3f);
+		//assetManager.CreateMeshInstance(3, transform);
+		//transform =  Mat4::Scale(make_float3(1.2f, 2.4f, 1.2f)) * Mat4::Translate(make_float3(-1.1f, 1.0f, -0.8f)) * Mat4::RotateY(0.3f);
+		//assetManager.CreateMeshInstance(3, transform);
+		//transform = Mat4::Identity();
+		//assetManager.CreateMeshInstance(4, transform);
 	}
-	else if (scene == SceneType::CORNELL_BOX_SPHERES)
+	else if (sceneType == SceneType::CORNELL_BOX_SPHERES)
 	{
 		Material material;
 		material.type = Material::Type::DIFFUSE;
@@ -71,27 +81,27 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
 		assetManager.AddMaterial(material);
 
-		assetManager.AddMesh("assets/models/box_grey_faces.obj", 0);
-		assetManager.AddMesh("assets/models/box_red_face.obj", 1);
-		assetManager.AddMesh("assets/models/box_green_face.obj", 2);
-		assetManager.AddMesh("assets/models/sphere.obj", 3);
-		assetManager.AddMesh("assets/models/light.obj", 4);
+		assetManager.AddMesh("assets/models/box_grey_faces.obj");
+		assetManager.AddMesh("assets/models/box_red_face.obj");
+		assetManager.AddMesh("assets/models/box_green_face.obj");
+		assetManager.AddMesh("assets/models/sphere.obj");
+		assetManager.AddMesh("assets/models/light.obj");
 
-		Mat4 transform = Mat4::Identity();
-		assetManager.CreateInstance(0, transform);
-		assetManager.CreateInstance(1, transform);
-		assetManager.CreateInstance(2, transform);
-		transform = Mat4::Scale(1.3f) * Mat4::Translate(make_float3(1.4f, 1.0f, 0.9f));
-		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Scale(1.3f) * Mat4::Translate(make_float3(-1.4f, 1.0f, -0.6f));
-		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Identity();
-		assetManager.CreateInstance(4, transform);
+		m_Scene.CreateMeshInstance(0);
+		m_Scene.CreateMeshInstance(1);
+		m_Scene.CreateMeshInstance(2);
 
-		assetManager.BuildTLAS();
+		MeshInstance& instance = m_Scene.CreateMeshInstance(3);
+		instance.Scale(1.3f);
+		instance.Translate(make_float3(1.4f, 1.0f, 0.9f));
 
+		instance = m_Scene.CreateMeshInstance(3);
+		instance.Scale(1.3f);
+		instance.Translate(make_float3(-1.4f, 1.0f, -0.6f));
+
+		m_Scene.CreateMeshInstance(4);
 	}
-	else if (scene == SceneType::DRAGON)
+	else if (sceneType == SceneType::DRAGON)
 	{
 		Material material;
 		material.type = Material::Type::DIFFUSE;
@@ -114,27 +124,29 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
 		assetManager.AddMaterial(material);
 
-		assetManager.AddMesh("assets/models/box_grey_faces.obj", 0);
-		assetManager.AddMesh("assets/models/box_red_face.obj", 1);
-		assetManager.AddMesh("assets/models/box_green_face.obj", 2);
-		assetManager.AddMesh("assets/models/dragon.obj", 3);
-		assetManager.AddMesh("assets/models/light.obj", 4);
+		assetManager.AddMesh("assets/models/box_grey_faces.obj");
+		assetManager.AddMesh("assets/models/box_red_face.obj");
+		assetManager.AddMesh("assets/models/box_green_face.obj");
+		assetManager.AddMesh("assets/models/dragon.obj");
+		assetManager.AddMesh("assets/models/light.obj");
 
-		Mat4 transform = Mat4::Identity();
-		assetManager.CreateInstance(0, transform);
-		assetManager.CreateInstance(1, transform);
-		assetManager.CreateInstance(2, transform);
-		transform = Mat4::Translate(make_float3(1.5f, 1.2f, 0.8f)) * Mat4::RotateY(1.8f) * Mat4::Scale(4.0f);
-		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Translate(make_float3(-1.5f, 1.0f, -0.8f)) * Mat4::RotateY(-1.8) * Mat4::Scale(3.0f);
-		assetManager.CreateInstance(3, transform);
-		transform = Mat4::Identity();
-		assetManager.CreateInstance(4, transform);
+		m_Scene.CreateMeshInstance(0);
+		m_Scene.CreateMeshInstance(1);
+		m_Scene.CreateMeshInstance(2);
 
-		assetManager.BuildTLAS();
+		MeshInstance& instance = m_Scene.CreateMeshInstance(3);
+		instance.Translate(make_float3(1.5f, 1.2f, 0.8f));
+		instance.RotateY(100.0f);
+		instance.Scale(4.0f);
 
+		instance = m_Scene.CreateMeshInstance(3);
+		instance.Translate(make_float3(-1.5f, 1.0f, -0.8f));
+		instance.RotateY(-100.0f);
+		instance.Scale(3.0f);
+
+		m_Scene.CreateMeshInstance(4);
 	}
-
+	m_Scene.BuildTLAS();
 }
 
 void RayTracerApplication::Update(float deltaTime)
