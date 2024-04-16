@@ -16,11 +16,24 @@ public:
 	}
 	void SetTransform(Mat4& t);
 
+	void Translate(float3 pos);
+
+	// Rotation is in degrees
+	void Rotate(float3 axis, float angle);
+	void RotateX(float angle);
+	void RotateY(float angle);
+	void RotateZ(float angle);
+	void Scale(float scale);
+	void Scale(float3 scale);
+
+	void AssignMaterial(int mIdx);
+
 public:
 	BVH* bvh = nullptr;
 	Mat4 invTransform;
 	Mat4 transform;
 	AABB bounds;
+	int materialId;
 
 	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
 	{
@@ -36,4 +49,5 @@ public:
 	}
 };
 
+// A BVH instance can be considered as a Mesh instance
 typedef BVHInstance MeshInstance;
