@@ -9,7 +9,7 @@ struct TLASNode
 	float3 aabbMin;
 	float3 aabbMax;
 	uint32_t leftRight;
-	uint32_t BLAS;
+	uint32_t blasIdx;
 	inline __host__ __device__ bool IsLeaf() { return leftRight == 0; }
 };
 
@@ -39,7 +39,7 @@ public:
 		{
 			if (node->IsLeaf())
 			{
-				blas[node->BLAS].Intersect(ray, node->BLAS);
+				blas[node->blasIdx].Intersect(ray, node->blasIdx);
 
 				if (stackPtr == 0)
 					break;

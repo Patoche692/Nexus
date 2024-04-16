@@ -8,7 +8,6 @@ TLAS::TLAS(BVHInstance* bvhList, int N)
 	nodes = new TLASNode[2 * N];
 	nodesIdx = new uint32_t[N];
 	nodesUsed = 2;
-	Build();
 }
 
 void TLAS::Build()
@@ -19,7 +18,7 @@ void TLAS::Build()
 		nodesIdx[i] = nodesUsed;
 		nodes[nodesUsed].aabbMin = blas[i].bounds.bMin;
 		nodes[nodesUsed].aabbMax = blas[i].bounds.bMax;
-		nodes[nodesUsed].BLAS = i;
+		nodes[nodesUsed].blasIdx = i;
 		nodes[nodesUsed++].leftRight = 0;
 	}
 
