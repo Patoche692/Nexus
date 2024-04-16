@@ -28,7 +28,7 @@ public:
 	bool IsInvalid() { return m_Invalid; }
 	void Invalidate() { m_Invalid = true; }
 
-	void SendDataToDevice();
+	bool SendDataToDevice();
 
 private:
 	float2 m_LastMousePosition{ 0.0f, 0.0 };

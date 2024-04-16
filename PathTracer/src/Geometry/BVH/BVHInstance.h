@@ -15,16 +15,18 @@ public:
 		SetTransform(m); 
 	}
 	void SetTransform(Mat4& t);
+	void SetTransform(float3 pos, float3 r, float3 s);
 
-	void Translate(float3 pos);
+	void SetPosition(float3 pos);
 
 	// Rotation is in degrees
-	void Rotate(float3 axis, float angle);
-	void RotateX(float angle);
-	void RotateY(float angle);
-	void RotateZ(float angle);
-	void Scale(float scale);
-	void Scale(float3 scale);
+	void SetRotation(float3 axis, float angle);
+	void SetRotationX(float angle);
+	void SetRotationY(float angle);
+	void SetRotationZ(float angle);
+
+	void SetScale(float s);
+	void SetScale(float3 s);
 
 	void AssignMaterial(int mIdx);
 
@@ -32,6 +34,9 @@ public:
 	BVH* bvh = nullptr;
 	Mat4 invTransform;
 	Mat4 transform;
+	float3 position = make_float3(0.0f);
+	float3 rotation = make_float3(0.0f);
+	float3 scale = make_float3(1.0f);
 	AABB bounds;
 	int materialId;
 

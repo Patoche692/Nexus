@@ -46,21 +46,8 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(scene);
 
-	if (scene.GetCamera()->IsInvalid())
-	{
-		scene.GetCamera()->SendDataToDevice();
+	if (scene.SendDataToDevice())
 		m_FrameNumber = 0;
-	}
-
-	if (scene.IsInvalid())
-	{
-		scene.SendDataToDevice();
-		m_FrameNumber = 0;
-	}
-
-	if (scene.GetAssetManager().SendDataToDevice())
-		m_FrameNumber = 0;
-
 
 	m_FrameNumber++;
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
@@ -101,15 +88,14 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Begin("Scene");
 
 	AssetManager& assetManager = scene.GetAssetManager();
-	//std::vector<Sphere>& spheres = scene.GetSpheres();
 	std::vector<Material>& materials = assetManager.GetMaterials();
-	std::vector<Mesh>& meshes = assetManager.GetMeshes();
 	std::string materialsString = assetManager.GetMaterialsString();
 	std::string materialTypes = assetManager.GetMaterialTypesString();
+	std::vector<MeshInstance> meshInstances = scene.GetMeshInstances();
 
-	for (int i = 0; i < meshes.size(); i++)
+	for (int i = 0; i < meshInstances.size(); i++)
 	{
-		Mesh& mesh = meshes[i];
+		MeshInstance& meshInstance = meshInstances[i];
 		ImGui::PushID(i);
 
 		//ImGui::ShowDemoWindow();
@@ -118,15 +104,15 @@ void Renderer::RenderUI(Scene& scene)
 
 			if (ImGui::TreeNode("Material"))
 			{
-				if (ImGui::Combo("Id", &mesh.materialId, materialsString.c_str()))
-					scene.Invalidate();
+				if (ImGui::Combo("Id", &meshInstance.materialId, materialsString.c_str()))
+					scene.InvalidateMeshInstance(i);
 
-				Material& material = materials[mesh.materialId];
+				Material& material = materials[meshInstance.materialId];
 				int type = (int)material.type;
 
 				if (ImGui::Combo("Type", &type, materialTypes.c_str()))
 				{
-					assetManager.InvalidateMaterial(mesh.materialId);
+					assetManager.InvalidateMaterial(meshInstance.materialId);
 				}
 
 				material.type = (Material::Type)type;
@@ -135,23 +121,23 @@ void Renderer::RenderUI(Scene& scene)
 				{
 				case Material::Type::LIGHT:
 					if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					break;
 				case Material::Type::DIFFUSE:
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					break;
 				case Material::Type::METAL:
 					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					break;
 				case Material::Type::DIELECTRIC:
 					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-						assetManager.InvalidateMaterial(mesh.materialId);
+						assetManager.InvalidateMaterial(meshInstance.materialId);
 					break;
 				}
 				ImGui::TreePop();

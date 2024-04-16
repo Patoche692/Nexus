@@ -31,6 +31,15 @@ public:
 
 	inline __host__ __device__ float3 GetTranslation() const { return make_float3(cell[3], cell[7], cell[11]); }
 
+	inline __host__ __device__ float3 GetScale() const
+	{
+		return make_float3(
+			sqrtf(cell[0] * cell[0] + cell[4] * cell[4] + cell[8] * cell[8]),
+			sqrtf(cell[1] * cell[1] + cell[5] * cell[5] + cell[9] * cell[9]),
+			sqrtf(cell[2] * cell[2] + cell[6] * cell[6] + cell[10] * cell[10])
+		);
+	}
+
 	inline __host__ __device__ static Mat4 FromColumnMajor(const Mat4& T)
 	{
 		Mat4 M;

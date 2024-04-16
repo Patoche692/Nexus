@@ -15,46 +15,49 @@ void BVHInstance::SetTransform(Mat4& t)
 	}
 }
 
-void BVHInstance::Translate(float3 pos)
+void BVHInstance::SetTransform(float3 pos, float3 r, float3 s)
 {
-	Mat4 t = Mat4::Translate(pos) * transform;
+	position = pos;
+	rotation = r;
+	scale = s;
+	Mat4 t = Mat4::Translate(pos) * Mat4::RotateX(Utils::ToRadians(r.x))
+		* Mat4::RotateY(Utils::ToRadians(r.y)) * Mat4::RotateZ(Utils::ToRadians(r.z)) * Mat4::Scale(s);
 	SetTransform(t);
 }
 
-void BVHInstance::Rotate(float3 axis, float angle)
+void BVHInstance::SetPosition(float3 pos)
 {
-	Mat4 t = Mat4::Rotate(axis, angle * M_PI / 180.0f) * transform;
-	SetTransform(t);
+	SetTransform(pos, rotation, scale);
 }
 
-void BVHInstance::RotateX(float angle)
+void BVHInstance::SetRotation(float3 axis, float angle)
 {
-	Mat4 t = Mat4::RotateX(angle * M_PI / 180.0f) * transform;
-	SetTransform(t);
+	SetTransform(position, axis * angle, scale);
 }
 
-void BVHInstance::RotateY(float angle)
+void BVHInstance::SetRotationX(float angle)
 {
-	Mat4 t = Mat4::RotateY(angle * M_PI / 180.0f) * transform;
-	SetTransform(t);
+	SetTransform(position, make_float3(1.0f, 0.0f, 0.0f) * angle, scale);
 }
 
-void BVHInstance::RotateZ(float angle)
+void BVHInstance::SetRotationY(float angle)
 {
-	Mat4 t = Mat4::RotateZ(angle * M_PI / 180.0f) * transform;
-	SetTransform(t);
+	SetTransform(position, make_float3(0.0f, 1.0f, 0.0f) * angle, scale);
 }
 
-void BVHInstance::Scale(float scale)
+void BVHInstance::SetRotationZ(float angle)
 {
-	Mat4 t = Mat4::Scale(scale) * transform;
-	SetTransform(t);
+	SetTransform(position, make_float3(0.0f, 0.0f, 1.0f) * angle, scale);
 }
 
-void BVHInstance::Scale(float3 scale)
+void BVHInstance::SetScale(float s)
 {
-	Mat4 t = Mat4::Scale(scale) * transform;
-	SetTransform(t);
+	SetTransform(position, rotation, make_float3(s));
+}
+
+void BVHInstance::SetScale(float3 s)
+{
+	SetTransform(position, rotation, s);
 }
 
 void BVHInstance::AssignMaterial(int mId)
