@@ -14,10 +14,7 @@ public:
 	AssetManager();
 	~AssetManager();
 
-	void AddMesh(const std::string& filename, int materialId = -1);
-	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
-	void InvalidateMesh(uint32_t index);
-	void InvalidateMeshes();
+	void AddMesh(const std::string& filename);
 
 	void AddMaterial();
 	void AddMaterial(const Material& material);
@@ -25,21 +22,14 @@ public:
 	void InvalidateMaterial(uint32_t index);
 	std::string GetMaterialTypesString();
 	std::string GetMaterialsString();
-
-	void BuildTLAS();
-	BVHInstance& CreateInstance(uint32_t meshId, Mat4 transform);
+	std::vector<BVH*> GetBVH() { return m_Bvh; }
 
 	bool SendDataToDevice();
 
 private:
-	std::vector<Mesh> m_Meshes;
-	std::set<uint32_t> m_InvalidMeshes;
 	std::vector<Material> m_Materials;
 	std::set<uint32_t> m_InvalidMaterials;
-	std::vector<BVH*> m_Blas;
-	std::vector<BVHInstance> m_BVHInstances;
-	std::set<uint32_t> m_InvalidInstances;
-	TLAS m_Tlas;
+	std::vector<BVH*> m_Bvh;
 
 	Material** m_MaterialSymbolAddress;
 	Mesh** m_MeshSymbolAddress;

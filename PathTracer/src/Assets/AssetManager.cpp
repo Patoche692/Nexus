@@ -10,48 +10,17 @@ AssetManager::AssetManager()
 AssetManager::~AssetManager()
 {
 	freeDeviceMaterials();
-	freeDeviceMeshes(m_Meshes.size());
 	freeDeviceTLAS();
-	for (Mesh& mesh : m_Meshes)
-	{
-		delete[] mesh.triangles;
-	}
-	for (BVH* bvh : m_Blas)
+	for (BVH* bvh : m_Bvh)
 		delete bvh;
 }
 
-void AssetManager::AddMesh(const std::string& filename, int materialId)
+void AssetManager::AddMesh(const std::string& filename)
 {
-	Mesh mesh;
 	std::vector<Triangle> triangles = OBJLoader::LoadOBJ(filename);
 
-	Triangle* ptr = new Triangle[triangles.size()];
-	memcpy(ptr, triangles.data(), triangles.size() * sizeof(Triangle));
-
-	mesh.triangles = ptr;
-	mesh.nTriangles = triangles.size();
-
-	if (materialId != -1)
-		mesh.materialId = materialId;
-
-	m_Meshes.push_back(mesh);
-	newDeviceMesh(mesh, m_Meshes.size());
-
 	BVH* bvh = new BVH(triangles);
-	m_Blas.push_back(bvh);
-}
-
-void AssetManager::InvalidateMesh(uint32_t index)
-{
-	m_InvalidMeshes.insert(index);
-}
-
-void AssetManager::InvalidateMeshes()
-{
-	for (int i = 0; i < m_Meshes.size(); i++)
-	{
-		m_InvalidMeshes.insert(i);
-	}
+	m_Bvh.push_back(bvh);
 }
 
 void AssetManager::AddMaterial()
@@ -74,6 +43,18 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 	m_InvalidMaterials.insert(index);
 }
 
+bool AssetManager::SendDataToDevice()
+{
+	bool invalid = false;
+	for (uint32_t id : m_InvalidMaterials)
+	{
+		invalid = true;
+		cpyMaterialToDevice(m_Materials[id], id);
+	}
+	m_InvalidMaterials.clear();
+	return invalid;
+}
+
 std::string AssetManager::GetMaterialsString()
 {
 	std::string materialsString;
@@ -84,20 +65,6 @@ std::string AssetManager::GetMaterialsString()
 		materialsString.push_back('\0');
 	}
 	return materialsString;
-}
-
-void AssetManager::BuildTLAS()
-{
-	m_Tlas = TLAS(m_BVHInstances.data(), m_BVHInstances.size());
-	CopyTLASData(m_Tlas);
-}
-
-BVHInstance& AssetManager::CreateInstance(uint32_t meshId, Mat4 transform)
-{
-	BVHInstance instance(m_Blas[meshId]);
-	instance.SetTransform(transform);
-	m_BVHInstances.push_back(instance);
-	return m_BVHInstances[m_BVHInstances.size() - 1];
 }
 
 std::string AssetManager::GetMaterialTypesString()
@@ -114,17 +81,4 @@ std::string AssetManager::GetMaterialTypesString()
 	materialTypes.append("Conductor");
 	materialTypes.push_back('\0');
 	return materialTypes;
-}
-
-
-bool AssetManager::SendDataToDevice()
-{
-	bool invalid = false;
-	for (uint32_t id : m_InvalidMaterials)
-	{
-		invalid = true;
-		changeDeviceMaterial(m_Materials[id], id);
-	}
-	m_InvalidMaterials.clear();
-	return invalid;
 }
