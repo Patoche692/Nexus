@@ -62,7 +62,7 @@ void freeDeviceMaterials()
 	CudaMemory::Free(materials);
 }
 
-void changeDeviceMaterial(Material& m, uint32_t id)
+void cpyMaterialToDevice(Material& m, uint32_t id)
 {
 	Material** materialsSymbolAddress;
 
@@ -72,7 +72,7 @@ void changeDeviceMaterial(Material& m, uint32_t id)
 	CudaMemory::SetToIndex(materialsSymbolAddress, id, m);
 }
 
-BVH* NewDeviceBVH(BVH& bvh)
+BVH* newDeviceBVH(BVH& bvh)
 {
 	Triangle* triangles = CudaMemory::Allocate<Triangle>(bvh.triCount);
 	BVHNode* nodes = CudaMemory::Allocate<BVHNode>(bvh.triCount * 2);
@@ -96,7 +96,7 @@ BVH* NewDeviceBVH(BVH& bvh)
 	return bvhPtr;
 }
 
-void CopyTLASData(TLAS& tl)
+void newDeviceTLAS(TLAS& tl)
 {
 	TLASNode* tlasNodes = CudaMemory::Allocate<TLASNode>(tl.blasCount * 2);
 	uint32_t *nodesIdx = CudaMemory::Allocate<uint32_t>(tl.blasCount);
@@ -111,7 +111,7 @@ void CopyTLASData(TLAS& tl)
 	{
 		if (!bvhMap.count(tl.blas[i].bvh))
 		{
-			bvhMap[tl.blas[i].bvh] = NewDeviceBVH(*tl.blas[i].bvh);
+			bvhMap[tl.blas[i].bvh] = newDeviceBVH(*tl.blas[i].bvh);
 		}
 		BVHInstance instance = tl.blas[i];
 		instance.bvh = bvhMap[tl.blas[i].bvh];
@@ -126,7 +126,28 @@ void CopyTLASData(TLAS& tl)
 	newTlas.nodesIdx = nodesIdx;
 
 	checkCudaErrors(cudaMemcpyToSymbol(tlas, &newTlas, sizeof(TLAS)));
+}
 
+void updateDeviceTLAS(TLAS& tl)
+{
+	TLAS tlasCpy;
+	BVHInstance* instancesCpy;
+	checkCudaErrors(cudaMemcpyFromSymbol(&tlasCpy, tlas, sizeof(TLAS)));
+
+	// Update the nodes
+	CudaMemory::MemCpy(tlasCpy.nodes, tl.nodes, tl.blasCount * 2, cudaMemcpyHostToDevice);
+
+	// TODO: handle the case when tl.blasCount has changed (new instance or deleted instance)
+	CudaMemory::MemCpy(instancesCpy, tlas.blas, tl.blasCount, cudaMemcpyDeviceToHost);
+
+	for (int i = 0; i < tl.blasCount; i++)
+	{
+		instancesCpy[i].SetTransform(tl.blas[i].transform);
+		instancesCpy[i].materialId = tl.blas[i].materialId;
+	}
+	
+	// Copy the instances back to the GPU
+	CudaMemory::MemCpy(tlas.blas, instancesCpy, tl.blasCount, cudaMemcpyHostToDevice);
 }
 
 __global__ void freeDeviceTLASKernel()
