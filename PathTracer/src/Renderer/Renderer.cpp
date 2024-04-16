@@ -91,7 +91,7 @@ void Renderer::RenderUI(Scene& scene)
 	std::vector<Material>& materials = assetManager.GetMaterials();
 	std::string materialsString = assetManager.GetMaterialsString();
 	std::string materialTypes = assetManager.GetMaterialTypesString();
-	std::vector<MeshInstance> meshInstances = scene.GetMeshInstances();
+	std::vector<MeshInstance>& meshInstances = scene.GetMeshInstances();
 
 	for (int i = 0; i < meshInstances.size(); i++)
 	{
@@ -101,6 +101,13 @@ void Renderer::RenderUI(Scene& scene)
 		//ImGui::ShowDemoWindow();
 		if (ImGui::CollapsingHeader("Mesh"))
 		{
+			ImGui::SeparatorText("Transform");
+			if (ImGui::DragFloat3("Position", (float*)&meshInstance.position, 0.01f))
+				scene.InvalidateMeshInstance(i);
+			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.01f))
+				scene.InvalidateMeshInstance(i);
+			if (ImGui::DragFloat3("Scale", (float*)&meshInstance.scale, 0.01f))
+				scene.InvalidateMeshInstance(i);
 
 			if (ImGui::TreeNode("Material"))
 			{

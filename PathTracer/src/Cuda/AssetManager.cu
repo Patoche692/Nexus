@@ -131,23 +131,28 @@ void newDeviceTLAS(TLAS& tl)
 void updateDeviceTLAS(TLAS& tl)
 {
 	TLAS tlasCpy;
-	BVHInstance* instancesCpy;
+	BVHInstance* instancesCpy = new BVHInstance[tl.blasCount];
 	checkCudaErrors(cudaMemcpyFromSymbol(&tlasCpy, tlas, sizeof(TLAS)));
 
 	// Update the nodes
 	CudaMemory::MemCpy(tlasCpy.nodes, tl.nodes, tl.blasCount * 2, cudaMemcpyHostToDevice);
 
 	// TODO: handle the case when tl.blasCount has changed (new instance or deleted instance)
-	CudaMemory::MemCpy(instancesCpy, tlas.blas, tl.blasCount, cudaMemcpyDeviceToHost);
+	CudaMemory::MemCpy(instancesCpy, tlasCpy.blas, tl.blasCount, cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < tl.blasCount; i++)
 	{
+		BVH* bvhBackup = instancesCpy[i].bvh;
+		instancesCpy[i].bvh = tl.blas[i].bvh;
 		instancesCpy[i].SetTransform(tl.blas[i].transform);
 		instancesCpy[i].materialId = tl.blas[i].materialId;
+		instancesCpy[i].bvh = bvhBackup;
 	}
 	
 	// Copy the instances back to the GPU
-	CudaMemory::MemCpy(tlas.blas, instancesCpy, tl.blasCount, cudaMemcpyHostToDevice);
+	CudaMemory::MemCpy(tlasCpy.blas, instancesCpy, tl.blasCount, cudaMemcpyHostToDevice);
+
+	delete[] instancesCpy;
 }
 
 __global__ void freeDeviceTLASKernel()

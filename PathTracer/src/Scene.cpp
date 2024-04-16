@@ -37,6 +37,11 @@ bool Scene::SendDataToDevice()
 
 	if (m_InvalidInstances.size() != 0)
 	{
+		for (int i : m_InvalidInstances)
+		{
+			MeshInstance& instance = m_MeshInstances[i];
+			instance.SetTransform(instance.position, instance.rotation, instance.scale);
+		}
 		m_Tlas.Build();
 		updateDeviceTLAS(m_Tlas);
 		m_InvalidInstances.clear();

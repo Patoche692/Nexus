@@ -3,7 +3,7 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
-	SceneType sceneType = SceneType::CORNELL_BOX;
+	SceneType sceneType = SceneType::DRAGONS;
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
