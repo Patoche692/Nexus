@@ -15,7 +15,9 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ![golden_dragon_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/82be7fb0-20bd-4504-890c-4f38c00326bd)
 ![glass_dragon](https://github.com/Patoche692/PathTracer/assets/54531293/49065a85-b623-40d9-a3f9-e5a4af1625ac)
 ![Capture d'écran 2024-04-13 0017481](https://github.com/Patoche692/PathTracer/assets/54531293/d64676fb-3d1d-4a99-b031-bf4b4bb252c4)
-![Capture d'écran 2024-04-06 194314](https://github.com/Patoche692/PathTracer/assets/54531293/4b5813a6-61ea-45bc-a2c7-5e110d82e9d8)
+![Capture d'écran 2024-04-16 203434](https://github.com/Patoche692/PathTracer/assets/54531293/a9075449-c786-4401-b6a8-28b693f81e51)
+![Capture d'écran 2024-04-16 215226](https://github.com/Patoche692/PathTracer/assets/54531293/8c01378b-80f8-4bb3-b411-3a30cd65ad82)
+
 
 ## Prerequisites
 - Having Microsoft Visual Studio installed
