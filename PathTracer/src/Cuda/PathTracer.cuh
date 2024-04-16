@@ -19,11 +19,5 @@ struct CameraData
 	uint2 resolution;
 };
 
-struct SceneData
-{
-	unsigned int nMeshes;
-};
-
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
 void SendCameraDataToDevice(Camera *camera);
-void SendSceneDataToDevice(Scene* scene);

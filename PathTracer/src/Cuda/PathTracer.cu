@@ -7,7 +7,6 @@
 #include "Geometry/BVH/TLAS.h"
 
 __device__ __constant__ CameraData cameraData;
-__device__ __constant__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Mesh* meshes;
 extern __constant__ __device__ TLAS tlas;
@@ -31,22 +30,26 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 	for (int j = 0; j < 10; j++)
 	{
+		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
 		currentRay.invDirection = 1 / currentRay.direction;
+
 		tlas.Intersect(currentRay);
 		if (currentRay.hit.t != 1e30f)
 		{
 			HitResult hitResult;
 			hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
 			hitResult.rIn = currentRay;
-			Triangle& triangle = tlas.blas[currentRay.hit.instanceIdx].bvh->triangles[currentRay.hit.triIdx];
+
+			MeshInstance instance = tlas.blas[currentRay.hit.instanceIdx];
+			Triangle& triangle = instance.bvh->triangles[currentRay.hit.triIdx];
 			float u = currentRay.hit.u, v = currentRay.hit.v;
 
 			// Interpolating and rotating the normal
 			hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
-			hitResult.normal = normalize(tlas.blas[currentRay.hit.instanceIdx].transform.TransformVector(hitResult.normal));
+			hitResult.normal = normalize(instance.transform.TransformVector(hitResult.normal));
 
-			hitResult.material = materials[currentRay.hit.instanceIdx];
+			hitResult.material = materials[instance.materialId];
 
 
 			// Normal flipping
@@ -94,11 +97,6 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	}
 
 	return make_float3(0.0f);
-}
-
-inline __device__ float3 defocusDiskSample()
-{
-
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
@@ -185,13 +183,5 @@ void SendCameraDataToDevice(Camera* camera)
 		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
 	};
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
-}
-
-void SendSceneDataToDevice(Scene* scene)
-{
-	SceneData data;
-	data.nMeshes = scene->GetAssetManager().GetMeshes().size();
-	// TODO: change the size of copy
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &data, sizeof(SceneData)));
 }
 
