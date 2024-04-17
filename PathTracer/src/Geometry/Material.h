@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/cuda_math.h"
 #include "Ray.h"
+#include <OpenGL/Texture.h>
 
 struct Material {
 
@@ -18,6 +19,8 @@ struct Material {
 		} light;
 		struct {
 			float3 albedo;
+			//uint32_t textureHandle; // for texture
+			Texture* texture;
 		} diffuse;
 		struct {
 			float3 albedo;

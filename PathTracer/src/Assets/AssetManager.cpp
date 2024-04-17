@@ -43,6 +43,11 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 	m_InvalidMaterials.insert(index);
 }
 
+void AssetManager::AddTexture(const std::string& filename)
+{
+	// TODO
+}
+
 bool AssetManager::SendDataToDevice()
 {
 	bool invalid = false;

@@ -7,6 +7,8 @@ public:
 	Texture(uint32_t width, uint32_t height);
 	~Texture();
 
+	float3 GetPixel(int x, int y) const;
+
 	void Bind();
 	void OnResize(uint32_t width, uint32_t height);
 

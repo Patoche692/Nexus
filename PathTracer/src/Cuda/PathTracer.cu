@@ -5,6 +5,7 @@
 #include "Utils/Utils.h"
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
+#include <RayTracerApplication.cpp>
 
 __device__ __constant__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
@@ -58,16 +59,27 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 			float3 attenuation = make_float3(1.0f);
 			Ray scatterRay = currentRay;
-
+			
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
-				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState) && hitResult.material.diffuse.textureHandle != 0) {
+					float3 textureColor = getTextureColor(hitResult.material.diffuse.texture, u, v);
+					currentAttenuation *= textureColor;
+				}
+				else if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
-					currentRay = scatterRay;
 				}
+				currentRay = scatterRay;
 				break;
+			//case Material::Type::DIFFUSE:
+			//	if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+			//	{
+			//		currentAttenuation *= attenuation;
+			//		currentRay = scatterRay;
+			//	}
+			//	break;
 			case Material::Type::METAL:
 				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
 				{
@@ -125,7 +137,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
-	float3 c = color(ray, rngState);
+	float3 c = color(ray, rngState);									// get new colour
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
 	else
@@ -135,7 +147,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 
 	// Gamma correction
 	c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert colour
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)
@@ -185,3 +197,15 @@ void SendCameraDataToDevice(Camera* camera)
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 
+__device__ float3 getTextureColor(Texture* texture, float u, float v)
+{
+	int texWidth = texture->GetWidth();
+	int texHeight = texture->GetHeight();
+
+	int texX = static_cast<int>(u * texWidth) % texWidth;
+	int texY = static_cast<int>(v * texHeight) % texHeight;
+
+	float3 textureColor = texture->GetPixel(texX, texY);
+
+	return textureColor;
+}
