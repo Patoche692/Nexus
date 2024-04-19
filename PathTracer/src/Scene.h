@@ -10,7 +10,8 @@ enum struct SceneType
 {
 	CORNELL_BOX,
 	CORNELL_BOX_SPHERES,
-	DRAGONS
+	DRAGONS,
+	NEONS
 };
 
 class Scene
