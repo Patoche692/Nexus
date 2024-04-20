@@ -18,7 +18,7 @@ public:
 	void AddMesh(const std::string& filename);
 
 	void AddMaterial();
-	void AddMaterial(const Material& material);
+	int AddMaterial(const Material& material);
 	std::vector<Material>& GetMaterials() { return m_Materials; }
 	void InvalidateMaterial(uint32_t index);
 	std::string GetMaterialTypesString();
@@ -26,7 +26,7 @@ public:
 	std::vector<BVH*> GetBVH() { return m_Bvh; }
 	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
-	void AddTexture(const std::string& filename);
+	int AddTexture(const std::string& filename);
 	void ApplyTextureToMaterial(int materialId, int textureId);
 
 	bool SendDataToDevice();

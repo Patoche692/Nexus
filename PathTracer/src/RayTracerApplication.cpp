@@ -36,8 +36,8 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.AddMesh("assets/models/lego.obj");
 		assetManager.AddMesh("assets/models/light.obj");
 
-		assetManager.AddTexture("assets/textures/brickwall.jpg");
-		assetManager.ApplyTextureToMaterial(0, 0);
+		//assetManager.AddTexture("assets/textures/brickwall.jpg");
+		//assetManager.ApplyTextureToMaterial(0, 0);
 
 
 		MeshInstance& greyFaces = m_Scene.CreateMeshInstance(0);
@@ -46,17 +46,16 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		redFace.AssignMaterial(1);
 		MeshInstance& greenFace = m_Scene.CreateMeshInstance(2);
 		greenFace.AssignMaterial(2);
-		MeshInstance& smallCube = m_Scene.CreateMeshInstance(3);
-		smallCube.AssignMaterial(3);
-		smallCube.SetRotationY(-18.0f);
-		smallCube.SetScale(1.2f);
-		smallCube.SetPosition(make_float3(1.4f, 1.2f, 1.2f));
-		//MeshInstance& bigCube = m_Scene.CreateMeshInstance(3);
-		//bigCube.AssignMaterial(4);
-		//bigCube.SetRotationY(18.0f);
-		//bigCube.SetScale(make_float3(1.2f, 2.4f, 1.2f));
-		//bigCube.SetPosition(make_float3(-1.3f, 2.4f, -1.3f));
-		MeshInstance& light = m_Scene.CreateMeshInstance(4);
+		m_Scene.CreateMeshInstance(3);
+		m_Scene.CreateMeshInstance(4);
+		m_Scene.CreateMeshInstance(5);
+		m_Scene.CreateMeshInstance(6);
+		m_Scene.CreateMeshInstance(7);
+		m_Scene.CreateMeshInstance(8);
+		m_Scene.CreateMeshInstance(9);
+		m_Scene.CreateMeshInstance(10);
+		m_Scene.CreateMeshInstance(11);
+		MeshInstance& light = m_Scene.CreateMeshInstance(12);
 		light.AssignMaterial(5);
 	}
 	else if (sceneType == SceneType::CORNELL_BOX_SPHERES)

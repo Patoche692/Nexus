@@ -7,7 +7,8 @@
 struct Mesh
 {
 	Mesh() = default;
-	Mesh(std::vector<BVH*> b) : bvhs(b) { }
+	Mesh(BVH* b, int mId) : bvh(b), materialId(mId) { }
 
-	std::vector<BVH*> bvhs;
+	BVH* bvh;
+	int materialId;
 };

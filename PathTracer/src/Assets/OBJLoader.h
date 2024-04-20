@@ -7,11 +7,12 @@
 #include "Geometry/Triangle.h"
 #include "Geometry/BVH/BVH.h"
 #include "Geometry/Mesh.h"
+#include "Assets/AssetManager.h"
 
 class OBJLoader
 {
 public:
-	static Mesh LoadOBJ(const std::string& filename);
+	static std::vector<Mesh> LoadOBJ(const std::string& filename, AssetManager* assetManager);
 
 private:
 	static Assimp::Importer m_Importer;

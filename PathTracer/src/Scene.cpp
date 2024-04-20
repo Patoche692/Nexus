@@ -21,13 +21,11 @@ void Scene::BuildTLAS()
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
-	m_MeshInstances.push_back(MeshInstance(m_AssetManager.GetMeshes()[meshId]));
-	MeshInstance& meshInstance = m_MeshInstances[m_MeshInstances.size() - 1];
+	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
+	m_BVHInstances.push_back(BVHInstance(mesh.bvh));
 
-	meshInstance.firstBVHInstanceIdx = m_BVHInstances.size();
-
-	for (BVHInstance* bvhInstance : meshInstance.bvhInstances)
-		m_BVHInstances.push_back(*bvhInstance);
+	MeshInstance meshInstance(m_BVHInstances.size() - 1, mesh.materialId);
+	m_MeshInstances.push_back(meshInstance);
 
 	InvalidateMeshInstance(m_MeshInstances.size() - 1);
 
@@ -48,12 +46,9 @@ bool Scene::SendDataToDevice()
 		for (int i : m_InvalidMeshInstances)
 		{
 			MeshInstance& meshInstance = m_MeshInstances[i];
-			for (int j = meshInstance.firstBVHInstanceIdx; j < meshInstance.firstBVHInstanceIdx + meshInstance.bvhInstances.size(); j++)
-			{
-				m_BVHInstances[j].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
-				if (meshInstance.materialId != -1)
-					m_BVHInstances[j].AssignMaterial(meshInstance.materialId);
-			}
+			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+			if (meshInstance.materialId != -1)
+				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
 			
 		}
 		m_Tlas.Build();

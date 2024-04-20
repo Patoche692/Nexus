@@ -3,18 +3,17 @@
 
 Assimp::Importer OBJLoader::m_Importer;
 
-Mesh OBJLoader::LoadOBJ(const std::string& filename)
+std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* assetManager)
 {
 	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
 		| aiProcess_FlipUVs);
 	
-	Mesh mesh;
-	std::vector<BVH*> bvhs;
+	std::vector<Mesh> meshes;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "OBJLoader: Error loading model " << filename << std::endl;
-		return mesh;
+		return meshes;
 	}
 
 	int a = scene->mNumMeshes;
@@ -69,13 +68,32 @@ Mesh OBJLoader::LoadOBJ(const std::string& filename)
 			);
 			triangles[j] = triangle;
 		}
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+		Material newMaterial;
+		newMaterial.type = Material::Type::DIFFUSE;
+		int textureId = -1;
+
+		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+		{
+			aiString path;
+			std::string fullPath;
+			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			{
+				fullPath = path.data;
+				newMaterial.textureId = assetManager->AddTexture(fullPath);
+			}
+		}
+		int materialId = assetManager->AddMaterial(newMaterial);
+
 		BVH* bvh = new BVH(triangles);
-		bvhs.push_back(bvh);
+
+		Mesh newMesh(bvh, materialId);
+
+		meshes.push_back(newMesh);
 	}
 
 	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
 
-	mesh = Mesh(bvhs);
-	
-	return mesh;
+	return meshes;
 }

@@ -9,7 +9,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/hair.png
+map_Kd assets/textures/hair.png
 
 newmtl blinn2SG
 Ns 0.000000
@@ -19,7 +19,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/han face.png
+map_Kd assets/textures/han face.png
 
 newmtl blinn3SG
 Ns 0.000000
@@ -29,7 +29,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/han chest.png
+map_Kd assets/textures/han chest.png
 
 newmtl blinn4SG
 Ns 0.000000
@@ -39,7 +39,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/han arm.png
+map_Kd assets/textures/han arm.png
 
 newmtl blinn5SG
 Ns 0.000000
@@ -49,7 +49,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/han belt.png
+map_Kd assets/textures/han belt.png
 
 newmtl blinn6SG
 Ns 0.000000
@@ -59,7 +59,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:/Users/Patrick/Downloads/2y66z9zdx4io-Hansolo/han leg.png
+map_Kd assets/textures/han leg.png
 
 newmtl blinn7SG
 Ns 0.000000

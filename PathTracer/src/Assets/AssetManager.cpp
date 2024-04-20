@@ -18,8 +18,9 @@ AssetManager::~AssetManager()
 
 void AssetManager::AddMesh(const std::string& filename)
 {
-	Mesh mesh = OBJLoader::LoadOBJ(filename);
-	m_Meshes.push_back(mesh);
+	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(filename, this);
+	for (Mesh& mesh : meshes)
+		m_Meshes.push_back(mesh);
 }
 
 void AssetManager::AddMaterial()
@@ -30,11 +31,12 @@ void AssetManager::AddMaterial()
 	AddMaterial(material);
 }
 
-void AssetManager::AddMaterial(const Material& material)
+int AssetManager::AddMaterial(const Material& material)
 {
 	m_Materials.push_back(material);
 	Material& m = m_Materials[m_Materials.size() - 1];
 	newDeviceMaterial(m, m_Materials.size());
+	return m_Materials.size() - 1;
 }
 
 void AssetManager::InvalidateMaterial(uint32_t index)
@@ -42,12 +44,13 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 	m_InvalidMaterials.insert(index);
 }
 
-void AssetManager::AddTexture(const std::string& filename)
+int AssetManager::AddTexture(const std::string& filename)
 {
 	Texture newTexture = IMGLoader::LoadIMG(filename);
 	m_Textures.push_back(newTexture);
 	Texture& m = m_Textures[m_Textures.size() - 1];
 	newDeviceTexture(m, m_Textures.size());
+	return m_Textures.size() - 1;
 }
 
 void AssetManager::ApplyTextureToMaterial(int materialId, int textureId)
