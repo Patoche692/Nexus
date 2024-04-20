@@ -38,7 +38,7 @@ private:
 
 	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
-	std::set<uint32_t> m_InvalidInstances;
+	std::set<uint32_t> m_InvalidMeshInstances;
 	TLAS m_Tlas;
 
 	AssetManager m_AssetManager;

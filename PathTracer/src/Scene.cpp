@@ -21,38 +21,39 @@ void Scene::BuildTLAS()
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
-	MeshInstance instance(m_AssetManager.GetMeshes()[meshId]);
+	m_MeshInstances.push_back(MeshInstance(m_AssetManager.GetMeshes()[meshId]));
+	MeshInstance& meshInstance = m_MeshInstances[m_MeshInstances.size() - 1];
 
-	instance.firstBVHInstanceIdx = m_BVHInstances.size();
+	meshInstance.firstBVHInstanceIdx = m_BVHInstances.size();
 
-	for (BVHInstance& bvhInstance : instance.bvhInstances)
-		m_BVHInstances.push_back(std::move(bvhInstance));
+	for (BVHInstance* bvhInstance : meshInstance.bvhInstances)
+		m_BVHInstances.push_back(*bvhInstance);
 
-	m_MeshInstances.push_back(std::move(instance));
+	InvalidateMeshInstance(m_MeshInstances.size() - 1);
 
 	return m_MeshInstances[m_MeshInstances.size() - 1];
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
 {
-	for (int i = 0; i < m_MeshInstances[instanceId].bvhInstances.size(); i++)
-		m_InvalidInstances.insert(m_MeshInstances[instanceId].firstBVHInstanceIdx + i);
+	m_InvalidMeshInstances.insert(instanceId);
 }
 
 bool Scene::SendDataToDevice()
 {
 	bool invalid = false;
 
-	if (m_InvalidInstances.size() != 0)
+	if (m_InvalidMeshInstances.size() != 0)
 	{
-		for (int i : m_InvalidInstances)
+		for (int i : m_InvalidMeshInstances)
 		{
-			BVHInstance& instance = m_BVHInstances[i];
-			instance.SetTransform(instance.position, instance.rotation, instance.scale);
+			MeshInstance& meshInstance = m_MeshInstances[i];
+			for (int j = meshInstance.firstBVHInstanceIdx; j < meshInstance.firstBVHInstanceIdx + meshInstance.bvhInstances.size(); j++)
+				m_BVHInstances[j].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
 		}
 		m_Tlas.Build();
 		updateDeviceTLAS(m_Tlas);
-		m_InvalidInstances.clear();
+		m_InvalidMeshInstances.clear();
 		invalid = true;
 	}
 
