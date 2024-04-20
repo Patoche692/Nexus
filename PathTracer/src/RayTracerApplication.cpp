@@ -33,7 +33,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.AddMesh("assets/models/box_grey_faces.obj");
 		assetManager.AddMesh("assets/models/box_red_face.obj");
 		assetManager.AddMesh("assets/models/box_green_face.obj");
-		assetManager.AddMesh("assets/models/iron_man.obj");
+		assetManager.AddMesh("assets/models/lego.obj");
 		assetManager.AddMesh("assets/models/light.obj");
 
 		assetManager.AddTexture("assets/textures/brickwall.jpg");

@@ -51,14 +51,16 @@ struct MeshInstance
 		for (BVHInstance* bvhInstance : bvhInstances)
 			bvhInstance->SetRotationZ(r);
 	}
-	void AssignMaterial(int materialId)
+	void AssignMaterial(int m)
 	{
+		materialId = m;
 		for (BVHInstance* bvhInstance : bvhInstances)
-			bvhInstance->AssignMaterial(materialId);
+			bvhInstance->AssignMaterial(m);
 	}
 
 	std::vector<BVHInstance*> bvhInstances;
 	int firstBVHInstanceIdx;
+	int materialId = -1;
 	float3 rotation = make_float3(0.0f);
 	float3 scale = make_float3(1.0f);
 	float3 position = make_float3(0.0f);

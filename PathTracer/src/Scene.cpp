@@ -49,7 +49,12 @@ bool Scene::SendDataToDevice()
 		{
 			MeshInstance& meshInstance = m_MeshInstances[i];
 			for (int j = meshInstance.firstBVHInstanceIdx; j < meshInstance.firstBVHInstanceIdx + meshInstance.bvhInstances.size(); j++)
+			{
 				m_BVHInstances[j].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+				if (meshInstance.materialId != -1)
+					m_BVHInstances[j].AssignMaterial(meshInstance.materialId);
+			}
+			
 		}
 		m_Tlas.Build();
 		updateDeviceTLAS(m_Tlas);

@@ -102,65 +102,64 @@ void Renderer::RenderUI(Scene& scene)
 		if (ImGui::CollapsingHeader("Mesh"))
 		{
 			ImGui::SeparatorText("Transform");
+
 			if (ImGui::DragFloat3("Position", (float*)&meshInstance.position, 0.01f))
-			{
-				meshInstance.SetPosition(meshInstance.position);
 				scene.InvalidateMeshInstance(i);
-			}
-			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.01f))
-			{
-				meshInstance.SetRotationX(meshInstance.rotation.x);
-				meshInstance.SetRotationY(meshInstance.rotation.y);
-				meshInstance.SetRotationZ(meshInstance.rotation.z);
+
+			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.1f))
 				scene.InvalidateMeshInstance(i);
-			}
+
 			if (ImGui::DragFloat3("Scale", (float*)&meshInstance.scale, 0.01f))
-			{
-				meshInstance.SetScale(meshInstance.scale);
 				scene.InvalidateMeshInstance(i);
+
+			if (ImGui::TreeNode("Material"))
+			{
+				if (meshInstance.materialId == -1)
+				{
+					if (ImGui::Button("Custom material"))
+						meshInstance.materialId = 0;
+				}
+				else
+				{
+
+					if (ImGui::Combo("Id", &meshInstance.materialId, materialsString.c_str()))
+						scene.InvalidateMeshInstance(i);
+
+					Material& material = materials[meshInstance.materialId];
+					int type = (int)material.type;
+
+					if (ImGui::Combo("Type", &type, materialTypes.c_str()))
+						assetManager.InvalidateMaterial(meshInstance.materialId);
+
+					material.type = (Material::Type)type;
+
+					switch (material.type)
+					{
+					case Material::Type::LIGHT:
+						if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::DIFFUSE:
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::METAL:
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::DIELECTRIC:
+						if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					}
+				}
+				ImGui::TreePop();
+				ImGui::Spacing();
 			}
-
-			//if (ImGui::TreeNode("Material"))
-			//{
-			//	if (ImGui::Combo("Id", &MeshInstance.materialId, materialsString.c_str()))
-			//		scene.InvalidateMeshInstance(i);
-
-			//	Material& material = materials[MeshInstance.materialId];
-			//	int type = (int)material.type;
-
-			//	if (ImGui::Combo("Type", &type, materialTypes.c_str()))
-			//	{
-			//		assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//	}
-
-			//	material.type = (Material::Type)type;
-
-			//	switch (material.type)
-			//	{
-			//	case Material::Type::LIGHT:
-			//		if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		break;
-			//	case Material::Type::DIFFUSE:
-			//		if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		break;
-			//	case Material::Type::METAL:
-			//		if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		break;
-			//	case Material::Type::DIELECTRIC:
-			//		if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-			//			assetManager.InvalidateMaterial(MeshInstance.materialId);
-			//		break;
-			//	}
-			//	ImGui::TreePop();
-			//	ImGui::Spacing();
-			//}
 
 		}
 		ImGui::PopID();
