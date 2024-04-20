@@ -8,12 +8,12 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
 		| aiProcess_FlipUVs);
 	
-	std::vector<Triangle> triangles;
+	std::vector<Triangle> objTriangles;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "OBJLoader: Error loading model " << filename << std::endl;
-		return triangles;
+		return objTriangles;
 	}
 
 	int a = scene->mNumMeshes;
@@ -22,8 +22,8 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 	{
 		aiMesh* mesh = scene->mMeshes[i];
 
-		triangles = std::vector<Triangle>(mesh->mNumFaces);
-
+		std::vector<Triangle> triangles = std::vector<Triangle>(mesh->mNumFaces);
+		
 		for (int j = 0; j < mesh->mNumFaces; j++)
 		{
 			float3 pos[3] = { };
@@ -68,9 +68,11 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 			);
 			triangles[j] = triangle;
 		}
+		objTriangles.reserve(objTriangles.size() + distance(triangles.begin(), triangles.end()));
+		objTriangles.insert(objTriangles.end(), triangles.begin(), triangles.end());
 	}
 
 	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
 
-	return triangles;
+	return objTriangles;
 }
