@@ -1,8 +1,9 @@
 #pragma once
+#include <vector>
 #include "Utils/Utils.h"
 #include "Geometry/AABB.h"
-#include "Geometry/Mesh.h"
 #include "Geometry/Ray.h"
+#include "Geometry/Triangle.h"
 
 #define BINS 8
 

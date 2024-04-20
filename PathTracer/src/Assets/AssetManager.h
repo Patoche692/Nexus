@@ -24,6 +24,7 @@ public:
 	std::string GetMaterialTypesString();
 	std::string GetMaterialsString();
 	std::vector<BVH*> GetBVH() { return m_Bvh; }
+	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
 	void AddTexture(const std::string& filename);
 	void ApplyTextureToMaterial(int materialId, int textureId);
@@ -35,6 +36,7 @@ private:
 	std::set<uint32_t> m_InvalidMaterials;
 	std::vector<Texture> m_Textures;
 	std::vector<BVH*> m_Bvh;
+	std::vector<Mesh> m_Meshes;
 
 	Material** m_MaterialSymbolAddress;
 	Mesh** m_MeshSymbolAddress;

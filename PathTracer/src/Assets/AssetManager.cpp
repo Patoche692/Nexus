@@ -18,10 +18,8 @@ AssetManager::~AssetManager()
 
 void AssetManager::AddMesh(const std::string& filename)
 {
-	std::vector<Triangle> triangles = OBJLoader::LoadOBJ(filename);
-
-	BVH* bvh = new BVH(triangles);
-	m_Bvh.push_back(bvh);
+	Mesh mesh = OBJLoader::LoadOBJ(filename);
+	m_Meshes.push_back(mesh);
 }
 
 void AssetManager::AddMaterial()

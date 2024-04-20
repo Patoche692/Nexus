@@ -202,6 +202,7 @@
     <ClInclude Include="src\Geometry\Material.h" />
     <ClInclude Include="src\Geometry\Medium.h" />
     <ClInclude Include="src\Geometry\Mesh.h" />
+    <ClInclude Include="src\Geometry\MeshInstance.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Geometry\Triangle.h" />
     <ClInclude Include="src\Input.h" />

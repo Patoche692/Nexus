@@ -53,6 +53,3 @@ public:
 		ray = backupRay;
 	}
 };
-
-// A BVH instance can be considered as a Mesh instance
-typedef BVHInstance MeshInstance;

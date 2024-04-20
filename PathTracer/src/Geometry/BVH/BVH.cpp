@@ -1,3 +1,4 @@
+#include <vector>
 #include "BVH.h"
 #include "Geometry/AABB.h"
 #include "Utils/Utils.h"

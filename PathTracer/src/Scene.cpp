@@ -14,21 +14,29 @@ void Scene::AddMaterial(Material& material)
 
 void Scene::BuildTLAS()
 {
-	m_Tlas = TLAS(m_MeshInstances.data(), m_MeshInstances.size());
+	m_Tlas = TLAS(m_BVHInstances.data(), m_BVHInstances.size());
 	m_Tlas.Build();
 	newDeviceTLAS(m_Tlas);
 }
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
-	BVHInstance instance(m_AssetManager.GetBVH()[meshId]);
-	m_MeshInstances.push_back(instance);
+	MeshInstance instance(m_AssetManager.GetMeshes()[meshId]);
+
+	instance.firstBVHInstanceIdx = m_BVHInstances.size();
+
+	for (BVHInstance& bvhInstance : instance.bvhInstances)
+		m_BVHInstances.push_back(std::move(bvhInstance));
+
+	m_MeshInstances.push_back(std::move(instance));
+
 	return m_MeshInstances[m_MeshInstances.size() - 1];
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
 {
-	m_InvalidInstances.insert(instanceId);
+	for (int i = 0; i < m_MeshInstances[instanceId].bvhInstances.size(); i++)
+		m_InvalidInstances.insert(m_MeshInstances[instanceId].firstBVHInstanceIdx + i);
 }
 
 bool Scene::SendDataToDevice()
@@ -39,7 +47,7 @@ bool Scene::SendDataToDevice()
 	{
 		for (int i : m_InvalidInstances)
 		{
-			MeshInstance& instance = m_MeshInstances[i];
+			BVHInstance& instance = m_BVHInstances[i];
 			instance.SetTransform(instance.position, instance.rotation, instance.scale);
 		}
 		m_Tlas.Build();

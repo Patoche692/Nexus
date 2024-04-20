@@ -10,7 +10,7 @@
 __device__ __constant__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Texture* textures;
-extern __constant__ __device__ Mesh* meshes;
+extern __constant__ __device__ Mesh* bvhs;
 extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
@@ -43,7 +43,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
 			hitResult.rIn = currentRay;
 
-			MeshInstance instance = tlas.blas[currentRay.hit.instanceIdx];
+			BVHInstance instance = tlas.blas[currentRay.hit.instanceIdx];
 			Triangle& triangle = instance.bvh->triangles[currentRay.hit.triIdx];
 			float u = currentRay.hit.u, v = currentRay.hit.v;
 

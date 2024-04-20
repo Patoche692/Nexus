@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Geometry/Sphere.h"
 #include "Assets/AssetManager.h"
+#include "Geometry/MeshInstance.h"
 
 enum struct SceneType
 {
@@ -35,6 +36,7 @@ public:
 private:
 	std::shared_ptr<Camera> m_Camera;
 
+	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
 	std::set<uint32_t> m_InvalidInstances;
 	TLAS m_Tlas;

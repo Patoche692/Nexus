@@ -3,17 +3,18 @@
 
 Assimp::Importer OBJLoader::m_Importer;
 
-std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
+Mesh OBJLoader::LoadOBJ(const std::string& filename)
 {
 	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
 		| aiProcess_FlipUVs);
 	
-	std::vector<Triangle> objTriangles;
+	Mesh mesh;
+	std::vector<BVH*> bvhs;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "OBJLoader: Error loading model " << filename << std::endl;
-		return objTriangles;
+		return mesh;
 	}
 
 	int a = scene->mNumMeshes;
@@ -68,11 +69,13 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 			);
 			triangles[j] = triangle;
 		}
-		objTriangles.reserve(objTriangles.size() + distance(triangles.begin(), triangles.end()));
-		objTriangles.insert(objTriangles.end(), triangles.begin(), triangles.end());
+		BVH* bvh = new BVH(triangles);
+		bvhs.push_back(bvh);
 	}
 
 	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
 
-	return objTriangles;
+	mesh = Mesh(bvhs);
+	
+	return mesh;
 }

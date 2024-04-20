@@ -51,11 +51,11 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		smallCube.SetRotationY(-18.0f);
 		smallCube.SetScale(1.2f);
 		smallCube.SetPosition(make_float3(1.4f, 1.2f, 1.2f));
-		MeshInstance& bigCube = m_Scene.CreateMeshInstance(3);
-		bigCube.AssignMaterial(4);
-		bigCube.SetRotationY(18.0f);
-		bigCube.SetScale(make_float3(1.2f, 2.4f, 1.2f));
-		bigCube.SetPosition(make_float3(-1.3f, 2.4f, -1.3f));
+		//MeshInstance& bigCube = m_Scene.CreateMeshInstance(3);
+		//bigCube.AssignMaterial(4);
+		//bigCube.SetRotationY(18.0f);
+		//bigCube.SetScale(make_float3(1.2f, 2.4f, 1.2f));
+		//bigCube.SetPosition(make_float3(-1.3f, 2.4f, -1.3f));
 		MeshInstance& light = m_Scene.CreateMeshInstance(4);
 		light.AssignMaterial(5);
 	}

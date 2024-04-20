@@ -5,29 +5,30 @@
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
+#include "Geometry/Triangle.h"
 
 __constant__ __device__ Material* materials;
 __constant__ __device__ Texture* textures;
-__constant__ __device__ Mesh* meshes;
+__constant__ __device__ BVH* bvhs;
 __constant__ __device__ TLAS tlas;
 
 
 void newDeviceMesh(Mesh& mesh, uint32_t size)
 {
-	Mesh** meshesSymbolAddress;
+	//Mesh** meshesSymbolAddress;
 
-	// Retreive the address of meshes
-	checkCudaErrors(cudaGetSymbolAddress((void**)&meshesSymbolAddress, meshes));
+	//// Retreive the address of meshes
+	//checkCudaErrors(cudaGetSymbolAddress((void**)&meshesSymbolAddress, bvhs));
 
-	Triangle* triangles = CudaMemory::Allocate<Triangle>(mesh.nTriangles);
-	CudaMemory::MemCpy(triangles, mesh.triangles, mesh.nTriangles, cudaMemcpyHostToDevice);
+	//Triangle* triangles = CudaMemory::Allocate<Triangle>(mesh.nTriangles);
+	//CudaMemory::MemCpy(triangles, mesh.triangles, mesh.nTriangles, cudaMemcpyHostToDevice);
 
-	Mesh newMesh = mesh;
-	newMesh.triangles = triangles;
+	//Mesh newMesh = mesh;
+	//newMesh.triangles = triangles;
 
-	CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
+	//CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
 
-	CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, newMesh);
+	//CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, newMesh);
 }
 
 void newDeviceMaterial(Material& material, uint32_t size)
@@ -63,9 +64,9 @@ __global__ void freeMeshesKernel(int meshesCount)
 {
 	for (int i = 0; i < meshesCount; i++)
 	{
-		free(meshes[i].triangles);
+		free(bvhs[i].triangles);
 	}
-	free(meshes);
+	free(bvhs);
 }
 
 void freeDeviceMeshes(int meshesCount)
@@ -202,7 +203,7 @@ Material** getMaterialSymbolAddress()
 Mesh** getMeshSymbolAddress()
 {
 	Mesh** meshSymbolAddress;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&meshSymbolAddress, meshes));
+	checkCudaErrors(cudaGetSymbolAddress((void**)&meshSymbolAddress, bvhs));
 	return meshSymbolAddress;
 }
 
