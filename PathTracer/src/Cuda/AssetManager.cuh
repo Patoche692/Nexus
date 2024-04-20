@@ -9,6 +9,7 @@
 
 void newDeviceMesh(Mesh& mesh, uint32_t size);
 void newDeviceMaterial(Material& m, uint32_t size);
+void newDeviceTexture(Texture& texture, uint32_t size);
 void freeDeviceMeshes(int meshesCount);
 void freeDeviceMaterials();
 void cpyMaterialToDevice(Material& m, uint32_t id);

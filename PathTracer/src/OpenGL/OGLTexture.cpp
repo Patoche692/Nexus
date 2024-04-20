@@ -1,13 +1,13 @@
-#include "Texture.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <vector_types.h>
 #include <common.hpp>
 #include "Utils/cuda_math.h"
+#include "OGLTexture.h"
 
 using namespace glm;
 
-Texture::Texture(uint32_t width, uint32_t height)
+OGLTexture::OGLTexture(uint32_t width, uint32_t height)
     :m_Width(width), m_Height(height)
 {
 	glGenTextures(1, &m_Handle);
@@ -19,12 +19,12 @@ Texture::Texture(uint32_t width, uint32_t height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
-void Texture::Bind()
+void OGLTexture::Bind()
 {
 	glBindTexture(GL_TEXTURE_2D, m_Handle);
 }
 
-void Texture::OnResize(uint32_t width, uint32_t height)
+void OGLTexture::OnResize(uint32_t width, uint32_t height)
 {
 	Bind();
 	m_Width = width;
@@ -32,12 +32,12 @@ void Texture::OnResize(uint32_t width, uint32_t height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
-Texture::~Texture()
+OGLTexture::~OGLTexture()
 {
     glDeleteTextures(1, &m_Handle);
 }
 
-float3 Texture::GetPixel(int x, int y) const
+float3 OGLTexture::GetPixel(int x, int y) const
 {
     x = clamp(x, 0, static_cast<int>(m_Width) - 1);
     y = clamp(y, 0, static_cast<int>(m_Height) - 1);

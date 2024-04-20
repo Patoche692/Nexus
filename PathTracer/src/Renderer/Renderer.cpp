@@ -18,7 +18,7 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	ImGui_ImplOpenGL3_Init("#version 130");
 
 	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
-	m_Texture = std::make_shared<Texture>(width, height);
+	m_Texture = std::make_shared<OGLTexture>(width, height);
 
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 

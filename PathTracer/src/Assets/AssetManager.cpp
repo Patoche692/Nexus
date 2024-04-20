@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "OBJLoader.h"
+#include "IMGLoader.h"
 
 AssetManager::AssetManager()
 {
@@ -45,8 +46,12 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 
 void AssetManager::AddTexture(const std::string& filename)
 {
-	// TODO
+	Texture newTexture = IMGLoader::LoadIMG(filename);
+	m_Textures.push_back(newTexture);
+	Texture& m = m_Textures[m_Textures.size() - 1];
+	newDeviceTexture(m, m_Textures.size());
 }
+
 
 bool AssetManager::SendDataToDevice()
 {

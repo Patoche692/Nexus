@@ -197,7 +197,7 @@ void SendCameraDataToDevice(Camera* camera)
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 
-__device__ float3 getTextureColor(Texture* texture, float u, float v)
+__device__ float3 getTextureColor(OGLTexture* texture, float u, float v)
 {
 	int texWidth = texture->GetWidth();
 	int texHeight = texture->GetHeight();

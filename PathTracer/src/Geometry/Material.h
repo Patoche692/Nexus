@@ -20,7 +20,7 @@ struct Material {
 		struct {
 			float3 albedo;
 			//uint32_t textureHandle; // for texture
-			Texture* texture;
+			//Texture* texture;		https://choodle.portal.chalmers.se/laxM2Dt4x8sTXOpF/vote/EeG9hcycqeTpqYRN#edit
 		} diffuse;
 		struct {
 			float3 albedo;

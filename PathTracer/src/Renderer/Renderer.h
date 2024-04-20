@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 #include "Camera.h"
 #include "OpenGL/PixelBuffer.h"
-#include "OpenGL/Texture.h"
+#include "OpenGL/OGLTexture.h"
 #include "Scene.h"
 
 class Renderer
@@ -22,12 +22,12 @@ public:
 	void UpdateTimer(float deltaTime);
 
 	std::shared_ptr<PixelBuffer> GetPixelBuffer() { return m_PixelBuffer; };
-	std::shared_ptr<Texture> GetTexture() { return m_Texture; };
+	std::shared_ptr<OGLTexture> GetTexture() { return m_Texture; };
 
 private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
 	std::shared_ptr<PixelBuffer> m_PixelBuffer;
-	std::shared_ptr<Texture> m_Texture;
+	std::shared_ptr<OGLTexture> m_Texture;
 	float m_DisplayFPSTimer;
 	float m_DeltaTime = 0.0f;
 	float m_AccumulatedTime = 0.0f;

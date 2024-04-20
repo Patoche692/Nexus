@@ -7,6 +7,7 @@
 #include "Geometry/Material.h"
 #include "Geometry/BVH/BVHInstance.h"
 #include "Geometry/BVH/TLAS.h"
+#include "Texture.h"
 
 class AssetManager
 {
@@ -31,6 +32,7 @@ public:
 private:
 	std::vector<Material> m_Materials;
 	std::set<uint32_t> m_InvalidMaterials;
+	std::vector<Texture> m_Textures;
 	std::vector<BVH*> m_Bvh;
 
 	Material** m_MaterialSymbolAddress;

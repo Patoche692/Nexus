@@ -1,13 +1,14 @@
 #include "AssetManager.cuh"
 #include <vector>
 #include <map>
-
 #include "CudaMemory.cuh"
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
+#include "Assets/Texture.h"
 
 __constant__ __device__ Material* materials;
+__constant__ __device__ Texture* textures;
 __constant__ __device__ Mesh* meshes;
 __constant__ __device__ TLAS tlas;
 
@@ -40,6 +41,17 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	CudaMemory::ResizeDeviceArray(materialsSymbolAddress, size);
 
 	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
+}
+
+void newDeviceTexture(Texture& texture, uint32_t size) {
+	
+	Texture** texturesSymbolAddress;
+
+	checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, textures));
+
+	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
+
+	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, texture);
 }
 
 __global__ void freeMeshesKernel(int meshesCount)

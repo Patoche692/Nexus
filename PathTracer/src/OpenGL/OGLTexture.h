@@ -1,11 +1,11 @@
 #pragma once
 #include <iostream>
 
-class Texture
+class OGLTexture
 {
 public:
-	Texture(uint32_t width, uint32_t height);
-	~Texture();
+	OGLTexture(uint32_t width, uint32_t height);
+	~OGLTexture();
 
 	float3 GetPixel(int x, int y) const;
 
