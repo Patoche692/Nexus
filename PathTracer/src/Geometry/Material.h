@@ -36,6 +36,7 @@ struct HitResult
 {
 	float3 p;
 	Ray rIn;
+	float3 albedo;
 	float3 normal;
 	Material material;
 };

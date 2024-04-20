@@ -63,25 +63,29 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			
 			switch (hitResult.material.type)
 			{
-			//case Material::Type::DIFFUSE:
-			//	if (diffuseScatter(hitResult, attenuation, scatterRay, rngState) && hitResult.material.diffuse.textureHandle != 0) {
-			//		float3 textureColor = getTextureColor(hitResult.material.diffuse.texture, u, v);
-			//		currentAttenuation *= textureColor;
-			//	}
-			//	else if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
-			//	{
-			//		currentAttenuation *= attenuation;
-			//	}
-			//	currentRay = scatterRay;
-			//	break;
 			case Material::Type::DIFFUSE:
-				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState, textures, tlas))
+				if (hitResult.material.textureId == -1)
+					hitResult.albedo = hitResult.material.diffuse.albedo;
+				else
+				{
+					float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+					hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+				}
+
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
 					currentRay = scatterRay;
 				}
 				break;
 			case Material::Type::METAL:
+				if (hitResult.material.textureId == -1)
+					hitResult.albedo = hitResult.material.diffuse.albedo;
+				else
+				{
+					float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+					hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+				}
 				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
@@ -106,10 +110,10 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			//if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
 		}
 		else
-			return make_float3(0.0f);
+			return currentAttenuation * make_float3(0.2f);
 	}
 
-	return make_float3(0.0f);
+	return currentAttenuation * make_float3(0.2f);
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)

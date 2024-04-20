@@ -4,24 +4,11 @@
 #include "Random.cuh"
 #include "Geometry/Material.h"
 
-inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState, Texture* textures, TLAS tlas)
+inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState)
 {
 	float3 scatterDirection = hitResult.normal + Random::RandomUnitVector(rngState);
 	scattered = Ray(hitResult.p, normalize(scatterDirection));
-
-	if (hitResult.material.textureId != -1) {
-		Intersection i = hitResult.rIn.hit;
-		Triangle triangle = tlas.blas[i.instanceIdx].bvh->triangles[i.triIdx];
-
-		float2 uv = i.u * triangle.texCoord1 + i.v * triangle.texCoord2 + (1 - (i.u + i.v)) * triangle.texCoord0;
-
-		attenuation = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-	}
-	else
-	{
-		attenuation = hitResult.material.diffuse.albedo;
-	}
-
+	attenuation = hitResult.albedo;
 	return true;
 }
 
@@ -29,7 +16,7 @@ inline __device__ bool plasticScattter(HitResult& hitResult, float3& attenuation
 {
 	float3 reflected = reflect(normalize(hitResult.rIn.direction), hitResult.normal);
 	scattered = Ray(hitResult.p, normalize(reflected + hitResult.material.plastic.roughness * Random::RandomUnitVector(rngState)));
-	attenuation = hitResult.material.diffuse.albedo;
+	attenuation = hitResult.albedo;
 	return dot(scattered.direction, hitResult.normal) > 0.0f;
 }
 
