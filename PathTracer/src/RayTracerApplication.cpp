@@ -33,19 +33,19 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.AddMesh("assets/models/box_grey_faces.obj");
 		assetManager.AddMesh("assets/models/box_red_face.obj");
 		assetManager.AddMesh("assets/models/box_green_face.obj");
-		assetManager.AddMesh("assets/models/lego.obj");
-		assetManager.AddMesh("assets/models/light.obj");
+		assetManager.AddMesh("assets/models/bathroom.obj");
+		//assetManager.AddMesh("assets/models/light.obj");
 
 		//assetManager.AddTexture("assets/textures/brickwall.jpg");
 		//assetManager.ApplyTextureToMaterial(0, 0);
 
 
-		MeshInstance& greyFaces = m_Scene.CreateMeshInstance(0);
-		greyFaces.AssignMaterial(0);
-		MeshInstance& redFace = m_Scene.CreateMeshInstance(1);
-		redFace.AssignMaterial(1);
-		MeshInstance& greenFace = m_Scene.CreateMeshInstance(2);
-		greenFace.AssignMaterial(2);
+		//MeshInstance& greyFaces = m_Scene.CreateMeshInstance(0);
+		//greyFaces.AssignMaterial(0);
+		//MeshInstance& redFace = m_Scene.CreateMeshInstance(1);
+		//redFace.AssignMaterial(1);
+		//MeshInstance& greenFace = m_Scene.CreateMeshInstance(2);
+		//greenFace.AssignMaterial(2);
 		m_Scene.CreateMeshInstance(3);
 		m_Scene.CreateMeshInstance(4);
 		m_Scene.CreateMeshInstance(5);
@@ -55,8 +55,14 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		m_Scene.CreateMeshInstance(9);
 		m_Scene.CreateMeshInstance(10);
 		m_Scene.CreateMeshInstance(11);
-		MeshInstance& light = m_Scene.CreateMeshInstance(12);
-		light.AssignMaterial(5);
+		m_Scene.CreateMeshInstance(12);
+		m_Scene.CreateMeshInstance(13);
+		m_Scene.CreateMeshInstance(14);
+		m_Scene.CreateMeshInstance(15);
+		m_Scene.CreateMeshInstance(16);
+		m_Scene.CreateMeshInstance(17);
+		//MeshInstance& light = m_Scene.CreateMeshInstance(18);
+		//light.AssignMaterial(5);
 	}
 	else if (sceneType == SceneType::CORNELL_BOX_SPHERES)
 	{

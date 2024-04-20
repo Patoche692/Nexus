@@ -16,7 +16,29 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* 
 		return meshes;
 	}
 
-	int a = scene->mNumMeshes;
+	int* materialIdx = new int[scene->mNumMaterials];
+	for (int i = 0; i < scene->mNumMaterials; i++)
+	{
+		aiMaterial* material = scene->mMaterials[i];
+		Material newMaterial;
+		newMaterial.type = Material::Type::DIFFUSE;
+
+		aiColor3D color(0.0f);
+		material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+		newMaterial.diffuse.albedo = make_float3(color.r, color.g, color.b);
+
+		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+		{
+			aiString path;
+			std::string fullPath;
+			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			{
+				fullPath = path.data;
+				newMaterial.textureId = assetManager->AddTexture(fullPath);
+			}
+		}
+		materialIdx[i] = assetManager->AddMaterial(newMaterial);
+	}
 	
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
@@ -68,32 +90,16 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* 
 			);
 			triangles[j] = triangle;
 		}
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
-		Material newMaterial;
-		newMaterial.type = Material::Type::DIFFUSE;
-		int textureId = -1;
-
-		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-		{
-			aiString path;
-			std::string fullPath;
-			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
-			{
-				fullPath = path.data;
-				newMaterial.textureId = assetManager->AddTexture(fullPath);
-			}
-		}
-		int materialId = assetManager->AddMaterial(newMaterial);
-
 		BVH* bvh = new BVH(triangles);
 
-		Mesh newMesh(bvh, materialId);
+		Mesh newMesh(bvh, materialIdx[mesh->mMaterialIndex]);
 
 		meshes.push_back(newMesh);
 	}
 
 	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
+
+	delete[] materialIdx;
 
 	return meshes;
 }
