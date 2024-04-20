@@ -1,17 +1,14 @@
 #pragma once
 #include <iostream>
 
-class Texture
+struct Texture
 {
-public:
 	~Texture();
-	Texture(uint32_t w, uint32_t h, unsigned char* d);
+	Texture(uint32_t w, uint32_t h, uint32_t c, unsigned char* d);
 
-private:
 	uint32_t width;
 	uint32_t height;
+	uint32_t channels;
 
 	unsigned char* data;
-
-
 };

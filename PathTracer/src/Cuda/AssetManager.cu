@@ -51,6 +51,12 @@ void newDeviceTexture(Texture& texture, uint32_t size) {
 
 	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
 
+	Texture newTexture = texture;
+	unsigned char* data = CudaMemory::Allocate<unsigned char>(texture.width * texture.height * texture.channels);
+	CudaMemory::MemCpy(data, texture.data, texture.width * texture.height * texture.channels, cudaMemcpyHostToDevice);
+
+	newTexture.data = data;
+
 	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, texture);
 }
 
