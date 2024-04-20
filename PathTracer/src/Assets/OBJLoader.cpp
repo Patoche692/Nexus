@@ -28,7 +28,7 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 		{
 			float3 pos[3] = { };
 			float3 normal[3] = { };
-			float3 texCoord[3] = { };
+			float2 texCoord[3] = { };
 
 			for (int k = 0; k < 3; k++)
 			{
@@ -51,7 +51,7 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 					v = mesh->mTextureCoords[0][3 * j + k];
 					texCoord[k].x = v.x;
 					texCoord[k].y = v.y;
-					texCoord[k].z = v.z;
+					
 				}
 			}
 

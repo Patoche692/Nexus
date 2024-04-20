@@ -37,16 +37,4 @@ OGLTexture::~OGLTexture()
     glDeleteTextures(1, &m_Handle);
 }
 
-//float3 OGLTexture::GetPixel(int x, int y) const
-//{
-//    x = clamp(x, 0, static_cast<int>(m_Width) - 1);
-//    y = clamp(y, 0, static_cast<int>(m_Height) - 1);
-//
-//    int index = (y * m_Width + x) * 4;
-//
-//    unsigned char r = m_TextureData[index];
-//    unsigned char g = m_TextureData[index + 1];
-//    unsigned char b = m_TextureData[index + 2];
-//
-//    return make_float3(r / 255.0f, g / 255.0f, b / 255.0f);
-//}
+

@@ -6,8 +6,10 @@
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
 
+
 __device__ __constant__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
+extern __constant__ __device__ Texture* textures;
 extern __constant__ __device__ Mesh* meshes;
 extern __constant__ __device__ TLAS tlas;
 
@@ -73,7 +75,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			//	currentRay = scatterRay;
 			//	break;
 			case Material::Type::DIFFUSE:
-				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState, textures, tlas))
 				{
 					currentAttenuation *= attenuation;
 					currentRay = scatterRay;
