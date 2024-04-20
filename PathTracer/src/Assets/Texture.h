@@ -3,7 +3,7 @@
 
 struct Texture
 {
-	~Texture();
+	Texture() = default;
 	Texture(uint32_t w, uint32_t h, uint32_t c, unsigned char* d);
 
 	uint32_t width;

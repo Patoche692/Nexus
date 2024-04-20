@@ -5,7 +5,6 @@
 #include "Utils/Utils.h"
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
-#include <RayTracerApplication.cpp>
 
 __device__ __constant__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;

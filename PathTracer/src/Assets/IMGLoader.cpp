@@ -1,3 +1,4 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "IMGLoader.h"
 #include "stb/stb_image.h"
 
@@ -9,7 +10,7 @@ IMGLoader::~IMGLoader()
 {
 }
 
-inline Texture IMGLoader::LoadIMG(std::string filepath)
+Texture IMGLoader::LoadIMG(std::string filepath)
 {
 	int width, height, channels;
 
