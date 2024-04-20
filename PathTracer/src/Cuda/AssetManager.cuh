@@ -6,6 +6,7 @@
 #include "Geometry/BVH/BVH.h"
 #include "Geometry/BVH/BVHInstance.h"
 #include "Geometry/BVH/TLAS.h"
+#include "Assets/Texture.h"
 
 void newDeviceMesh(Mesh& mesh, uint32_t size);
 void newDeviceMaterial(Material& m, uint32_t size);

@@ -52,6 +52,11 @@ void AssetManager::AddTexture(const std::string& filename)
 	newDeviceTexture(m, m_Textures.size());
 }
 
+void AssetManager::ApplyTextureToMaterial(int materialId, int textureId)
+{
+	m_Materials[materialId].textureId = textureId;
+
+}
 
 bool AssetManager::SendDataToDevice()
 {

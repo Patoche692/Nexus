@@ -37,6 +37,8 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		assetManager.AddMesh("assets/models/light.obj");
 
 		assetManager.AddTexture("assets/textures/brickwall.jpg");
+		assetManager.ApplyTextureToMaterial(0, 0);
+
 
 		MeshInstance& greyFaces = m_Scene.CreateMeshInstance(0);
 		greyFaces.AssignMaterial(0);

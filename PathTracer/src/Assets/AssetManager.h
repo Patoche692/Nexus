@@ -26,6 +26,7 @@ public:
 	std::vector<BVH*> GetBVH() { return m_Bvh; }
 
 	void AddTexture(const std::string& filename);
+	void ApplyTextureToMaterial(int materialId, int textureId);
 
 	bool SendDataToDevice();
 

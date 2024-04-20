@@ -5,7 +5,6 @@
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
-#include "Assets/Texture.h"
 
 __constant__ __device__ Material* materials;
 __constant__ __device__ Texture* textures;

@@ -62,24 +62,24 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			
 			switch (hitResult.material.type)
 			{
-			case Material::Type::DIFFUSE:
-				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState) && hitResult.material.diffuse.textureHandle != 0) {
-					float3 textureColor = getTextureColor(hitResult.material.diffuse.texture, u, v);
-					currentAttenuation *= textureColor;
-				}
-				else if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
-				{
-					currentAttenuation *= attenuation;
-				}
-				currentRay = scatterRay;
-				break;
 			//case Material::Type::DIFFUSE:
-			//	if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+			//	if (diffuseScatter(hitResult, attenuation, scatterRay, rngState) && hitResult.material.diffuse.textureHandle != 0) {
+			//		float3 textureColor = getTextureColor(hitResult.material.diffuse.texture, u, v);
+			//		currentAttenuation *= textureColor;
+			//	}
+			//	else if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
 			//	{
 			//		currentAttenuation *= attenuation;
-			//		currentRay = scatterRay;
 			//	}
+			//	currentRay = scatterRay;
 			//	break;
+			case Material::Type::DIFFUSE:
+				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
+				{
+					currentAttenuation *= attenuation;
+					currentRay = scatterRay;
+				}
+				break;
 			case Material::Type::METAL:
 				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
 				{
@@ -197,15 +197,15 @@ void SendCameraDataToDevice(Camera* camera)
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 
-__device__ float3 getTextureColor(OGLTexture* texture, float u, float v)
-{
-	int texWidth = texture->GetWidth();
-	int texHeight = texture->GetHeight();
-
-	int texX = static_cast<int>(u * texWidth) % texWidth;
-	int texY = static_cast<int>(v * texHeight) % texHeight;
-
-	float3 textureColor = texture->GetPixel(texX, texY);
-
-	return textureColor;
-}
+//__device__ float3 getTextureColor(OGLTexture* texture, float u, float v)
+//{
+//	int texWidth = texture->GetWidth();
+//	int texHeight = texture->GetHeight();
+//
+//	int texX = static_cast<int>(u * texWidth) % texWidth;
+//	int texY = static_cast<int>(v * texHeight) % texHeight;
+//
+//	float3 textureColor = texture->GetPixel(texX, texY);
+//
+//	return textureColor;
+//}
