@@ -56,7 +56,7 @@ void newDeviceTexture(Texture& texture, uint32_t size) {
 
 	newTexture.data = data;
 
-	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, texture);
+	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, newTexture);
 }
 
 __global__ void freeMeshesKernel(int meshesCount)

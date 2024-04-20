@@ -28,7 +28,7 @@ struct Material {
 			float roughness;
 		} dielectric;
 	};
-	int textureId;
+	int textureId = -1;
 	Type type;
 };
 

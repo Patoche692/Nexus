@@ -55,6 +55,7 @@ void AssetManager::AddTexture(const std::string& filename)
 void AssetManager::ApplyTextureToMaterial(int materialId, int textureId)
 {
 	m_Materials[materialId].textureId = textureId;
+	InvalidateMaterial(materialId);
 }
 
 bool AssetManager::SendDataToDevice()
