@@ -4,7 +4,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
 	//SceneType sceneType = SceneType::DRAGONS;
-	SceneType sceneType = SceneType::BATHROOM;				// change scene
+	SceneType sceneType = SceneType::LIVING_ROOM;				// change scene
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
