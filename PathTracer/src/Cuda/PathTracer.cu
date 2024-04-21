@@ -30,7 +30,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentAttenuation = make_float3(1.0f);
 	const float russianRouProb = 0.7f;				// low number = earlier break up
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 6; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;

@@ -15,7 +15,7 @@ public:
 	AssetManager();
 	~AssetManager();
 
-	void AddMesh(const std::string& filename);
+	void AddMesh(const std::string& path, const std::string filename);
 
 	void AddMaterial();
 	int AddMaterial(const Material& material);

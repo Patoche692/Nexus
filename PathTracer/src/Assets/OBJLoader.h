@@ -12,7 +12,7 @@
 class OBJLoader
 {
 public:
-	static std::vector<Mesh> LoadOBJ(const std::string& filename, AssetManager* assetManager);
+	static std::vector<Mesh> LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager);
 
 private:
 	static Assimp::Importer m_Importer;

@@ -16,9 +16,9 @@ AssetManager::~AssetManager()
 		delete bvh;
 }
 
-void AssetManager::AddMesh(const std::string& filename)
+void AssetManager::AddMesh(const std::string& path, const std::string filename)
 {
-	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(filename, this);
+	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(path, filename, this);
 	for (Mesh& mesh : meshes)
 		m_Meshes.push_back(mesh);
 }

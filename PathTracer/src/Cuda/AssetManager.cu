@@ -75,9 +75,15 @@ void freeDeviceMeshes(int meshesCount)
 	checkCudaErrors(cudaDeviceSynchronize());
 }
 
+__global__ void freeMaterialsKernel()
+{
+	free(materials);
+}
+
 void freeDeviceMaterials()
 {
-	CudaMemory::Free(materials);
+	freeMaterialsKernel<<<1, 1>>>();
+	checkCudaErrors(cudaDeviceSynchronize());
 }
 
 void cpyMaterialToDevice(Material& m, uint32_t id)

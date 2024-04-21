@@ -3,16 +3,17 @@
 
 Assimp::Importer OBJLoader::m_Importer;
 
-std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* assetManager)
+std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
 {
-	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
+	const std::string filePath = path + filename;
+	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
 		| aiProcess_FlipUVs);
 	
 	std::vector<Mesh> meshes;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
-		std::cout << "OBJLoader: Error loading model " << filename << std::endl;
+		std::cout << "OBJLoader: Error loading model " << filePath << std::endl;
 		return meshes;
 	}
 
@@ -29,12 +30,13 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* 
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{
-			aiString path;
-			std::string fullPath;
-			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			aiString mPath;
+			std::string materialPath;
+			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &mPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
 			{
-				fullPath = path.data;
-				newMaterial.textureId = assetManager->AddTexture(fullPath);
+				materialPath = mPath.data;
+				materialPath = path + materialPath;
+				newMaterial.textureId = assetManager->AddTexture(materialPath);
 			}
 		}
 		materialIdx[i] = assetManager->AddMaterial(newMaterial);
@@ -97,7 +99,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& filename, AssetManager* 
 		meshes.push_back(newMesh);
 	}
 
-	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
+	std::cout << "OBJLoader: loaded model " << filePath << " successfully" << std::endl;
 
 	delete[] materialIdx;
 

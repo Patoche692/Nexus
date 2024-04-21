@@ -10,7 +10,10 @@
 enum struct SceneType
 {
 	CORNELL_BOX,
-	CORNELL_BOX_SPHERES,
+	CORNELL_BOX_SPHERE,
+	DINING_ROOM,
+	LIVING_ROOM,
+	BATHROOM,
 	DRAGONS
 };
 
@@ -24,7 +27,6 @@ public:
 	void AddMaterial(Material& material);
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
-	void AddMesh(const std::string& filename) { m_AssetManager.AddMesh(filename); }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);

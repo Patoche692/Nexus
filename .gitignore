@@ -364,4 +364,5 @@ FodyWeavers.xsd
 
 # Exclude files from assets folder
 !PathTracer/assets/models/**
+!PathTracer/assets/scenes/**
 !dependencies/**
