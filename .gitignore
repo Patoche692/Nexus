@@ -366,3 +366,4 @@ FodyWeavers.xsd
 !PathTracer/assets/models/**
 !PathTracer/assets/scenes/**
 !dependencies/**
+/PathTracer/assets/scenes/bathroom
