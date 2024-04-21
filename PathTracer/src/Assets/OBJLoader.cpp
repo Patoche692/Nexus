@@ -24,9 +24,17 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		Material newMaterial;
 		newMaterial.type = Material::Type::DIFFUSE;
 
-		aiColor3D color(0.0f);
-		material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-		newMaterial.diffuse.albedo = make_float3(color.r, color.g, color.b);
+		aiColor3D diffuse(0.0f);
+		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+		newMaterial.diffuse.albedo = make_float3(diffuse.r, diffuse.g, diffuse.b);
+
+		aiColor3D emission(0.0f);
+		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
+		if (!emission.IsBlack())
+		{
+			newMaterial.type = Material::Type::LIGHT;
+			newMaterial.light.emission = make_float3(emission.r, emission.g, emission.b);
+		}
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{
@@ -53,17 +61,25 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 			float3 pos[3] = { };
 			float3 normal[3] = { };
 			float2 texCoord[3] = { };
+			bool skipFace = false;
 
 			for (int k = 0; k < 3; k++)
 			{
-				aiVector3D v = mesh->mVertices[3 * j + k];
+				if (mesh->mFaces[j].mNumIndices != 3)
+				{
+					skipFace = true;
+					continue;
+				}
+				unsigned int vertexIndex = mesh->mFaces[j].mIndices[k];
+
+				aiVector3D v = mesh->mVertices[vertexIndex];
 				pos[k].x = v.x;
 				pos[k].y = v.y;
 				pos[k].z = v.z;
 
 				if (mesh->HasNormals())
 				{
-					v = mesh->mNormals[3 * j + k];
+					v = mesh->mNormals[vertexIndex];
 					normal[k].x = v.x;
 					normal[k].y = v.y;
 					normal[k].z = v.z;
@@ -72,12 +88,14 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 				// We only deal with one tex coord per vertex for now
 				if (mesh->HasTextureCoords(0))
 				{
-					v = mesh->mTextureCoords[0][3 * j + k];
+					v = mesh->mTextureCoords[0][vertexIndex];
 					texCoord[k].x = v.x;
 					texCoord[k].y = v.y;
 					
 				}
 			}
+			if (skipFace)
+				continue;
 
 			Triangle triangle(
 				pos[0],

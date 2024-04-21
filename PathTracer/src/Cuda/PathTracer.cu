@@ -151,7 +151,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 
 	// Gamma correction
-	//c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
+	c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
 	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert colour
 }
 
