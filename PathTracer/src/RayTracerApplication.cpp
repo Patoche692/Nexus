@@ -4,7 +4,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
 	//SceneType sceneType = SceneType::DRAGONS;
-	SceneType sceneType = SceneType::LIVING_ROOM;				// change scene
+	SceneType sceneType = SceneType::ELLIE;				// change scene
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
@@ -36,6 +36,12 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	else if (sceneType == SceneType::BATHROOM)
 	{
 		assetManager.AddMesh("assets/scenes/bathroom/", "bathroom.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
+	}
+	else if (sceneType == SceneType::ELLIE)
+	{
+		assetManager.AddMesh("assets/scenes/ellie/", "ellie.obj");
 		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
 			m_Scene.CreateMeshInstance(i);
 	}

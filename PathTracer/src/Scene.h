@@ -14,6 +14,7 @@ enum struct SceneType
 	DINING_ROOM,
 	LIVING_ROOM,
 	BATHROOM,
+	ELLIE,
 	DRAGONS
 };
 
