@@ -367,3 +367,4 @@ FodyWeavers.xsd
 !PathTracer/assets/scenes/**
 !dependencies/**
 /PathTracer/assets/scenes/bathroom
+/PathTracer/assets/scenes/lego_city
