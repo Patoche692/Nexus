@@ -17,16 +17,16 @@ struct Triangle
 	float3 normal2;
 
 	// Texture coordinates
-	float3 texCoord0;
-	float3 texCoord1;
-	float3 texCoord2;
+	float2 texCoord0;
+	float2 texCoord1;
+	float2 texCoord2;
 
 	__host__ __device__ Triangle() = default;
 
 	__host__ __device__ Triangle(
 		float3 p0, float3 p1, float3 p2,
 		float3 n0 = make_float3(0.0f), float3 n1 = make_float3(0.0f), float3 n2 = make_float3(0.0f),
-		float3 t0 = make_float3(0.0f), float3 t1 = make_float3(0.0f), float3 t2 = make_float3(0.0f)
+		float2 t0 = make_float2(0.0f), float2 t1 = make_float2(0.0f), float2 t2 = make_float2(0.0f)
 	): pos0(p0), pos1(p1), pos2(p2), normal0(n0), normal1(n1),
 		normal2(n2), texCoord0(t0), texCoord1(t1), texCoord2(t2),
 		centroid((pos0 + pos1 + pos2) * 0.33333333f) { }

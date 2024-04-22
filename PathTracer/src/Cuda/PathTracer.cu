@@ -6,9 +6,11 @@
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
 
+
 __device__ __constant__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
-extern __constant__ __device__ Mesh* meshes;
+extern __constant__ __device__ Texture* textures;
+extern __constant__ __device__ Mesh* bvhs;
 extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
@@ -28,7 +30,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentAttenuation = make_float3(1.0f);
 	const float russianRouProb = 0.7f;				// low number = earlier break up
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 6; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -41,7 +43,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
 			hitResult.rIn = currentRay;
 
-			MeshInstance instance = tlas.blas[currentRay.hit.instanceIdx];
+			BVHInstance instance = tlas.blas[currentRay.hit.instanceIdx];
 			Triangle& triangle = instance.bvh->triangles[currentRay.hit.triIdx];
 			float u = currentRay.hit.u, v = currentRay.hit.v;
 
@@ -58,10 +60,18 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 			float3 attenuation = make_float3(1.0f);
 			Ray scatterRay = currentRay;
-
+			
 			switch (hitResult.material.type)
 			{
 			case Material::Type::DIFFUSE:
+				if (hitResult.material.textureId == -1)
+					hitResult.albedo = hitResult.material.diffuse.albedo;
+				else
+				{
+					float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+					hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+				}
+
 				if (diffuseScatter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
@@ -69,6 +79,13 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 				}
 				break;
 			case Material::Type::METAL:
+				if (hitResult.material.textureId == -1)
+					hitResult.albedo = hitResult.material.diffuse.albedo;
+				else
+				{
+					float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+					hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+				}
 				if (plasticScattter(hitResult, attenuation, scatterRay, rngState))
 				{
 					currentAttenuation *= attenuation;
@@ -93,10 +110,10 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			//if (randNr > russianRouProb ? true : (j > 0 ? (currentAttenuation /= russianRouProb, false) : false)) break;
 		}
 		else
-			return make_float3(0.0f);
+			return currentAttenuation * make_float3(0.2f);
 	}
 
-	return make_float3(0.0f);
+	return currentAttenuation * make_float3(0.2f);
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
@@ -125,7 +142,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
-	float3 c = color(ray, rngState);
+	float3 c = color(ray, rngState);									// get new colour
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
 	else
@@ -135,7 +152,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 
 	// Gamma correction
 	c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert colour
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)
@@ -185,3 +202,15 @@ void SendCameraDataToDevice(Camera* camera)
 	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
 }
 
+//__device__ float3 getTextureColor(OGLTexture* texture, float u, float v)
+//{
+//	int texWidth = texture->GetWidth();
+//	int texHeight = texture->GetHeight();
+//
+//	int texX = static_cast<int>(u * texWidth) % texWidth;
+//	int texY = static_cast<int>(v * texHeight) % texHeight;
+//
+//	float3 textureColor = texture->GetPixel(texX, texY);
+//
+//	return textureColor;
+//}

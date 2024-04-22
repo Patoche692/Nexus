@@ -5,12 +5,17 @@
 #include "Camera.h"
 #include "Geometry/Sphere.h"
 #include "Assets/AssetManager.h"
+#include "Geometry/MeshInstance.h"
 
 enum struct SceneType
 {
 	CORNELL_BOX,
-	CORNELL_BOX_SPHERES,
-	DRAGONS,
+	CORNELL_BOX_SPHERE,
+	DINING_ROOM,
+	LIVING_ROOM,
+	BATHROOM,
+	ELLIE,
+	DRAGONS
 	NEONS
 };
 
@@ -24,7 +29,6 @@ public:
 	void AddMaterial(Material& material);
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
-	void AddMesh(const std::string& filename) { m_AssetManager.AddMesh(filename); }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
@@ -36,8 +40,9 @@ public:
 private:
 	std::shared_ptr<Camera> m_Camera;
 
+	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
-	std::set<uint32_t> m_InvalidInstances;
+	std::set<uint32_t> m_InvalidMeshInstances;
 	TLAS m_Tlas;
 
 	AssetManager m_AssetManager;

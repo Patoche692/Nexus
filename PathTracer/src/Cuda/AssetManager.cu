@@ -1,33 +1,34 @@
 #include "AssetManager.cuh"
 #include <vector>
 #include <map>
-
 #include "CudaMemory.cuh"
 #include "../Utils/Utils.h"
 #include "Random.cuh"
 #include "Geometry/Ray.h"
+#include "Geometry/Triangle.h"
 
 __constant__ __device__ Material* materials;
-__constant__ __device__ Mesh* meshes;
+__constant__ __device__ Texture* textures;
+__constant__ __device__ BVH* bvhs;
 __constant__ __device__ TLAS tlas;
 
 
 void newDeviceMesh(Mesh& mesh, uint32_t size)
 {
-	Mesh** meshesSymbolAddress;
+	//Mesh** meshesSymbolAddress;
 
-	// Retreive the address of meshes
-	checkCudaErrors(cudaGetSymbolAddress((void**)&meshesSymbolAddress, meshes));
+	//// Retreive the address of meshes
+	//checkCudaErrors(cudaGetSymbolAddress((void**)&meshesSymbolAddress, bvhs));
 
-	Triangle* triangles = CudaMemory::Allocate<Triangle>(mesh.nTriangles);
-	CudaMemory::MemCpy(triangles, mesh.triangles, mesh.nTriangles, cudaMemcpyHostToDevice);
+	//Triangle* triangles = CudaMemory::Allocate<Triangle>(mesh.nTriangles);
+	//CudaMemory::MemCpy(triangles, mesh.triangles, mesh.nTriangles, cudaMemcpyHostToDevice);
 
-	Mesh newMesh = mesh;
-	newMesh.triangles = triangles;
+	//Mesh newMesh = mesh;
+	//newMesh.triangles = triangles;
 
-	CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
+	//CudaMemory::ResizeDeviceArray(meshesSymbolAddress, size);
 
-	CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, newMesh);
+	//CudaMemory::SetToIndex(meshesSymbolAddress, size - 1, newMesh);
 }
 
 void newDeviceMaterial(Material& material, uint32_t size)
@@ -42,24 +43,58 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
 }
 
+void newDeviceTexture(Texture& texture, uint32_t size) {
+	
+	Texture** texturesSymbolAddress;
+
+	checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, textures));
+
+	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
+
+	Texture newTexture = texture;
+	unsigned char* data = CudaMemory::Allocate<unsigned char>(texture.width * texture.height * texture.channels);
+	CudaMemory::MemCpy(data, texture.data, texture.width * texture.height * texture.channels, cudaMemcpyHostToDevice);
+
+	newTexture.data = data;
+
+	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, newTexture);
+}
+
 __global__ void freeMeshesKernel(int meshesCount)
 {
 	for (int i = 0; i < meshesCount; i++)
 	{
-		free(meshes[i].triangles);
+		free(bvhs[i].triangles);
 	}
-	free(meshes);
+	free(bvhs);
 }
 
 void freeDeviceMeshes(int meshesCount)
 {
 	freeMeshesKernel<<<1, 1>>>(meshesCount);
-	checkCudaErrors(cudaDeviceSynchronize());
+}
+
+__global__ void freeMaterialsKernel()
+{
+	free(materials);
 }
 
 void freeDeviceMaterials()
 {
-	CudaMemory::Free(materials);
+	freeMaterialsKernel<<<1, 1>>>();
+}
+
+__global__ void freeTexturesKernel(int texturesCount)
+{
+	for (int i = 0; i < texturesCount; i++)
+		free(textures[i].data);
+
+	free(textures);
+}
+
+void freeDeviceTextures(int texturesCount)
+{
+	freeTexturesKernel<<<1, 1>>>(texturesCount);
 }
 
 void cpyMaterialToDevice(Material& m, uint32_t id)
@@ -163,6 +198,7 @@ __global__ void freeDeviceTLASKernel()
 		free(bvh->nodes);
 		free(bvh->triangles);
 		free(bvh->triangleIdx);
+		free(bvh);
 	}
 	free(tlas.blas);
 	free(tlas.nodes);
@@ -172,7 +208,6 @@ __global__ void freeDeviceTLASKernel()
 void freeDeviceTLAS()
 {
 	freeDeviceTLASKernel<<<1, 1>>>();
-	checkCudaErrors(cudaDeviceSynchronize());
 }
 
 Material** getMaterialSymbolAddress()
@@ -185,7 +220,7 @@ Material** getMaterialSymbolAddress()
 Mesh** getMeshSymbolAddress()
 {
 	Mesh** meshSymbolAddress;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&meshSymbolAddress, meshes));
+	checkCudaErrors(cudaGetSymbolAddress((void**)&meshSymbolAddress, bvhs));
 	return meshSymbolAddress;
 }
 

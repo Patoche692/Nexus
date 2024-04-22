@@ -364,4 +364,7 @@ FodyWeavers.xsd
 
 # Exclude files from assets folder
 !PathTracer/assets/models/**
+!PathTracer/assets/scenes/**
 !dependencies/**
+/PathTracer/assets/scenes/bathroom
+/PathTracer/assets/scenes/lego_city

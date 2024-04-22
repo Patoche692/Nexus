@@ -54,7 +54,9 @@ int main(void)
             glfwSwapBuffers(window);
         }
     }
-
+    // Free all device allocations
+    checkCudaErrors(cudaDeviceSynchronize());
+    checkCudaErrors(cudaDeviceReset());
     glfwTerminate();
     return 0;
 }

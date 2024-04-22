@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "OBJLoader.h"
+#include "IMGLoader.h"
 
 AssetManager::AssetManager()
 {
@@ -9,18 +10,15 @@ AssetManager::AssetManager()
 
 AssetManager::~AssetManager()
 {
-	freeDeviceMaterials();
-	freeDeviceTLAS();
 	for (BVH* bvh : m_Bvh)
 		delete bvh;
 }
 
-void AssetManager::AddMesh(const std::string& filename)
+void AssetManager::AddMesh(const std::string& path, const std::string filename)
 {
-	std::vector<Triangle> triangles = OBJLoader::LoadOBJ(filename);
-
-	BVH* bvh = new BVH(triangles);
-	m_Bvh.push_back(bvh);
+	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(path, filename, this);
+	for (Mesh& mesh : meshes)
+		m_Meshes.push_back(mesh);
 }
 
 void AssetManager::AddMaterial()
@@ -31,16 +29,32 @@ void AssetManager::AddMaterial()
 	AddMaterial(material);
 }
 
-void AssetManager::AddMaterial(const Material& material)
+int AssetManager::AddMaterial(const Material& material)
 {
 	m_Materials.push_back(material);
 	Material& m = m_Materials[m_Materials.size() - 1];
 	newDeviceMaterial(m, m_Materials.size());
+	return m_Materials.size() - 1;
 }
 
 void AssetManager::InvalidateMaterial(uint32_t index)
 {
 	m_InvalidMaterials.insert(index);
+}
+
+int AssetManager::AddTexture(const std::string& filename)
+{
+	Texture newTexture = IMGLoader::LoadIMG(filename);
+	m_Textures.push_back(newTexture);
+	Texture& m = m_Textures[m_Textures.size() - 1];
+	newDeviceTexture(m, m_Textures.size());
+	return m_Textures.size() - 1;
+}
+
+void AssetManager::ApplyTextureToMaterial(int materialId, int textureId)
+{
+	m_Materials[materialId].textureId = textureId;
+	InvalidateMaterial(materialId);
 }
 
 bool AssetManager::SendDataToDevice()

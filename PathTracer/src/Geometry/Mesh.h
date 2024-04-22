@@ -1,15 +1,14 @@
 #pragma once
 
 #include <vector>
-#include <cuda_runtime_api.h>
+#include "Geometry/BVH/BVH.h"
 
-#include "Triangle.h"
 
 struct Mesh
 {
-	__host__ __device__ Mesh() = default;
+	Mesh() = default;
+	Mesh(BVH* b, int mId) : bvh(b), materialId(mId) { }
 
-	Triangle* triangles = nullptr;
-	uint32_t nTriangles = 0;
-	int materialId = -1;
+	BVH* bvh;
+	int materialId;
 };

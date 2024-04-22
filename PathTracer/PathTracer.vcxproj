@@ -147,14 +147,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Assets\AssetManager.cpp" />
+    <ClCompile Include="src\Assets\IMGLoader.cpp" />
     <ClCompile Include="src\Assets\OBJLoader.cpp" />
+    <ClCompile Include="src\Assets\Texture.cpp" />
     <ClCompile Include="src\Geometry\BVH\BVHInstance.cpp" />
     <ClCompile Include="src\Geometry\BVH\TLAS.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Math\Mat4.cpp" />
     <ClCompile Include="src\OpenGL\Framebuffer.cpp" />
     <ClCompile Include="src\OpenGL\PixelBuffer.cpp" />
-    <ClCompile Include="src\OpenGL\Texture.cpp" />
+    <ClCompile Include="src\OpenGL\OGLTexture.cpp" />
     <ClCompile Include="src\RayTracerApplication.cpp" />
     <ClCompile Include="src\Camera.cpp">
       <DeploymentContent>false</DeploymentContent>
@@ -186,7 +188,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assets\AssetManager.h" />
+    <ClInclude Include="src\Assets\IMGLoader.h" />
     <ClInclude Include="src\Assets\OBJLoader.h" />
+    <ClInclude Include="src\Assets\Texture.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\AssetManager.cuh" />
     <ClInclude Include="src\Geometry\AABB.h" />
@@ -198,6 +202,7 @@
     <ClInclude Include="src\Geometry\Material.h" />
     <ClInclude Include="src\Geometry\Medium.h" />
     <ClInclude Include="src\Geometry\Mesh.h" />
+    <ClInclude Include="src\Geometry\MeshInstance.h" />
     <ClInclude Include="src\Geometry\Sphere.h" />
     <ClInclude Include="src\Geometry\Triangle.h" />
     <ClInclude Include="src\Input.h" />
@@ -205,7 +210,7 @@
     <ClInclude Include="src\Math\Mat4.h" />
     <ClInclude Include="src\OpenGL\Framebuffer.h" />
     <ClInclude Include="src\OpenGL\PixelBuffer.h" />
-    <ClInclude Include="src\OpenGL\Texture.h" />
+    <ClInclude Include="src\OpenGL\OGLTexture.h" />
     <ClInclude Include="src\Geometry\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Cuda\PathTracer.cuh" />

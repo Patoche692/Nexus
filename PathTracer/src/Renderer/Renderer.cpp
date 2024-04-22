@@ -18,7 +18,7 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	ImGui_ImplOpenGL3_Init("#version 130");
 
 	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
-	m_Texture = std::make_shared<Texture>(width, height);
+	m_Texture = std::make_shared<OGLTexture>(width, height);
 
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
@@ -102,50 +102,60 @@ void Renderer::RenderUI(Scene& scene)
 		if (ImGui::CollapsingHeader("Mesh"))
 		{
 			ImGui::SeparatorText("Transform");
+
 			if (ImGui::DragFloat3("Position", (float*)&meshInstance.position, 0.01f))
 				scene.InvalidateMeshInstance(i);
-			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.01f))
+
+			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.1f))
 				scene.InvalidateMeshInstance(i);
+
 			if (ImGui::DragFloat3("Scale", (float*)&meshInstance.scale, 0.01f))
 				scene.InvalidateMeshInstance(i);
 
 			if (ImGui::TreeNode("Material"))
 			{
-				if (ImGui::Combo("Id", &meshInstance.materialId, materialsString.c_str()))
-					scene.InvalidateMeshInstance(i);
-
-				Material& material = materials[meshInstance.materialId];
-				int type = (int)material.type;
-
-				if (ImGui::Combo("Type", &type, materialTypes.c_str()))
+				if (meshInstance.materialId == -1)
 				{
-					assetManager.InvalidateMaterial(meshInstance.materialId);
+					if (ImGui::Button("Custom material"))
+						meshInstance.materialId = 0;
 				}
-
-				material.type = (Material::Type)type;
-
-				switch (material.type)
+				else
 				{
-				case Material::Type::LIGHT:
-					if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+
+					if (ImGui::Combo("Id", &meshInstance.materialId, materialsString.c_str()))
+						scene.InvalidateMeshInstance(i);
+
+					Material& material = materials[meshInstance.materialId];
+					int type = (int)material.type;
+
+					if (ImGui::Combo("Type", &type, materialTypes.c_str()))
 						assetManager.InvalidateMaterial(meshInstance.materialId);
-					break;
-				case Material::Type::DIFFUSE:
-					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					break;
-				case Material::Type::METAL:
-					if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					break;
-				case Material::Type::DIELECTRIC:
-					if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					break;
+
+					material.type = (Material::Type)type;
+
+					switch (material.type)
+					{
+					case Material::Type::LIGHT:
+						if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::DIFFUSE:
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::METAL:
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					case Material::Type::DIELECTRIC:
+						if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						break;
+					}
 				}
 				ImGui::TreePop();
 				ImGui::Spacing();

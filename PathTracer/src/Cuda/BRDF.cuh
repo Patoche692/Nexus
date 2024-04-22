@@ -8,7 +8,7 @@ inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation,
 {
 	float3 scatterDirection = hitResult.normal + Random::RandomUnitVector(rngState);
 	scattered = Ray(hitResult.p, normalize(scatterDirection));
-	attenuation = hitResult.material.diffuse.albedo;
+	attenuation = hitResult.albedo;
 	return true;
 }
 
@@ -16,7 +16,7 @@ inline __device__ bool plasticScattter(HitResult& hitResult, float3& attenuation
 {
 	float3 reflected = reflect(normalize(hitResult.rIn.direction), hitResult.normal);
 	scattered = Ray(hitResult.p, normalize(reflected + hitResult.material.plastic.roughness * Random::RandomUnitVector(rngState)));
-	attenuation = hitResult.material.diffuse.albedo;
+	attenuation = hitResult.albedo;
 	return dot(scattered.direction, hitResult.normal) > 0.0f;
 }
 

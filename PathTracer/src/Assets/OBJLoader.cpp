@@ -3,43 +3,83 @@
 
 Assimp::Importer OBJLoader::m_Importer;
 
-std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
+std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
 {
-	const aiScene* scene = m_Importer.ReadFile(filename, aiProcess_CalcTangentSpace | aiProcess_Triangulate
+	const std::string filePath = path + filename;
+	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
 		| aiProcess_FlipUVs);
 	
-	std::vector<Triangle> triangles;
+	std::vector<Mesh> meshes;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
-		std::cout << "OBJLoader: Error loading model " << filename << std::endl;
-		return triangles;
+		std::cout << "OBJLoader: Error loading model " << filePath << std::endl;
+		return meshes;
 	}
 
-	int a = scene->mNumMeshes;
+	int* materialIdx = new int[scene->mNumMaterials];
+	for (int i = 0; i < scene->mNumMaterials; i++)
+	{
+		aiMaterial* material = scene->mMaterials[i];
+		Material newMaterial;
+		newMaterial.type = Material::Type::DIFFUSE;
+
+		aiColor3D diffuse(0.0f);
+		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+		newMaterial.diffuse.albedo = make_float3(diffuse.r, diffuse.g, diffuse.b);
+
+		aiColor3D emission(0.0f);
+		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
+		if (!emission.IsBlack())
+		{
+			newMaterial.type = Material::Type::LIGHT;
+			newMaterial.light.emission = make_float3(emission.r, emission.g, emission.b);
+		}
+
+		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+		{
+			aiString mPath;
+			std::string materialPath;
+			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &mPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			{
+				materialPath = mPath.data;
+				materialPath = path + materialPath;
+				newMaterial.textureId = assetManager->AddTexture(materialPath);
+			}
+		}
+		materialIdx[i] = assetManager->AddMaterial(newMaterial);
+	}
 	
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[i];
 
-		triangles = std::vector<Triangle>(mesh->mNumFaces);
-
+		std::vector<Triangle> triangles = std::vector<Triangle>(mesh->mNumFaces);
+		
 		for (int j = 0; j < mesh->mNumFaces; j++)
 		{
 			float3 pos[3] = { };
 			float3 normal[3] = { };
-			float3 texCoord[3] = { };
+			float2 texCoord[3] = { };
+			bool skipFace = false;
 
 			for (int k = 0; k < 3; k++)
 			{
-				aiVector3D v = mesh->mVertices[3 * j + k];
+				if (mesh->mFaces[j].mNumIndices != 3)
+				{
+					skipFace = true;
+					continue;
+				}
+				unsigned int vertexIndex = mesh->mFaces[j].mIndices[k];
+
+				aiVector3D v = mesh->mVertices[vertexIndex];
 				pos[k].x = v.x;
 				pos[k].y = v.y;
 				pos[k].z = v.z;
 
 				if (mesh->HasNormals())
 				{
-					v = mesh->mNormals[3 * j + k];
+					v = mesh->mNormals[vertexIndex];
 					normal[k].x = v.x;
 					normal[k].y = v.y;
 					normal[k].z = v.z;
@@ -48,12 +88,14 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 				// We only deal with one tex coord per vertex for now
 				if (mesh->HasTextureCoords(0))
 				{
-					v = mesh->mTextureCoords[0][3 * j + k];
+					v = mesh->mTextureCoords[0][vertexIndex];
 					texCoord[k].x = v.x;
 					texCoord[k].y = v.y;
-					texCoord[k].z = v.z;
+					
 				}
 			}
+			if (skipFace)
+				continue;
 
 			Triangle triangle(
 				pos[0],
@@ -68,9 +110,16 @@ std::vector<Triangle> OBJLoader::LoadOBJ(const std::string& filename)
 			);
 			triangles[j] = triangle;
 		}
+		BVH* bvh = new BVH(triangles);
+
+		Mesh newMesh(bvh, materialIdx[mesh->mMaterialIndex]);
+
+		meshes.push_back(newMesh);
 	}
 
-	std::cout << "OBJLoader: loaded model " << filename << " successfully" << std::endl;
+	std::cout << "OBJLoader: loaded model " << filePath << " successfully" << std::endl;
 
-	return triangles;
+	delete[] materialIdx;
+
+	return meshes;
 }

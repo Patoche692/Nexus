@@ -3,134 +3,46 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
-	SceneType sceneType = SceneType::NEONS;
+	SceneType sceneType = SceneType::ELLIE;
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
 	if (sceneType == SceneType::CORNELL_BOX)
 	{
-		Material material;
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.85f, 0.05f, 0.05f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.12f, 0.75f, 0.15f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::LIGHT;
-		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
-		assetManager.AddMaterial(material);
+		assetManager.AddMesh("assets/scenes/cornell_box/", "cornell_box.obj");
 
-		assetManager.AddMesh("assets/models/plane.obj");
-		assetManager.AddMesh("assets/models/cube.obj");
-
-		MeshInstance& ground = m_Scene.CreateMeshInstance(0);
-		ground.SetScale(4.0f);
-		ground.AssignMaterial(0);
-		MeshInstance& backWall = m_Scene.CreateMeshInstance(0);
-		backWall.AssignMaterial(0);
-		backWall.SetScale(4.0f);
-		backWall.SetRotationX(90.0f);
-		backWall.SetPosition(make_float3(0.0f, 4.0f, -4.0f));
-		MeshInstance& roof = m_Scene.CreateMeshInstance(0);
-		roof.SetScale(4.0f);
-		roof.SetRotationX(180.0f);
-		roof.SetPosition(make_float3(0.0f, 8.0f, 0.0f));
-		roof.AssignMaterial(0);
-		MeshInstance& redWall = m_Scene.CreateMeshInstance(0);
-		redWall.SetScale(4.0f);
-		redWall.SetRotationZ(-90.0f);
-		redWall.SetPosition(make_float3(-4.0f, 4.0f, 0.0f));
-		redWall.AssignMaterial(1);
-		MeshInstance& greenWall = m_Scene.CreateMeshInstance(0);
-		greenWall.SetScale(4.0f);
-		greenWall.SetRotationZ(90.0f);
-		greenWall.SetPosition(make_float3(4.0f, 4.0f, 0.0f));
-		greenWall.AssignMaterial(2);
-		MeshInstance& smallCube = m_Scene.CreateMeshInstance(1);
-		smallCube.AssignMaterial(3);
-		smallCube.SetRotationY(-18.0f);
-		smallCube.SetScale(1.2f);
-		smallCube.SetPosition(make_float3(1.4f, 1.2f, 1.2f));
-		MeshInstance& bigCube = m_Scene.CreateMeshInstance(1);
-		bigCube.AssignMaterial(4);
-		bigCube.SetRotationY(18.0f);
-		bigCube.SetScale(make_float3(1.2f, 2.4f, 1.2f));
-		bigCube.SetPosition(make_float3(-1.3f, 2.4f, -1.3f));
-		MeshInstance& light = m_Scene.CreateMeshInstance(0);
-		light.SetRotationX(180.0f);
-		light.SetPosition(make_float3(0.0f, 7.99f, 0.0f));
-		light.AssignMaterial(5);
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
 	}
-	else if (sceneType == SceneType::CORNELL_BOX_SPHERES)
+	else if (sceneType == SceneType::CORNELL_BOX_SPHERE)
 	{
-		Material material;
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.93f, 0.93f, 0.93f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.85f, 0.05f, 0.05f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIFFUSE;
-		material.diffuse.albedo = make_float3(0.12f, 0.75f, 0.15f);
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::DIELECTRIC;
-		material.dielectric.ior = 1.5f;
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::METAL;
-		material.plastic.albedo = make_float3(1.0f);
-		material.plastic.roughness = 0.0f;
-		assetManager.AddMaterial(material);
-		material.type = Material::Type::LIGHT;
-		material.light.emission = make_float3(15.0f, 15.0f, 15.0f);
-		assetManager.AddMaterial(material);
-
-		assetManager.AddMesh("assets/models/plane.obj");
-		assetManager.AddMesh("assets/models/sphere.obj");
-
-		MeshInstance& ground = m_Scene.CreateMeshInstance(0);
-		ground.SetScale(4.0f);
-		ground.AssignMaterial(0);
-		MeshInstance& backWall = m_Scene.CreateMeshInstance(0);
-		backWall.AssignMaterial(0);
-		backWall.SetScale(4.0f);
-		backWall.SetRotationX(90.0f);
-		backWall.SetPosition(make_float3(0.0f, 4.0f, -4.0f));
-		MeshInstance& roof = m_Scene.CreateMeshInstance(0);
-		roof.SetScale(4.0f);
-		roof.SetRotationX(180.0f);
-		roof.SetPosition(make_float3(0.0f, 8.0f, 0.0f));
-		roof.AssignMaterial(0);
-		MeshInstance& redWall = m_Scene.CreateMeshInstance(0);
-		redWall.SetScale(4.0f);
-		redWall.SetRotationZ(-90.0f);
-		redWall.SetPosition(make_float3(-4.0f, 4.0f, 0.0f));
-		redWall.AssignMaterial(1);
-		MeshInstance& greenWall = m_Scene.CreateMeshInstance(0);
-		greenWall.SetScale(4.0f);
-		greenWall.SetRotationZ(90.0f);
-		greenWall.SetPosition(make_float3(4.0f, 4.0f, 0.0f));
-		greenWall.AssignMaterial(2);
-		MeshInstance& sphere1 = m_Scene.CreateMeshInstance(1);
-		sphere1.AssignMaterial(3);
-		sphere1.SetScale(1.3f);
-		sphere1.SetPosition(make_float3(1.8f, 1.3f, 1.3f));
-		MeshInstance& sphere2 = m_Scene.CreateMeshInstance(1);
-		sphere2.AssignMaterial(4);
-		sphere2.SetScale(1.3f);
-		sphere2.SetPosition(make_float3(-1.8f, 1.3f, -0.9f));
-		MeshInstance& light = m_Scene.CreateMeshInstance(0);
-		light.SetRotationX(180.0f);
-		light.SetPosition(make_float3(0.0f, 7.99f, 0.0f));
-		light.AssignMaterial(5);
+		assetManager.AddMesh("assets/scenes/cornell_box_sphere/", "cornell_box_sphere.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
+	}
+	else if (sceneType == SceneType::DINING_ROOM)
+	{
+		assetManager.AddMesh("assets/scenes/dining_room/", "dining_room.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
+	}
+	else if (sceneType == SceneType::LIVING_ROOM)
+	{
+		assetManager.AddMesh("assets/scenes/living_room/", "living_room.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
+	}
+	else if (sceneType == SceneType::BATHROOM)
+	{
+		assetManager.AddMesh("assets/scenes/bathroom/", "bathroom.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
+	}
+	else if (sceneType == SceneType::ELLIE)
+	{
+		assetManager.AddMesh("assets/scenes/ellie/", "ellie.obj");
+		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+			m_Scene.CreateMeshInstance(i);
 	}
 	else if (sceneType == SceneType::DRAGONS)
 	{
@@ -155,10 +67,10 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.light.emission = make_float3(35.0f, 35.0f, 35.0f);
 		assetManager.AddMaterial(material);
 
-		assetManager.AddMesh("assets/models/plane.obj");
-		assetManager.AddMesh("assets/models/dragon.obj");
-		assetManager.AddMesh("assets/models/cube.obj");
-		assetManager.AddMesh("assets/models/light2.obj");
+		assetManager.AddMesh("assets/models/", "plane.obj");
+		assetManager.AddMesh("assets/models/", "dragon.obj");
+		assetManager.AddMesh("assets/models/", "cube.obj");
+		assetManager.AddMesh("assets/models/", "light2.obj");
 
 		MeshInstance& greyFaces = m_Scene.CreateMeshInstance(0);
 		greyFaces.AssignMaterial(0);
