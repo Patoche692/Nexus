@@ -10,8 +10,6 @@ AssetManager::AssetManager()
 
 AssetManager::~AssetManager()
 {
-	freeDeviceMaterials();
-	freeDeviceTLAS();
 	for (BVH* bvh : m_Bvh)
 		delete bvh;
 }

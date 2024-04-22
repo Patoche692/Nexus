@@ -72,7 +72,6 @@ __global__ void freeMeshesKernel(int meshesCount)
 void freeDeviceMeshes(int meshesCount)
 {
 	freeMeshesKernel<<<1, 1>>>(meshesCount);
-	checkCudaErrors(cudaDeviceSynchronize());
 }
 
 __global__ void freeMaterialsKernel()
@@ -83,7 +82,19 @@ __global__ void freeMaterialsKernel()
 void freeDeviceMaterials()
 {
 	freeMaterialsKernel<<<1, 1>>>();
-	checkCudaErrors(cudaDeviceSynchronize());
+}
+
+__global__ void freeTexturesKernel(int texturesCount)
+{
+	for (int i = 0; i < texturesCount; i++)
+		free(textures[i].data);
+
+	free(textures);
+}
+
+void freeDeviceTextures(int texturesCount)
+{
+	freeTexturesKernel<<<1, 1>>>(texturesCount);
 }
 
 void cpyMaterialToDevice(Material& m, uint32_t id)
@@ -187,6 +198,7 @@ __global__ void freeDeviceTLASKernel()
 		free(bvh->nodes);
 		free(bvh->triangles);
 		free(bvh->triangleIdx);
+		free(bvh);
 	}
 	free(tlas.blas);
 	free(tlas.nodes);
@@ -196,7 +208,6 @@ __global__ void freeDeviceTLASKernel()
 void freeDeviceTLAS()
 {
 	freeDeviceTLASKernel<<<1, 1>>>();
-	checkCudaErrors(cudaDeviceSynchronize());
 }
 
 Material** getMaterialSymbolAddress()
