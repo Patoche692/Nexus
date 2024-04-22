@@ -54,7 +54,9 @@ int main(void)
             glfwSwapBuffers(window);
         }
     }
-
+    /
+    checkCudaErrors(cudaDeviceSynchronize());
+    checkCudaErrors(cudaDeviceReset());
     glfwTerminate();
     return 0;
 }
