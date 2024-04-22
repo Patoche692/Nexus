@@ -16,6 +16,7 @@ enum struct SceneType
 	BATHROOM,
 	ELLIE,
 	DRAGONS
+	NEONS
 };
 
 class Scene

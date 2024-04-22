@@ -3,8 +3,7 @@
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
-	//SceneType sceneType = SceneType::DRAGONS;
-	SceneType sceneType = SceneType::ELLIE;				// change scene
+	SceneType sceneType = SceneType::ELLIE;
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
 
@@ -93,6 +92,88 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 
 		MeshInstance& light = m_Scene.CreateMeshInstance(3);
 		light.AssignMaterial(5);
+	}
+	else if (sceneType == SceneType::NEONS)
+	{
+		Material material;
+		material.type = Material::Type::DIFFUSE;
+		material.diffuse.albedo = make_float3(0.7f, 0.0f, 0.0f);
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::DIFFUSE;
+		material.diffuse.albedo = make_float3(0.85f, 0.05f, 0.05f);
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::METAL;
+		material.plastic.albedo = make_float3(0.8f);
+		material.plastic.roughness = 0.0f;
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::DIELECTRIC;
+		material.dielectric.ior = 1.5f;
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::METAL;
+		material.plastic.albedo = make_float3(1.0f, 0.5f, 0.0f);
+		material.plastic.roughness = 0.15f;
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::LIGHT;
+		material.light.emission = make_float3(7.0f, 7.0f, 7.0f);
+		assetManager.AddMaterial(material);
+		material.type = Material::Type::METAL;
+		material.plastic.albedo = make_float3(0.8f, 0.2f, 0.2f);
+		material.plastic.roughness = 0.05f;
+		assetManager.AddMaterial(material);
+
+		assetManager.AddMesh("assets/models/plane.obj");
+		assetManager.AddMesh("assets/models/sphere.obj");
+		assetManager.AddMesh("assets/models/cube.obj");
+		assetManager.AddMesh("assets/models/ring.obj");
+
+		MeshInstance& floor = m_Scene.CreateMeshInstance(0);
+		floor.AssignMaterial(0);
+		floor.SetScale(100.0f);
+		floor.SetPosition(make_float3(0.0f, -0.5f, 0.0f));
+		MeshInstance& stair = m_Scene.CreateMeshInstance(2);
+		stair.AssignMaterial(0);
+		stair.SetScale(make_float3(10.0f, 0.15f, 6.0f));
+		stair.SetPosition(make_float3(0.0f, -0.15f, 0.0f));
+		MeshInstance& sphere1 = m_Scene.CreateMeshInstance(1);
+		sphere1.AssignMaterial(3);
+		sphere1.SetScale(1.0f);
+		sphere1.SetPosition(make_float3(7.0f, 1.0f, 0.0f));
+		MeshInstance& sphere2 = m_Scene.CreateMeshInstance(1);
+		sphere2.AssignMaterial(6);
+		sphere2.SetScale(0.8f);
+		sphere2.SetPosition(make_float3(3.5f, 0.8f, -2.0f));
+		MeshInstance& sphere3 = m_Scene.CreateMeshInstance(1);
+		sphere3.AssignMaterial(2);
+		sphere3.SetScale(1.0f);
+		sphere3.SetPosition(make_float3(-7.0f, 1.0f, 0.5f));
+		MeshInstance& sphere4 = m_Scene.CreateMeshInstance(1);
+		sphere4.AssignMaterial(6);
+		sphere4.SetScale(0.7f);
+		sphere4.SetPosition(make_float3(-3.5f, 0.7f, 2.0f));
+		MeshInstance& sphere5 = m_Scene.CreateMeshInstance(1);
+		sphere5.AssignMaterial(6);
+		sphere5.SetScale(0.2f);
+		sphere5.SetPosition(make_float3(0.2f, 0.2f, 5.0f));
+		MeshInstance& ring1 = m_Scene.CreateMeshInstance(3);
+		ring1.AssignMaterial(2);
+		ring1.SetScale(make_float3(0.5f, 0.7f, 0.5f));
+		ring1.SetPosition(make_float3(0.0f, 0.0f, 0.0f));
+		MeshInstance& ring2 = m_Scene.CreateMeshInstance(3);
+		ring2.AssignMaterial(2);
+		ring2.SetScale(make_float3(0.5f, 0.7f, 0.5f));
+		ring2.SetPosition(make_float3(1.0f, 0.0f, 1.0f));
+		MeshInstance& ring3 = m_Scene.CreateMeshInstance(3);
+		ring3.AssignMaterial(2);
+		ring3.SetScale(make_float3(0.5f, 0.7f, 0.5f));
+		ring3.SetPosition(make_float3(-2.0f, 0.0f, -0.4f));
+		for (int i = 0; i < 16; i++)
+		{
+			MeshInstance& light = m_Scene.CreateMeshInstance(0);
+			light.SetScale(make_float3(0.25f, 1.0f, 2.0f));
+			light.SetRotationX(180.0f);
+			light.SetPosition(make_float3(-8.0f + i, 4.0f, 0.0f));
+			light.AssignMaterial(5);
+		}
 	}
 	m_Scene.BuildTLAS();
 }
