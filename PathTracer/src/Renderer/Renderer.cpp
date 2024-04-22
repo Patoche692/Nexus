@@ -3,6 +3,7 @@
 #include "Cuda/PathTracer.cuh"
 #include "Utils/Utils.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
@@ -12,7 +13,10 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/opensans/OpenSans-Regular.ttf", 16.0f);
     ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
@@ -60,6 +64,70 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+static bool DrawFloat3Control(const std::string& label, float3& values, float resetValue = 0.0f, float columnWidth = 80.0f)
+{
+	ImGui::PushID(label.c_str());
+
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+	bool modified = false;
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+	if (ImGui::Button("X", buttonSize))
+		values.x = resetValue, modified = true;
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f"))
+		modified = true;
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+	if (ImGui::Button("Y", buttonSize))
+		values.y = resetValue, modified = true;;
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f"))
+		modified = true;
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	if (ImGui::Button("Z", buttonSize))
+		values.z = resetValue, modified = true;
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f"))
+		modified = true;
+	ImGui::PopItemWidth();
+
+	ImGui::PopStyleVar();
+
+	ImGui::Columns(1);
+
+	ImGui::PopID();
+
+	return modified;
+}
+
 void Renderer::RenderUI(Scene& scene)
 {
 	ImGui::DockSpaceOverViewport();
@@ -103,13 +171,13 @@ void Renderer::RenderUI(Scene& scene)
 		{
 			ImGui::SeparatorText("Transform");
 
-			if (ImGui::DragFloat3("Position", (float*)&meshInstance.position, 0.01f))
+			if (DrawFloat3Control("Location", meshInstance.position))
 				scene.InvalidateMeshInstance(i);
 
-			if (ImGui::DragFloat3("Rotation", (float*)&meshInstance.rotation, 0.1f))
+			if (DrawFloat3Control("Rotation", meshInstance.rotation))
 				scene.InvalidateMeshInstance(i);
 
-			if (ImGui::DragFloat3("Scale", (float*)&meshInstance.scale, 0.01f))
+			if (DrawFloat3Control("Scale", meshInstance.scale, 1.0f))
 				scene.InvalidateMeshInstance(i);
 
 			if (ImGui::TreeNode("Material"))

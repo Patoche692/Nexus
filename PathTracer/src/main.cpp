@@ -5,7 +5,7 @@
 #include "Input.h"
 #include "RayTracerApplication.h"
 
-int WIDTH = 1200, HEIGHT = 800;
+int WIDTH = 1400, HEIGHT = 800;
 
 int main(void)
 {
