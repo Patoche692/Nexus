@@ -121,10 +121,10 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 		material.plastic.roughness = 0.05f;
 		assetManager.AddMaterial(material);
 
-		assetManager.AddMesh("assets/models/plane.obj");
-		assetManager.AddMesh("assets/models/sphere.obj");
-		assetManager.AddMesh("assets/models/cube.obj");
-		assetManager.AddMesh("assets/models/ring.obj");
+		assetManager.AddMesh("assets/models/", "plane.obj");
+		assetManager.AddMesh("assets/models/", "sphere.obj");
+		assetManager.AddMesh("assets/models/", "cube.obj");
+		assetManager.AddMesh("assets/models/", "ring.obj");
 
 		MeshInstance& floor = m_Scene.CreateMeshInstance(0);
 		floor.AssignMaterial(0);
