@@ -29,10 +29,12 @@ public:
 	void AddMaterial(Material& material);
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
+	bool IsEmpty() { return m_MeshInstances.size() == 0; }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
 	std::vector<MeshInstance>& GetMeshInstances() { return m_MeshInstances; }
+	void CreateMeshInstanceFromFile(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
 	bool SendDataToDevice();

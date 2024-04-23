@@ -65,3 +65,11 @@ bool Scene::SendDataToDevice()
 
 	return invalid;
 }
+
+void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::string& fileName)
+{
+	m_AssetManager.AddMesh(path, fileName);
+	for (int i = 0; i < m_AssetManager.GetMeshes().size(); i++)
+		CreateMeshInstance(i);
+	BuildTLAS();
+}

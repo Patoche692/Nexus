@@ -1,8 +1,12 @@
 #include "RayTracerApplication.h"
 
+GLFWwindow* RayTracerApplication::m_Window;
+
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
 	:m_Renderer(width, height, window), m_Scene(width, height)
 {
+	m_Window = window;
+
 	SceneType sceneType = SceneType::ELLIE;
 
 	AssetManager& assetManager = m_Scene.GetAssetManager();
@@ -40,9 +44,9 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 	}
 	else if (sceneType == SceneType::ELLIE)
 	{
-		assetManager.AddMesh("assets/scenes/ellie/", "ellie.obj");
-		for (int i = 0; i < assetManager.GetMeshes().size(); i++)
-			m_Scene.CreateMeshInstance(i);
+		//assetManager.AddMesh("assets/scenes/ellie/", "ellie.obj");
+		//for (int i = 0; i < assetManager.GetMeshes().size(); i++)
+		//	m_Scene.CreateMeshInstance(i);
 	}
 	else if (sceneType == SceneType::DRAGONS)
 	{
@@ -175,7 +179,7 @@ RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *wi
 			light.AssignMaterial(5);
 		}
 	}
-	m_Scene.BuildTLAS();
+	//m_Scene.BuildTLAS();
 }
 
 void RayTracerApplication::Update(float deltaTime)

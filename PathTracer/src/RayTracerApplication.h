@@ -13,7 +13,10 @@ public:
 
 	void OnResize(int width, int height);
 
+	static GLFWwindow* GetNativeWindow() { return m_Window; }
+
 private:
 	Renderer m_Renderer;
 	Scene m_Scene;
+	static GLFWwindow* m_Window;
 };

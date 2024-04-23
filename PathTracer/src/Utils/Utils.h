@@ -26,4 +26,6 @@ namespace Utils
 	{
 		return angle * 180.0f / M_PI;
 	}
+
+	void GetPathAndFileName(const std::string fullPath, std::string& path, std::string& name);
 }

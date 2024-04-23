@@ -6,6 +6,7 @@
 #include "imgui/imgui_internal.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "FileDialog.h"
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
@@ -55,10 +56,13 @@ void Renderer::Render(Scene& scene, float deltaTime)
 
 	m_FrameNumber++;
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
-	RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
+	if (!scene.IsEmpty())
+	{
+		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
 
-	// Unpack the pixel buffer written by cuda to the renderer texture
-	UnpackToTexture();
+		// Unpack the pixel buffer written by cuda to the renderer texture
+		UnpackToTexture();
+	}
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -132,6 +136,25 @@ void Renderer::RenderUI(Scene& scene)
 {
 	ImGui::DockSpaceOverViewport();
 
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open...", "Ctrl+O"))
+			{
+				std::string fullPath = FileDialog::OpenFile("Wavefront OBJ (*.obj)\0*.obj\0");
+				if (!fullPath.empty())
+				{
+					std::string fileName, filePath;
+					Utils::GetPathAndFileName(fullPath, filePath, fileName);
+					scene.CreateMeshInstanceFromFile(filePath, fileName);
+				}
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
 	ImGui::Begin("Settings");
 
 	ImGui::Spacing();
@@ -166,7 +189,6 @@ void Renderer::RenderUI(Scene& scene)
 		MeshInstance& meshInstance = meshInstances[i];
 		ImGui::PushID(i);
 
-		//ImGui::ShowDemoWindow();
 		if (ImGui::CollapsingHeader("Mesh"))
 		{
 			ImGui::SeparatorText("Transform");
@@ -249,6 +271,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
+
 	ImGui::PopStyleVar();
 }
 

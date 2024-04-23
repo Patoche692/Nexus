@@ -164,6 +164,7 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Renderer\FileDialog.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Utils\Utils.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="src\Geometry\Ray.h" />
     <ClInclude Include="src\RayTracerApplication.h" />
     <ClInclude Include="src\Cuda\PathTracer.cuh" />
+    <ClInclude Include="src\Renderer\FileDialog.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Utils\Utils.h" />
