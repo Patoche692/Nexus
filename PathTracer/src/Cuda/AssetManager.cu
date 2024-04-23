@@ -52,10 +52,10 @@ void newDeviceTexture(Texture& texture, uint32_t size) {
 	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
 
 	Texture newTexture = texture;
-	unsigned char* data = CudaMemory::Allocate<unsigned char>(texture.width * texture.height * texture.channels);
-	CudaMemory::MemCpy(data, texture.data, texture.width * texture.height * texture.channels, cudaMemcpyHostToDevice);
+	float3* pixels = CudaMemory::Allocate<float3>(texture.width * texture.height);
+	CudaMemory::MemCpy(pixels, texture.pixels, texture.width * texture.height, cudaMemcpyHostToDevice);
 
-	newTexture.data = data;
+	newTexture.pixels = pixels;
 
 	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, newTexture);
 }
@@ -87,7 +87,7 @@ void freeDeviceMaterials()
 __global__ void freeTexturesKernel(int texturesCount)
 {
 	for (int i = 0; i < texturesCount; i++)
-		free(textures[i].data);
+		free(textures[i].pixels);
 
 	free(textures);
 }

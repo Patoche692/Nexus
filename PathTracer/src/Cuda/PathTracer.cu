@@ -113,7 +113,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			return currentAttenuation * make_float3(0.2f);
 	}
 
-	return currentAttenuation * make_float3(0.2f);
+	return make_float3(0.0f);
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
