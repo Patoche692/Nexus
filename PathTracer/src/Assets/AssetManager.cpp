@@ -45,6 +45,11 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 int AssetManager::AddTexture(const std::string& filename)
 {
 	Texture newTexture = IMGLoader::LoadIMG(filename);
+	if (newTexture.pixels == NULL)
+	{
+		std::cout << "AssetManager: Failed to load texture " << filename << std::endl;
+		return -1;
+	}
 	m_Textures.push_back(newTexture);
 	Texture& m = m_Textures[m_Textures.size() - 1];
 	newDeviceTexture(m, m_Textures.size());
