@@ -14,9 +14,9 @@ Texture IMGLoader::LoadIMG(std::string filepath)
 {
 	int width, height, channels;
 
-	unsigned char* image = stbi_load(filepath.c_str(), &width, &height, &channels, 0);
+	float3* pixels = (float3*)stbi_loadf(filepath.c_str(), &width, &height, &channels, 3);
 
-	return Texture(width, height, channels, image);
+	return Texture(width, height, channels, pixels);
 }
 
 
