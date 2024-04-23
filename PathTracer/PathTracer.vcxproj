@@ -193,6 +193,7 @@
     <ClInclude Include="src\Assets\Texture.h" />
     <ClInclude Include="src\Cuda\BRDF.cuh" />
     <ClInclude Include="src\Cuda\AssetManager.cuh" />
+    <ClInclude Include="src\Cuda\BSDF.cuh" />
     <ClInclude Include="src\Geometry\AABB.h" />
     <ClInclude Include="src\Geometry\BVH\BVH.h" />
     <ClInclude Include="src\Cuda\CudaMemory.cuh" />

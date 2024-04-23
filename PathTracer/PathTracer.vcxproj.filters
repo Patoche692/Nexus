@@ -208,6 +208,10 @@
     <ClInclude Include="src\Assets\Texture.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Geometry\MeshInstance.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cuda\BSDF.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
