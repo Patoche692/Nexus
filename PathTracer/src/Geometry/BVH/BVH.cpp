@@ -3,7 +3,7 @@
 #include "Geometry/AABB.h"
 #include "Utils/Utils.h"
 
-BVH::BVH(std::vector<Triangle> tri)
+BVH::BVH(std::vector<Triangle>& tri)
 {
 	triCount = tri.size();
 	triangles = new Triangle[triCount];
@@ -13,6 +13,13 @@ BVH::BVH(std::vector<Triangle> tri)
 	memcpy(triangles, tri.data(), triCount * sizeof(Triangle));
 
 	Build();
+}
+
+BVH::~BVH()
+{
+	delete[] triangles;
+	delete[] nodes;
+	delete[] triangleIdx;
 }
 
 void BVH::Build()

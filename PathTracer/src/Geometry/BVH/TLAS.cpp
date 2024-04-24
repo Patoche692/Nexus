@@ -10,6 +10,12 @@ TLAS::TLAS(BVHInstance* bvhList, int N)
 	nodesUsed = 2;
 }
 
+//TLAS::~TLAS()
+//{
+//	delete[] nodes;
+//	delete[] nodesIdx;
+//}
+
 void TLAS::Build()
 {
 	nodesUsed = 1;

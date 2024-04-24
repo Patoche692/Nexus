@@ -33,7 +33,8 @@ class BVH
 {
 public:
 	BVH() = default;
-	BVH(std::vector<Triangle> triangles);
+	BVH(std::vector<Triangle>& triangles);
+	~BVH();
 
 	void Build();
 
