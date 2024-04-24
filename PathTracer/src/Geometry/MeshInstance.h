@@ -6,8 +6,9 @@
 struct MeshInstance
 {
 	MeshInstance() = default;
-	MeshInstance(int bvhInstIdx, int mId = -1)
+	MeshInstance(const std::string n, int bvhInstIdx, int mId = -1)
 	{
+		name = n;
 		bvhInstanceIdx = bvhInstIdx;
 		materialId = mId;
 	}
@@ -19,6 +20,8 @@ struct MeshInstance
 	void SetScale(float s) { scale = make_float3(s); }
 	void SetScale(float3 s) { scale = s; }
 	void AssignMaterial(int mId) { materialId = mId; }
+
+	std::string name;
 
 	int bvhInstanceIdx;
 	int materialId = -1;

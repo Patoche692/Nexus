@@ -189,7 +189,7 @@ void Renderer::RenderUI(Scene& scene)
 		MeshInstance& meshInstance = meshInstances[i];
 		ImGui::PushID(i);
 
-		if (ImGui::CollapsingHeader("Mesh"))
+		if (ImGui::CollapsingHeader(meshInstance.name.c_str()))
 		{
 			ImGui::SeparatorText("Transform");
 

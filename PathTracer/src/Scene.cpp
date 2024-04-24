@@ -24,7 +24,7 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
 	m_BVHInstances.push_back(BVHInstance(mesh.bvh));
 
-	MeshInstance meshInstance(m_BVHInstances.size() - 1, mesh.materialId);
+	MeshInstance meshInstance(mesh.name, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
 
 	InvalidateMeshInstance(m_MeshInstances.size() - 1);
