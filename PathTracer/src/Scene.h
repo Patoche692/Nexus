@@ -23,6 +23,7 @@ class Scene
 {
 public:
 	Scene(uint32_t width, uint32_t height);
+	void Reset();
 
 	std::shared_ptr<Camera> GetCamera() { return m_Camera; }
 
@@ -45,7 +46,7 @@ private:
 	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
 	std::set<uint32_t> m_InvalidMeshInstances;
-	TLAS m_Tlas;
+	std::shared_ptr<TLAS> m_Tlas;
 
 	AssetManager m_AssetManager;
 };

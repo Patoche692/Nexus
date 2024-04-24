@@ -128,6 +128,11 @@ BVH* newDeviceBVH(BVH& bvh)
 	BVH* bvhPtr = CudaMemory::Allocate<BVH>(1);
 	CudaMemory::MemCpy(bvhPtr, &newBvh, 1, cudaMemcpyHostToDevice);
 
+	// TODO: Move all structures to the GPU. For now, avoid calling delete on a device ptr
+	newBvh.triangles = nullptr;
+	newBvh.nodes = nullptr;
+	newBvh.triangleIdx = nullptr;
+
 	return bvhPtr;
 }
 

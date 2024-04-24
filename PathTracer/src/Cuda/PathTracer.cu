@@ -142,7 +142,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
-	float3 c = color(ray, rngState);									// get new colour
+	float3 c = color(ray, rngState);	// get new color
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
 	else
@@ -151,11 +151,9 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 
 	// Gamma correction
-	//c = make_float3(sqrt(c.x), sqrt(c.y), sqrt(c.z));
-	// More precise version
 	c = make_float3(pow(c.x, 0.455), pow(c.y, 0.455), pow(c.z, 0.455));
 
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert colour
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert color
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)

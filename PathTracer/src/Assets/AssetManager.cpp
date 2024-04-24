@@ -10,8 +10,14 @@ AssetManager::AssetManager()
 
 AssetManager::~AssetManager()
 {
-	for (BVH* bvh : m_Bvh)
-		delete bvh;
+}
+
+void AssetManager::Reset()
+{
+	m_Materials.clear();
+	m_InvalidMaterials.clear();
+	m_Textures.clear();
+	m_Meshes.clear();
 }
 
 void AssetManager::AddMesh(const std::string& path, const std::string filename)
