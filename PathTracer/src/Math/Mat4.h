@@ -206,22 +206,19 @@ public:
 		return R;
 	}
 
-	inline __host__ __device__ inline float3 TransformVector(const float3& v) const
+	inline __host__ __device__ float3 TransformVector(const float3& v) const
 	{
 		return make_float3( cell[0] * v.x + cell[1] * v.y + cell[2] * v.z,
 			cell[4] * v.x + cell[5] * v.y + cell[6] * v.z,
 			cell[8] * v.x + cell[9] * v.y + cell[10] * v.z );
 	}
 
-	inline __host__ __device__ inline float3 TransformPoint(const float3& v) const
+	inline __host__ __device__ float3 TransformPoint(const float3& v) const
 	{
-		const float3 res = make_float3(
+		return make_float3(
 			cell[0] * v.x + cell[1] * v.y + cell[2] * v.z + cell[3],
 			cell[4] * v.x + cell[5] * v.y + cell[6] * v.z + cell[7],
 			cell[8] * v.x + cell[9] * v.y + cell[10] * v.z + cell[11] );
-		const float w = cell[12] * v.x + cell[13] * v.y + cell[14] * v.z + cell[15];
-		if (w == 1) return res;
-		return res * (1.f / w);
 	}
 };
 
