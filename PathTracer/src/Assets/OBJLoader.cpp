@@ -53,6 +53,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[i];
+		std::string name = mesh->mName.data;
 
 		std::vector<Triangle> triangles = std::vector<Triangle>(mesh->mNumFaces);
 		
@@ -112,7 +113,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		}
 		BVH* bvh = new BVH(triangles);
 
-		Mesh newMesh(bvh, materialIdx[mesh->mMaterialIndex]);
+		Mesh newMesh(name, bvh, materialIdx[mesh->mMaterialIndex]);
 
 		meshes.push_back(newMesh);
 	}
