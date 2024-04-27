@@ -231,36 +231,36 @@ void Renderer::RenderUI(Scene& scene)
 						scene.InvalidateMeshInstance(i);
 
 					Material& material = materials[meshInstance.materialId];
-					int type = (int)material.type;
+					//int type = (int)material.type;
 
-					if (ImGui::Combo("Type", &type, materialTypes.c_str()))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
+					//if (ImGui::Combo("Type", &type, materialTypes.c_str()))
+					//	assetManager.InvalidateMaterial(meshInstance.materialId);
 
-					material.type = (Material::Type)type;
+					//material.type = (Material::Type)type;
 
-					switch (material.type)
-					{
-					case Material::Type::LIGHT:
-						if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::DIFFUSE:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::METAL:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::DIELECTRIC:
-						if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					}
+					//switch (material.type)
+					//{
+					//case Material::Type::LIGHT:
+					//	if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	break;
+					//case Material::Type::DIFFUSE:
+					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	break;
+					//case Material::Type::METAL:
+					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	break;
+					//case Material::Type::DIELECTRIC:
+					//	if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	break;
+					//}
 				}
 				ImGui::TreePop();
 				ImGui::Spacing();

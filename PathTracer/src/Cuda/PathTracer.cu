@@ -1,6 +1,7 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
 #include "BRDF.cuh"
+#include "BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
@@ -55,53 +56,69 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		hitResult.material = materials[instance.materialId];
 
+		if (hitResult.material.diffuseMapId == -1)
+			hitResult.albedo = hitResult.material.diffuse;
+		else
+		{
+			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+			hitResult.material.diffuse = textures[hitResult.material.diffuseMapId].GetPixel(uv.x, uv.y);
+		}
 		// Normal flipping
 		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 		//	hitResult.normal = -hitResult.normal;
 
 		float3 attenuation = make_float3(1.0f);
+		float3 scatteredDir = make_float3(0.0f);
 
-		switch (hitResult.material.type)
+		BSDF bsdf;
+		if (bsdf.Eval(hitResult, attenuation, scatteredDir, rngState))
 		{
-		case Material::Type::DIFFUSE:
-			if (hitResult.material.textureId == -1)
-				hitResult.albedo = hitResult.material.diffuse.albedo;
-			else
-			{
-				float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-				hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-			}
-
-			if (diffuseScatter(hitResult, attenuation, currentRay, rngState))
-			{
-				currentAttenuation *= attenuation;
-			}
-			break;
-		case Material::Type::METAL:
-			if (hitResult.material.textureId == -1)
-				hitResult.albedo = hitResult.material.diffuse.albedo;
-			else
-			{
-				float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-				hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-			}
-			if (plasticScattter(hitResult, attenuation, currentRay, rngState))
-			{
-				currentAttenuation *= attenuation;
-			}
-			break;
-		case Material::Type::DIELECTRIC:
-			if (dielectricScattter(hitResult, attenuation, currentRay, rngState))
-			{
-				currentAttenuation *= attenuation;
-			}
-			break;
-		case Material::Type::LIGHT:
-			return currentAttenuation * hitResult.material.light.emission;
-			break;
-		default:
-			break;
+			currentAttenuation *= attenuation;
+			currentRay.origin = hitResult.p;
+			currentRay.direction = scatteredDir;
 		}
+
+		//switch (hitResult.material.type)
+		//{
+		//case Material::Type::DIFFUSE:
+		//	if (hitResult.material.textureId == -1)
+		//		hitResult.albedo = hitResult.material.diffuse.albedo;
+		//	else
+		//	{
+		//		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		//		hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+		//	}
+
+		//	if (diffuseScatter(hitResult, attenuation, currentRay, rngState))
+		//	{
+		//		currentAttenuation *= attenuation;
+		//	}
+		//	break;
+		//case Material::Type::METAL:
+		//	if (hitResult.material.textureId == -1)
+		//		hitResult.albedo = hitResult.material.diffuse.albedo;
+		//	else
+		//	{
+		//		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		//		hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
+		//	}
+		//	if (plasticScattter(hitResult, attenuation, currentRay, rngState))
+		//	{
+		//		currentAttenuation *= attenuation;
+		//	}
+		//	break;
+		//case Material::Type::DIELECTRIC:
+		//	if (dielectricScattter(hitResult, attenuation, currentRay, rngState))
+		//	{
+		//		currentAttenuation *= attenuation;
+		//	}
+		//	break;
+		//case Material::Type::LIGHT:
+		//	return currentAttenuation * hitResult.material.light.emission;
+		//	break;
+		//default:
+		//	break;
+		//}
 
 		// Russian roulette
 		float p = fmax(currentAttenuation.x, fmax(currentAttenuation.y, currentAttenuation.z));

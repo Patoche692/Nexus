@@ -30,8 +30,7 @@ void AssetManager::AddMesh(const std::string& path, const std::string filename)
 void AssetManager::AddMaterial()
 {
 	Material material;
-	material.type = Material::Type::DIFFUSE;
-	material.diffuse.albedo = make_float3(0.2f, 0.2f, 0.2f);
+	material.diffuse = make_float3(0.2f, 0.2f, 0.2f);
 	AddMaterial(material);
 }
 
@@ -62,9 +61,9 @@ int AssetManager::AddTexture(const std::string& filename)
 	return m_Textures.size() - 1;
 }
 
-void AssetManager::ApplyTextureToMaterial(int materialId, int textureId)
+void AssetManager::ApplyTextureToMaterial(int materialId, int diffuseMapId)
 {
-	m_Materials[materialId].textureId = textureId;
+	m_Materials[materialId].diffuseMapId = diffuseMapId;
 	InvalidateMaterial(materialId);
 }
 
