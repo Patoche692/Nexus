@@ -30,7 +30,7 @@ struct AABB
 		return diff.x * diff.y + diff.y * diff.z + diff.x * diff.z;
 	}
 
-	__host__ __device__ static inline float intersectionAABB(const Ray& ray, const float3 bMin, const float3 bMax)
+	__host__ __device__ static inline float intersectionAABB(const Ray& ray, const float3& bMin, const float3& bMax)
 	{
 		float tx1 = (bMin.x - ray.origin.x) * ray.invDirection.x, tx2 = (bMax.x - ray.origin.x) * ray.invDirection.x;
 		float tmin = min(tx1, tx2), tmax = max(tx1, tx2);

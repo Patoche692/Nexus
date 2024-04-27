@@ -7,8 +7,13 @@
 struct Mesh
 {
 	Mesh() = default;
-	Mesh(BVH* b, int mId) : bvh(b), materialId(mId) { }
+	Mesh(const std::string n, std::vector<Triangle>& triangles, int mId)
+		: name(n), materialId(mId)
+	{
+		bvh = std::make_shared<BVH>(triangles);
+	}
 
-	BVH* bvh;
+	std::shared_ptr<BVH> bvh;
+	std::string name;
 	int materialId;
 };

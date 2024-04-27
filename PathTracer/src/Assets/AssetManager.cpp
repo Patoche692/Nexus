@@ -10,8 +10,14 @@ AssetManager::AssetManager()
 
 AssetManager::~AssetManager()
 {
-	for (BVH* bvh : m_Bvh)
-		delete bvh;
+}
+
+void AssetManager::Reset()
+{
+	m_Materials.clear();
+	m_InvalidMaterials.clear();
+	m_Textures.clear();
+	m_Meshes.clear();
 }
 
 void AssetManager::AddMesh(const std::string& path, const std::string filename)
@@ -45,6 +51,11 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 int AssetManager::AddTexture(const std::string& filename)
 {
 	Texture newTexture = IMGLoader::LoadIMG(filename);
+	if (newTexture.pixels == NULL)
+	{
+		std::cout << "AssetManager: Failed to load texture " << filename << std::endl;
+		return -1;
+	}
 	m_Textures.push_back(newTexture);
 	Texture& m = m_Textures[m_Textures.size() - 1];
 	newDeviceTexture(m, m_Textures.size());

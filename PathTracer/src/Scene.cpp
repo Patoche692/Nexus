@@ -7,6 +7,15 @@ Scene::Scene(uint32_t width, uint32_t height)
 {
 }
 
+void Scene::Reset()
+{
+	m_BVHInstances.clear();
+	m_InvalidMeshInstances.clear();
+	m_MeshInstances.clear();
+	m_AssetManager.Reset();
+	m_Camera->Invalidate();
+}
+
 void Scene::AddMaterial(Material& material)
 {
 	m_AssetManager.AddMaterial(material);
@@ -14,22 +23,32 @@ void Scene::AddMaterial(Material& material)
 
 void Scene::BuildTLAS()
 {
-	m_Tlas = TLAS(m_BVHInstances.data(), m_BVHInstances.size());
-	m_Tlas.Build();
-	newDeviceTLAS(m_Tlas);
+	m_Tlas = std::make_shared<TLAS>(m_BVHInstances.data(), m_BVHInstances.size());
+	m_Tlas->Build();
+	newDeviceTLAS(*m_Tlas);
 }
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
-	m_BVHInstances.push_back(BVHInstance(mesh.bvh));
 
-	MeshInstance meshInstance(m_BVHInstances.size() - 1, mesh.materialId);
+	// Get the raw ptr for BVHInstance because CUDA doesnt support shared_ptr
+	m_BVHInstances.push_back(BVHInstance(mesh.bvh.get()));
+
+	MeshInstance meshInstance(mesh.name, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
 
 	InvalidateMeshInstance(m_MeshInstances.size() - 1);
 
 	return m_MeshInstances[m_MeshInstances.size() - 1];
+}
+
+void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::string& fileName)
+{
+	m_AssetManager.AddMesh(path, fileName);
+	for (int i = 0; i < m_AssetManager.GetMeshes().size(); i++)
+		CreateMeshInstance(i);
+	BuildTLAS();
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
@@ -51,8 +70,8 @@ bool Scene::SendDataToDevice()
 				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
 			
 		}
-		m_Tlas.Build();
-		updateDeviceTLAS(m_Tlas);
+		m_Tlas->Build();
+		updateDeviceTLAS(*m_Tlas);
 		m_InvalidMeshInstances.clear();
 		invalid = true;
 	}

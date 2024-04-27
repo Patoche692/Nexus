@@ -21,8 +21,8 @@ struct BVHNode
 	// Number of triangles in the node (0 if not leaf)
 	uint32_t triCount;
 
-	__host__ __device__ bool IsLeaf() { return triCount > 0; }
-	__host__ __device__ float Cost()
+	inline __host__ __device__ bool IsLeaf() { return triCount > 0; }
+	inline __host__ __device__ float Cost()
 	{
 		float3 diag = aabbMax - aabbMin;
 		return (diag.x * diag.y + diag.y * diag.z + diag.x * diag.z) * triCount;
@@ -33,7 +33,8 @@ class BVH
 {
 public:
 	BVH() = default;
-	BVH(std::vector<Triangle> triangles);
+	BVH(std::vector<Triangle>& triangles);
+	~BVH();
 
 	void Build();
 

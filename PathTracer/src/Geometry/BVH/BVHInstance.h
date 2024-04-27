@@ -14,6 +14,7 @@ public:
 		Mat4 m;
 		SetTransform(m); 
 	}
+
 	void SetTransform(Mat4& t);
 	void SetTransform(float3 pos, float3 r, float3 s);
 

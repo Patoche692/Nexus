@@ -18,6 +18,7 @@ class TLAS
 public:
 	TLAS() = default;
 	TLAS(BVHInstance* bvhList, int N);
+	//~TLAS();
 	void Build();
 
 private:

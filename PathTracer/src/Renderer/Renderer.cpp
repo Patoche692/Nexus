@@ -6,6 +6,7 @@
 #include "imgui/imgui_internal.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "FileDialog.h"
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
@@ -31,13 +32,19 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 
 Renderer::~Renderer()
 {
-
 	checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 	ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
+void Renderer::Reset()
+{
+	m_FrameNumber = 0;
+	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
+	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
+	m_DisplayFPSTimer = glfwGetTime();
+}
 
 void Renderer::Render(Scene& scene, float deltaTime)
 { 
@@ -53,12 +60,18 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (scene.SendDataToDevice())
 		m_FrameNumber = 0;
 
-	m_FrameNumber++;
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
-	RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
+	if (!scene.IsEmpty())
+	{
+		m_FrameNumber++;
+		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
 
-	// Unpack the pixel buffer written by cuda to the renderer texture
-	UnpackToTexture();
+		// Unpack the pixel buffer written by cuda to the renderer texture
+		UnpackToTexture();
+	}
+	else
+		m_FrameNumber = 0;
+
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -132,6 +145,31 @@ void Renderer::RenderUI(Scene& scene)
 {
 	ImGui::DockSpaceOverViewport();
 
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open...", "Ctrl+O"))
+			{
+				std::string fullPath = FileDialog::OpenFile("Wavefront OBJ (*.obj)\0*.obj\0");
+				if (!fullPath.empty())
+				{
+					checkCudaErrors(cudaDeviceSynchronize());
+					checkCudaErrors(cudaDeviceReset());
+					Reset();
+					scene.Reset();
+
+					std::string fileName, filePath;
+					Utils::GetPathAndFileName(fullPath, filePath, fileName);
+					scene.CreateMeshInstanceFromFile(filePath, fileName);
+					checkCudaErrors(cudaDeviceSynchronize());
+				}
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
 	ImGui::Begin("Settings");
 
 	ImGui::Spacing();
@@ -166,8 +204,7 @@ void Renderer::RenderUI(Scene& scene)
 		MeshInstance& meshInstance = meshInstances[i];
 		ImGui::PushID(i);
 
-		//ImGui::ShowDemoWindow();
-		if (ImGui::CollapsingHeader("Mesh"))
+		if (ImGui::CollapsingHeader(meshInstance.name.c_str()))
 		{
 			ImGui::SeparatorText("Transform");
 
@@ -244,11 +281,13 @@ void Renderer::RenderUI(Scene& scene)
 	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
 	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
 
-	OnResize(scene.GetCamera(), viewportWidth, viewportHeight);
+	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
+	OnResize(viewportWidth, viewportHeight);
 
 	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
+
 	ImGui::PopStyleVar();
 }
 
@@ -273,14 +312,13 @@ void Renderer::UnpackToTexture()
 	m_PixelBuffer->Unbind();
 }
 
-void Renderer::OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t height)
+void Renderer::OnResize(uint32_t width, uint32_t height)
 {
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
 		m_FrameNumber = 0;
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
-		camera->OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 

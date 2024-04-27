@@ -10,3 +10,10 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
         exit(99);
     }
 }
+
+void Utils::GetPathAndFileName(const std::string fullPath, std::string& path, std::string& name)
+{
+	int splitIndex = fullPath.find_last_of("/\\");
+	name = fullPath.substr(splitIndex + 1);
+	path = fullPath.substr(0, splitIndex + 1);
+}

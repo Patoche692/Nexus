@@ -15,7 +15,9 @@ public:
 	Renderer(uint32_t width, uint32_t height, GLFWwindow* window);
 	~Renderer();
 
-	void OnResize(std::shared_ptr<Camera> camera, uint32_t width, uint32_t height);
+	void Reset();
+
+	void OnResize(uint32_t width, uint32_t height);
 	void Render(Scene& scene, float deltaTime);
 	void RenderUI(Scene& scene);
 	void UnpackToTexture();
