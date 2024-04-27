@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime_api.h>
-
-#define ONE_DIV_PI (0.31830988618)
+#include "Utils/cuda_math.h"
+#define ONE_DIV_PI (0.31830988618f)
 
 struct BSDF {
 
