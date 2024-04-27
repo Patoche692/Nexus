@@ -5,6 +5,7 @@
 #include "Random.cuh"
 
 #define ONE_DIV_PI (0.31830988618f)
+#define TWO_TIMES_PI 6.28318530718f
 
 struct BSDF {
 
@@ -72,16 +73,71 @@ struct BSDF {
 		VdotH = dot(V, H);
 		LdotH = dot(L, H);
 
-		diffuseReflectance = material.diffuse;
+		diffuseReflectance = BaseColorToDiffuseReflectance(material.diffuse, material.metalness);
+		specularF0 = BaseColorToSpecular(material.diffuse, material.metalness);
+		roughness = material.roughness;
+		alpha = material.roughness * material.roughness;
+		alphaSquared = alpha * alpha;
+
+		F = EvalFresnel(specularF0, shadowedF90(specularF0), LdotH);
+
 	}
 
-	inline __device__ float lambertian()
+	inline __device__ float3 EvalFresnelSchlick(float3 f0, float f90, float NdotS)
+	{
+		return f0 + (f90 - f0) * pow(1.0f - NdotS, 5.0f);
+	}
+
+	inline __device__ float3 EvalFresnel(float3 f0, float f90, float NdotS)
+	{
+		return EvalFresnelSchlick(f0, f90, NdotS);
+	}
+
+	inline __device__ float shadowedF90(float3 F0) {
+		//const float t = 60.0f;
+		const float t = (1.0f / 0.04);
+		return min(1.0f, t * Luminance(F0));
+	}
+
+	inline __device__ float Luminance(float3 rgb)
+	{
+		return dot(rgb, make_float3(0.2126f, 0.7152f, 0.0722f));
+	}
+
+	inline __device__ float3 BaseColorToSpecular(const float3 baseColor, const float metalness, const float reflectance = 0.5f) {
+
+		const float minDielectricsF0 = 0.16f * reflectance * reflectance;
+
+		return lerp(make_float3(minDielectricsF0, minDielectricsF0, minDielectricsF0), baseColor, metalness);
+	}
+
+	inline __device__ float3 BaseColorToDiffuseReflectance(float3 baseColor, float metalness)
+	{
+		return baseColor * (1.0f - metalness);
+	}
+
+	inline __device__ float Lambertian()
 	{
 		return 1.0f;
 	}
 
-	inline __device__ float3 lambertianEval() {
+	inline __device__ float3 LambertianEval() {
 		return diffuseReflectance * ONE_DIV_PI * NdotL;
+	}
+
+	inline __device__ float3 SampleSpecularHalfBeckWalt(float3 Vlocal, float2 alpha2D, unsigned int& rngState) {
+		float alpha = dot(alpha2D, make_float2(0.5f, 0.5f));
+
+		float2 u = make_float2(Random::Rand(rngState),Random::Rand(rngState));
+		float tanThetaSquared = -(alpha * alpha) * log(1.0f - u.x);
+		float phi = TWO_TIMES_PI * u.y;
+
+		// Calculate cosTheta and sinTheta needed for conversion to H vector
+		float cosTheta = 1.0 / sqrt(1.0f + tanThetaSquared);
+		float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+		// Convert sampled spherical coordinates to H vector
+		return normalize(make_float3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
 	}
 
 	inline __device__ bool Eval(HitResult& hitResult, float3& attenuation, float3& scattered, unsigned int& rngState)
@@ -94,9 +150,15 @@ struct BSDF {
 
 		PrepareBSDFData(scatteredLocal, Vlocal, hitResult.material);
 
-		attenuation = diffuseReflectance * lambertian();
+		attenuation = diffuseReflectance * Lambertian();
 
 		scattered = normalize(RotatePoint(InvertRotation(qRotationToZ), scatteredLocal));
+
+		float3 Hspecular = SampleSpecularHalfBeckWalt(Vlocal, make_float2(alpha, alpha), rngState);
+
+		float VdotH = max(0.00001f, min(1.0f, dot(Vlocal, Hspecular)));
+		attenuation *= (make_float3(1.0f, 1.0f, 1.0f) - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH));
+
 
 		return true;
 	}
