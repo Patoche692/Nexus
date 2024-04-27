@@ -29,6 +29,7 @@ struct Material {
 	//	} dielectric;
 	//};
 	float3 diffuse;
+	float3 specular;
 	float metalness;
 
 	float3 emissive;

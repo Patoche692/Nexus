@@ -74,7 +74,7 @@ struct BSDF {
 		LdotH = dot(L, H);
 
 		diffuseReflectance = BaseColorToDiffuseReflectance(material.diffuse, material.metalness);
-		specularF0 = BaseColorToSpecular(material.diffuse, material.metalness);
+		specularF0 = material.specular; //BaseColorToSpecular(material.specular, material.metalness);
 		roughness = material.roughness;
 		alpha = material.roughness * material.roughness;
 		alphaSquared = alpha * alpha;
@@ -108,7 +108,7 @@ struct BSDF {
 
 		const float minDielectricsF0 = 0.16f * reflectance * reflectance;
 
-		return lerp(make_float3(minDielectricsF0, minDielectricsF0, minDielectricsF0), baseColor, metalness);
+		return lerp(make_float3(minDielectricsF0), baseColor, metalness);
 	}
 
 	inline __device__ float3 BaseColorToDiffuseReflectance(float3 baseColor, float metalness)
@@ -151,14 +151,12 @@ struct BSDF {
 		PrepareBSDFData(scatteredLocal, Vlocal, hitResult.material);
 
 		attenuation = diffuseReflectance * Lambertian();
-
-		scattered = normalize(RotatePoint(InvertRotation(qRotationToZ), scatteredLocal));
-
 		float3 Hspecular = SampleSpecularHalfBeckWalt(Vlocal, make_float2(alpha, alpha), rngState);
 
 		float VdotH = max(0.00001f, min(1.0f, dot(Vlocal, Hspecular)));
 		attenuation *= (make_float3(1.0f, 1.0f, 1.0f) - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH));
 
+		scattered = normalize(RotatePoint(InvertRotation(qRotationToZ), scatteredLocal));
 
 		return true;
 	}

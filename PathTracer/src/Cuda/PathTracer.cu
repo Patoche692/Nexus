@@ -70,6 +70,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		float3 attenuation = make_float3(1.0f);
 		float3 scatteredDir = make_float3(0.0f);
 
+		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
+			return currentAttenuation * hitResult.material.emissive;
+
 		BSDF bsdf;
 		if (bsdf.Eval(hitResult, attenuation, scatteredDir, rngState))
 		{
