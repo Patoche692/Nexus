@@ -68,18 +68,23 @@ struct BSDF {
 		float3 N = make_float3(0.0f, 0.0f, 1.0f);
 
 		NdotL = dot(N, L);
-		NdotH = dot(N, H);
 		NdotV = dot(N, V);
-		VdotH = dot(V, H);
-		LdotH = dot(L, H);
+
+		NdotL = fmin(fmax(0.00001f, NdotL), 1.0f);
+		NdotV = fmin(fmax(0.00001f, NdotV), 1.0f);
+
+		LdotH = clamp(dot(L, H), 0.0f, 1.0f);
+		NdotH = clamp(dot(N, H), 0.0f, 1.0f);
+		VdotH = clamp(dot(V, H), 0.0f, 1.0f);
 
 		diffuseReflectance = BaseColorToDiffuseReflectance(material.diffuse, material.metalness);
-		specularF0 = material.specular; //BaseColorToSpecular(material.specular, material.metalness);
+		specularF0 = material.specular; //BaseColorToSpecular(material.diffuse, material.metalness);
 		roughness = material.roughness;
 		alpha = material.roughness * material.roughness;
 		alphaSquared = alpha * alpha;
 
-		F = EvalFresnel(specularF0, shadowedF90(specularF0), LdotH);
+		//F = EvalFresnel(specularF0, shadowedF90(specularF0), LdotH);
+		F = EvalFresnel(specularF0, 1, LdotH);
 
 	}
 
@@ -128,7 +133,7 @@ struct BSDF {
 	inline __device__ float3 SampleSpecularHalfBeckWalt(float3 Vlocal, float2 alpha2D, unsigned int& rngState) {
 		float alpha = dot(alpha2D, make_float2(0.5f, 0.5f));
 
-		float2 u = make_float2(Random::Rand(rngState),Random::Rand(rngState));
+		float2 u = make_float2(Random::Rand(rngState), Random::Rand(rngState));
 		float tanThetaSquared = -(alpha * alpha) * log(1.0f - u.x);
 		float phi = TWO_TIMES_PI * u.y;
 
@@ -140,21 +145,65 @@ struct BSDF {
 		return normalize(make_float3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
 	}
 
+	inline __device__ float Beckmann_D(float alphaSquared, float NdotH)
+	{
+		float cos2Theta = NdotH * NdotH;
+		float numerator = exp((cos2Theta - 1.0f) / (alphaSquared * cos2Theta));
+		float denominator = M_PI * alphaSquared * cos2Theta * cos2Theta;
+		return numerator / denominator;
+	}
+
+	inline __device__ float Smith_G_a(float alpha, float NdotS) {
+		return NdotS / (max(0.00001f, alpha) * sqrt(1.0f - min(0.99999f, NdotS * NdotS)));
+	}
+
+	inline __device__ float Smith_G1_Beckmann_Walter(float a) {
+		if (a < 1.6f) {
+			return ((3.535f + 2.181f * a) * a) / (1.0f + (2.276f + 2.577f * a) * a);
+		}
+		else {
+			return 1.0f;
+		}
+	}
+
+	inline __device__ float Smith_G1_Beckmann_Walter(float alpha, float NdotS, float alphaSquared, float NdotSSquared) {
+		return Smith_G1_Beckmann_Walter(Smith_G_a(alpha, NdotS));
+	}
+
+	inline __device__ float Smith_G2_Separable(float alpha, float NdotL, float NdotV) {
+		float aL = Smith_G_a(alpha, NdotL);
+		float aV = Smith_G_a(alpha, NdotV);
+		return Smith_G1_Beckmann_Walter(aL) * Smith_G1_Beckmann_Walter(aV);
+	}
+
+	inline __device__ float Smith_G2(float alpha, float alphaSquared, float NdotL, float NdotV) {
+		return Smith_G2_Separable(alpha, NdotL, NdotV);
+	}
+
 	inline __device__ bool Eval(HitResult& hitResult, float3& attenuation, float3& scattered, unsigned int& rngState)
 	{
 		float4 qRotationToZ = GetRotationToZAxis(hitResult.normal);
 		float3 Vlocal = RotatePoint(qRotationToZ, -hitResult.rIn.direction);
 		float3 Nlocal = make_float3(0.0f, 0.0f, 1.0f);
 
-		float3 scatteredLocal = Random::RandomCosineHemisphere(rngState);
+		float3 scatteredLocal = Random::RandomOnHemisphere(rngState, Nlocal);
 
 		PrepareBSDFData(scatteredLocal, Vlocal, hitResult.material);
 
-		attenuation = diffuseReflectance * Lambertian();
-		float3 Hspecular = SampleSpecularHalfBeckWalt(Vlocal, make_float2(alpha, alpha), rngState);
+		//attenuation = diffuseReflectance * Lambertian();
+		//float3 Hspecular = SampleSpecularHalfBeckWalt(Vlocal, make_float2(alpha), rngState);
 
-		float VdotH = max(0.00001f, min(1.0f, dot(Vlocal, Hspecular)));
-		attenuation *= (make_float3(1.0f, 1.0f, 1.0f) - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH));
+		//float VdotH = max(0.00001f, min(1.0f, dot(Vlocal, Hspecular)));
+		//attenuation *= (make_float3(1.0f, 1.0f, 1.0f) - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH));
+
+		//float D = Beckmann_D(max(0.00001f, alphaSquared), NdotH);
+		//float G2 = Smith_G2(alpha, alphaSquared, NdotL, NdotV);
+
+		float D = ((hitResult.material.shininess + 2) / (2.0 * M_PI)) * pow(NdotH, hitResult.material.shininess);
+		float G = min(1.0, min(2.0 * NdotH * NdotV / VdotH, 2.0 * NdotH * NdotL / VdotH));
+		float F = hitResult.material.specular.x + (1.0 - hitResult.material.specular.x) * pow(1.0 - VdotH, 5.0);
+
+		attenuation = diffuseReflectance * Lambertian() * (1.0f - F) + make_float3(F * G * D / (4.0f * clamp(NdotL * NdotV, 0.00001f, 1.0f))) * NdotL;
 
 		scattered = normalize(RotatePoint(InvertRotation(qRotationToZ), scatteredLocal));
 

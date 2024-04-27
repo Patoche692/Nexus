@@ -40,8 +40,9 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		{
 			shininess = 20.0f;
 		}
-		newMaterial.roughness = 1.0f - sqrt(shininess) / 30.0f;
+		newMaterial.roughness = clamp(1.0f - sqrt(shininess) / 30.0f, 0.0f, 1.0f);
 		newMaterial.metalness = 0.0f;
+		newMaterial.shininess = shininess;
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{

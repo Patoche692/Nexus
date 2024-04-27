@@ -241,18 +241,20 @@ void Renderer::RenderUI(Scene& scene)
 					//switch (material.type)
 					//{
 					//case Material::Type::LIGHT:
-					//	if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
-					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::DIFFUSE:
-					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::ColorEdit3("Specular", (float*)&material.specular))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::METAL:
 					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 					//		assetManager.InvalidateMaterial(meshInstance.materialId);
-					//	if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
-					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::DIELECTRIC:
 					//	if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
