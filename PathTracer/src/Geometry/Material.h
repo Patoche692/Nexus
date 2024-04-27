@@ -34,7 +34,6 @@ struct Material {
 	float3 emissive;
 	float roughness;
 
-	float shininess;
 	float transmissiveness;
 	float reflectance;
 	float opacity;
