@@ -80,7 +80,7 @@ struct BSDF {
 		VdotH = clamp(dot(V, H), 0.00001f, 1.0f);
 
 		diffuseReflectance = BaseColorToDiffuseReflectance(material.diffuse, material.metalness);
-		specularF0 = BaseColorToSpecular(material.diffuse, material.metalness);
+		specularF0 = BaseColorToSpecular(material.specular, material.metalness);
 		roughness = material.roughness;
 		alpha = material.roughness * material.roughness;
 		alphaSquared = alpha * alpha;
@@ -99,11 +99,10 @@ struct BSDF {
 	}
 
 	// Fresnel reflection formula for dieletric materials. See https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission
-	inline __device__ float FresnelDielectric()
+	inline __device__ float FresnelDielectric(float etaT)
 	{
 		// TODO: include eta in the materials
 		float etaI = 1.0f;
-		float etaT = 1.45f;
 		float cosThetaI = dot(V, N);
 		float sinThetaI = sqrt(fmax(0.0f, 1.0f - cosThetaI * cosThetaI));
 		float sinThetaT = etaI / etaT * sinThetaI;
@@ -221,7 +220,7 @@ struct BSDF {
 		N = Nlocal;
 		V = Vlocal;
 
-		float fr = FresnelDielectric();
+		float fr = FresnelDielectric(hitResult.material.ior) * hitResult.material.iorLevel;
 
 		// Randomly select a reflected or diffuse ray based on Fresnel reflectance
 		float r = Random::Rand(rngState);
@@ -253,8 +252,6 @@ struct BSDF {
 			//Diffuse
 			Llocal = Random::RandomCosineHemisphere(rngState);
 			PrepareBSDFData(Llocal, Vlocal, hitResult.material);
-			float3 Hlocal = SampleSpecularHalfBeckWalt(rngState);
-			VdotH = fmax(0.00001f, fmin(1.0f, dot(Vlocal, Hlocal)));
 			attenuation = diffuseReflectance * (1.0f - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH)) / (1.0f - fr);
 		}
 

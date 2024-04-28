@@ -247,6 +247,8 @@ void Renderer::RenderUI(Scene& scene)
 					//case Material::Type::DIFFUSE:
 						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("IOR", &material.ior, 0.01f, 0.0f, 4.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::ColorEdit3("Specular", (float*)&material.specular))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
@@ -254,6 +256,10 @@ void Renderer::RenderUI(Scene& scene)
 					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
 					//		assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("IOR Level", &material.iorLevel, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Metalness", &material.metalness, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::DIELECTRIC:
