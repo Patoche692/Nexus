@@ -16,9 +16,6 @@ public:
 	~Renderer();
 
 	void Reset();
-
-	void UpdateMRPS(double currentTime);
-
 	void OnResize(uint32_t width, uint32_t height);
 	void Render(Scene& scene, float deltaTime);
 	void RenderUI(Scene& scene);
@@ -37,9 +34,8 @@ private:
 	float m_AccumulatedTime = 0.0f;
 	uint32_t m_NAccumulatedFrame = 0;
 	uint32_t m_FrameNumber = 0;
-	uint32_t m_MRPS = 0;
-	double m_NumRaysProcessed = 0;
-	double m_LastSecond = 0;
+	float m_MRPS = 0;
+	uint32_t m_NumRaysProcessed = 0;
 	float3* m_AccumulationBuffer;
 };
 

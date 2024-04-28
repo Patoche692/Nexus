@@ -48,17 +48,6 @@ void Renderer::Reset()
 	m_DisplayFPSTimer = glfwGetTime();
 }
 
-void Renderer::UpdateMRPS(double currentTime) 
-{
-	m_NumRaysProcessed++;
-
-	if (currentTime - m_LastSecond >= 1.0) {
-		m_MRPS = static_cast<double>(m_NumRaysProcessed) / (currentTime - m_LastSecond); // / 1000000.0;
-		m_NumRaysProcessed = 0;
-		m_LastSecond = currentTime;
-	}
-}
-
 void Renderer::Render(Scene& scene, float deltaTime)
 { 
 	ImGui_ImplOpenGL3_NewFrame();
@@ -82,8 +71,6 @@ void Renderer::Render(Scene& scene, float deltaTime)
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
-
-		UpdateMRPS(glfwGetTime());
 
 	}
 	else
@@ -195,7 +182,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
 	ImGui::Text("Frame: %d", m_FrameNumber);
-	ImGui::Text("Megarays/sec: %d", m_MRPS);
+	ImGui::Text("Megarays/sec: %.2f", m_MRPS);
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -320,13 +307,18 @@ void Renderer::RenderUI(Scene& scene)
 void Renderer::UpdateTimer(float deltaTime)
 {
 	m_NAccumulatedFrame++;
+	m_NumRaysProcessed += m_ViewportHeight * m_ViewportWidth;
+
 	m_AccumulatedTime += deltaTime;
 	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f || m_DeltaTime == 0)
 	{
 		m_DisplayFPSTimer = glfwGetTime();
 		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
+		m_MRPS = static_cast<float>(m_NumRaysProcessed) / m_AccumulatedTime / 1000.0f;		// millisecond * 1.000.000
+		
 		m_NAccumulatedFrame = 0;
 		m_AccumulatedTime = 0.0f;
+		m_NumRaysProcessed = 0;
 	}
 }
 
