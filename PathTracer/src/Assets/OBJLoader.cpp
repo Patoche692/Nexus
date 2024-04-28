@@ -36,6 +36,10 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
 		newMaterial.emissive = make_float3(emission.r, emission.g, emission.b);
 
+		float ior = 1.45f;
+		aiGetMaterialFloat(material, AI_MATKEY_REFRACTI, &ior);
+		newMaterial.ior = ior;
+
 		float shininess = 0.0f;
 		if (AI_SUCCESS != aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess))
 		{
