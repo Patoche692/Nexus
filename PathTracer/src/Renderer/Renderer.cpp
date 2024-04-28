@@ -41,9 +41,22 @@ Renderer::~Renderer()
 void Renderer::Reset()
 {
 	m_FrameNumber = 0;
+	m_MRPS = 0;
+	m_NumRaysProcessed = 0;
 	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
 	m_DisplayFPSTimer = glfwGetTime();
+}
+
+void Renderer::UpdateMRPS(double currentTime) 
+{
+	m_NumRaysProcessed++;
+
+	if (currentTime - m_LastSecond >= 1.0) {
+		m_MRPS = static_cast<double>(m_NumRaysProcessed) / (currentTime - m_LastSecond); // / 1000000.0;
+		m_NumRaysProcessed = 0;
+		m_LastSecond = currentTime;
+	}
 }
 
 void Renderer::Render(Scene& scene, float deltaTime)
@@ -64,10 +77,14 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (!scene.IsEmpty())
 	{
 		m_FrameNumber++;
+
 		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
+
+		UpdateMRPS(glfwGetTime());
+
 	}
 	else
 		m_FrameNumber = 0;
@@ -178,6 +195,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
 	ImGui::Text("Frame: %d", m_FrameNumber);
+	ImGui::Text("Megarays/sec: %d", m_MRPS);
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -319,6 +337,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
 		m_FrameNumber = 0;
+		m_MRPS = 0;
+		m_NumRaysProcessed = 0;
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
