@@ -15,6 +15,7 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
 ![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
 ![piano](https://github.com/Patoche692/PathTracer/assets/54531293/b792f32d-b0fb-4bd2-afb7-36ee65c3ac84)
+![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
 ![bathroom2](https://github.com/Patoche692/PathTracer/assets/54531293/47cddedc-bea7-43db-9d60-f91815e12622)
 ![dining_room2](https://github.com/Patoche692/PathTracer/assets/54531293/667db080-381b-487b-8761-befd88f85b14)
 <!--![living_room2](https://github.com/Patoche692/PathTracer/assets/54531293/c8c989b9-af19-46f2-9a47-fa36aa88ab3b) -->
@@ -22,7 +23,7 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)
 <!-- ![golden_dragon_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/82be7fb0-20bd-4504-890c-4f38c00326bd) -->
 ![Capture d'écran 2024-04-16 203434](https://github.com/Patoche692/PathTracer/assets/54531293/a9075449-c786-4401-b6a8-28b693f81e51)
-![Capture d'écran 2024-04-16 215226](https://github.com/Patoche692/PathTracer/assets/54531293/8c01378b-80f8-4bb3-b411-3a30cd65ad82)
+<!--![Capture d'écran 2024-04-16 215226](https://github.com/Patoche692/PathTracer/assets/54531293/8c01378b-80f8-4bb3-b411-3a30cd65ad82) -->
 
 
 ## Prerequisites
