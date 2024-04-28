@@ -29,7 +29,8 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 
 		aiColor3D specular(0.0f);
 		material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
-		newMaterial.specular = make_float3(specular.r, specular.g, specular.b);
+		newMaterial.specular = make_float3(1.0f);
+		newMaterial.iorLevel = specular.r;
 
 		aiColor3D emission(0.0f);
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);

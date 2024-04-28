@@ -30,6 +30,7 @@ struct Material {
 	//};
 	float3 diffuse;
 	float3 specular;
+	float iorLevel;
 	float metalness;
 
 	float3 emissive;

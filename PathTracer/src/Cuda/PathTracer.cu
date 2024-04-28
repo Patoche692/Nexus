@@ -64,8 +64,8 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.material.diffuse = textures[hitResult.material.diffuseMapId].GetPixel(uv.x, uv.y);
 		}
 		// Normal flipping
-		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-		//	hitResult.normal = -hitResult.normal;
+		if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+			hitResult.normal = -hitResult.normal;
 
 		float3 attenuation = make_float3(1.0f);
 		float3 scatteredDir = make_float3(0.0f);
