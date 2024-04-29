@@ -14,9 +14,10 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ![sormtrooper2](https://github.com/Patoche692/PathTracer/assets/54531293/2de0eb11-19db-48f7-860c-96747e73c734)
 ![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
 ![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
-![piano](https://github.com/Patoche692/PathTracer/assets/54531293/b792f32d-b0fb-4bd2-afb7-36ee65c3ac84)
+![piano2](https://github.com/Patoche692/PathTracer/assets/54531293/ad5b3331-487e-4f8f-a724-c2a262d09372)
 ![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
-![bathroom2](https://github.com/Patoche692/PathTracer/assets/54531293/47cddedc-bea7-43db-9d60-f91815e12622)
+![bathroom3](https://github.com/Patoche692/PathTracer/assets/54531293/8b840e93-0b22-416f-a18d-25a381d7eb29)
+<!--![bathroom2](https://github.com/Patoche692/PathTracer/assets/54531293/47cddedc-bea7-43db-9d60-f91815e12622) -->
 ![dining_room2](https://github.com/Patoche692/PathTracer/assets/54531293/667db080-381b-487b-8761-befd88f85b14)
 <!--![living_room2](https://github.com/Patoche692/PathTracer/assets/54531293/c8c989b9-af19-46f2-9a47-fa36aa88ab3b) -->
 ![ellie_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/edc16123-270e-42b9-89d0-c1b843d8688d)
