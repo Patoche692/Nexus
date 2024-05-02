@@ -246,15 +246,11 @@ void Renderer::RenderUI(Scene& scene)
 					//switch (material.type)
 					//{
 					//case Material::Type::LIGHT:
-						if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::DIFFUSE:
 						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::DragFloat("IOR", &material.ior, 0.01f, 0.0f, 4.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::ColorEdit3("Specular", (float*)&material.specular))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::METAL:
@@ -265,6 +261,10 @@ void Renderer::RenderUI(Scene& scene)
 						if (ImGui::DragFloat("IOR Level", &material.iorLevel, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::DragFloat("Metalness", &material.metalness, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Transmissiveness", &material.transmittance, 0.01f, 0.0f, 1.0f))
+							assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 					//	break;
 					//case Material::Type::DIELECTRIC:

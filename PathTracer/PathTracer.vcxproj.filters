@@ -87,6 +87,9 @@
     <ClCompile Include="src\Assets\Texture.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Renderer\FileDialog.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\Cuda\PathTracer.cu" />
@@ -212,6 +215,10 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\BSDF.cuh" />
+    <ClInclude Include="src\Renderer\FileDialog.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cuda\BSDF\Fresnel.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

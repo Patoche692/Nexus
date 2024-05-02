@@ -29,6 +29,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
 	float3 currentAttenuation = make_float3(1.0f);
+	float3 emission = make_float3(0.0f);
 
 	for (int j = 0; j < 8; j++)
 	{
@@ -40,7 +41,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentAttenuation * make_float3(0.2f);
+			return currentAttenuation * make_float3(0.50f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -71,7 +72,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		float3 scatteredDir = make_float3(0.0f);
 
 		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
-			return currentAttenuation * hitResult.material.emissive;
+			emission += hitResult.material.emissive * currentAttenuation;
 
 		BSDF bsdf;
 		if (bsdf.Eval(hitResult, attenuation, scatteredDir, rngState))
@@ -81,59 +82,17 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			currentRay.direction = scatteredDir;
 		}
 
-		//switch (hitResult.material.type)
-		//{
-		//case Material::Type::DIFFUSE:
-		//	if (hitResult.material.textureId == -1)
-		//		hitResult.albedo = hitResult.material.diffuse.albedo;
-		//	else
-		//	{
-		//		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		//		hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-		//	}
-
-		//	if (diffuseScatter(hitResult, attenuation, currentRay, rngState))
-		//	{
-		//		currentAttenuation *= attenuation;
-		//	}
-		//	break;
-		//case Material::Type::METAL:
-		//	if (hitResult.material.textureId == -1)
-		//		hitResult.albedo = hitResult.material.diffuse.albedo;
-		//	else
-		//	{
-		//		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		//		hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-		//	}
-		//	if (plasticScattter(hitResult, attenuation, currentRay, rngState))
-		//	{
-		//		currentAttenuation *= attenuation;
-		//	}
-		//	break;
-		//case Material::Type::DIELECTRIC:
-		//	if (dielectricScattter(hitResult, attenuation, currentRay, rngState))
-		//	{
-		//		currentAttenuation *= attenuation;
-		//	}
-		//	break;
-		//case Material::Type::LIGHT:
-		//	return currentAttenuation * hitResult.material.light.emission;
-		//	break;
-		//default:
-		//	break;
-		//}
-
 		// Russian roulette
-		float p = fmax(currentAttenuation.x, fmax(currentAttenuation.y, currentAttenuation.z));
+		float p = clamp(fmax(currentAttenuation.x, fmax(currentAttenuation.y, currentAttenuation.z)), 0.01f, 1.0f);
 		if (Random::Rand(rngState) > p)
-			return make_float3(0.0f);
+			return emission;
 
 		// To get unbiased results, we need to increase the contribution of
-		// the non-terminated rays with their probability to be terminated
+		// the non-terminated rays with their probability of being terminated
 		currentAttenuation *= 1.0f / p;
 	}
 
-	return make_float3(0.0f);
+	return emission;
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)

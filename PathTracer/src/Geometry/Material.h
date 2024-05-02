@@ -29,7 +29,6 @@ struct Material {
 	//	} dielectric;
 	//};
 	float3 diffuse;
-	float3 specular;
 	float iorLevel;
 	float metalness;
 
@@ -37,7 +36,7 @@ struct Material {
 	float roughness;
 	float shininess;
 
-	float transmissiveness;
+	float transmittance;
 	float reflectance;
 	float opacity;
 	float ior;

@@ -2,6 +2,7 @@
 
 #include <cuda_runtime_api.h>
 #include <iostream>
+#include "cuda_math.h"
 
 #define M_PI  3.14159265358979323846
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
@@ -25,6 +26,16 @@ namespace Utils
 	inline __host__ __device__ float ToDegrees(float angle)
 	{
 		return angle * 180.0f / M_PI;
+	}
+
+	inline __host__ __device__ float3 LinearToGamma(float3 color)
+	{
+		return make_float3(pow(color.x, 0.455), pow(color.y, 0.455), pow(color.z, 0.455));
+	}
+
+	inline __host__ __device__ float3 GammaToLinear(float3 color)
+	{
+		return make_float3(pow(color.x, 2.2), pow(color.y, 2.2), pow(color.z, 2.2));
 	}
 
 	void GetPathAndFileName(const std::string fullPath, std::string& path, std::string& name);

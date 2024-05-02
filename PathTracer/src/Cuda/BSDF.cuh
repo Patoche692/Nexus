@@ -7,32 +7,22 @@
 #define ONE_DIV_PI (0.31830988618f)
 #define TWO_TIMES_PI 6.28318530718f
 
-struct BSDF {
-
-	// for 
-	// lambertianeval => for diffuesd FUNCTION
-	// lambertianPDF FUNCTION
-
+struct BSDF 
+{
 	float3 specularF0;
 	float3 diffuseReflectance;
 
 	float roughness;
 	float alpha;
 	float alphaSquared;
+	float reflectance;
 
-	float3 F;
+	//float3 F;
 
-	float3 V;	// Opposite incoming direction
-	float3 N;	// Normal
-	float3 H;	// Half vector
-	float3 L;	// Outgoing direction
-
-	float NdotL;
-	float NdotV;
-
-	float LdotH;
-	float NdotH;
-	float VdotH;
+	//float3 V;	// Opposite incoming direction
+	//float3 N;	// Normal
+	//float3 H;	// Half vector
+	//float3 L;	// Outgoing direction
 
 	bool VbackFacing;
 	bool LbachFacing;
@@ -67,25 +57,12 @@ struct BSDF {
 
 	inline __device__ void PrepareBSDFData(float3& scatteredLocal, float3& Vlocal,  Material& material)
 	{
-		V = Vlocal;
-		L = scatteredLocal;
-		H = normalize(V + L);
-		N = make_float3(0.0f, 0.0f, 1.0f);
-
-		NdotL = clamp(dot(N, L), 0.00001f, 1.0f);
-		NdotV = clamp(dot(N, V), 0.00001f, 1.0f);
-
-		LdotH = clamp(dot(L, H), 0.00001f, 1.0f);
-		NdotH = clamp(dot(N, H), 0.00001f, 1.0f);
-		VdotH = clamp(dot(V, H), 0.00001f, 1.0f);
-
 		diffuseReflectance = BaseColorToDiffuseReflectance(material.diffuse, material.metalness);
-		specularF0 = BaseColorToSpecular(material.specular, material.metalness);
+		specularF0 = BaseColorToSpecular(material.diffuse, material.metalness, material.ior, material.iorLevel);
 		roughness = material.roughness;
 		alpha = material.roughness * material.roughness;
 		alphaSquared = alpha * alpha;
-
-		F = EvalFresnel(specularF0, shadowedF90(specularF0), VdotH);
+		reflectance = material.iorLevel;
 	}
 
 	inline __device__ float3 EvalFresnelSchlick(float3 f0, float f90, float NdotS)
@@ -98,29 +75,40 @@ struct BSDF {
 		return EvalFresnelSchlick(f0, f90, NdotS);
 	}
 
-	// Fresnel reflection formula for dieletric materials. See https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission
-	inline __device__ float FresnelDielectric(float etaT)
+	inline __device__ float FresnelDielectric(float etaT, float f90, float cosThetaI, float& cosThetaT)
 	{
-		// TODO: include eta in the materials
 		float etaI = 1.0f;
-		float cosThetaI = dot(V, N);
-		float sinThetaI = sqrt(fmax(0.0f, 1.0f - cosThetaI * cosThetaI));
-		float sinThetaT = etaI / etaT * sinThetaI;
-		if (sinThetaT >= 1.0f)
-			return 1.0f;
-
-		float cosThetaT = sqrt(fmax(0.0f, 1.0f - sinThetaT * sinThetaT));
-
-		float Rparl = ((etaT * cosThetaI) - (etaI * cosThetaT)) /
-					  ((etaT * cosThetaI) + (etaI * cosThetaT));
-		float Rperp = ((etaI * cosThetaI) - (etaT * cosThetaT)) /
-					  ((etaI * cosThetaI) + (etaT * cosThetaT));
-
-		return (Rparl * Rparl + Rperp * Rperp) / 2.0f;
+		float R0 = (etaT - etaI) / (etaI + etaT);
+		R0 *= R0;
+		R0 *= reflectance * 2;
+		return R0 + (f90 - R0) * pow((1.0f - cosThetaI), 5.0f);
 	}
 
+	// Fresnel reflection formula for dieletric materials. See https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission
+	//inline __device__ float FresnelDielectric(float etaT, float cosThetaI, float& cosThetaT)
+	//{
+	//	// TODO: include etaI in the rays
+	//	float etaI = 1.0f;
+	//	float eta = etaI / etaT;
+	//	float sinThetaTSq = eta * eta * (1.0f - cosThetaI * cosThetaI);
+	//	if (sinThetaTSq > 1.0f)
+	//	{
+	//		cosThetaT = 0.0f;
+	//		return 1.0f;
+	//	}
+
+	//	cosThetaT = sqrt(fmax(0.0f, 1.0f - sinThetaTSq));
+
+	//	float Rparl = ((etaT * cosThetaI) - (etaI * cosThetaT)) /
+	//				  ((etaT * cosThetaI) + (etaI * cosThetaT));
+	//	float Rperp = ((etaI * cosThetaI) - (etaT * cosThetaT)) /
+	//				  ((etaI * cosThetaI) + (etaT * cosThetaT));
+
+	//	return (Rparl * Rparl + Rperp * Rperp) * 0.5f;
+	//}
+
 	inline __device__ float shadowedF90(float3 F0) {
-		const float t = (1.0f / 0.04);
+		const float t = (1.0f / 0.04f);
 		return min(1.0f, t * Luminance(F0));
 	}
 
@@ -129,11 +117,13 @@ struct BSDF {
 		return dot(rgb, make_float3(0.2126f, 0.7152f, 0.0722f));
 	}
 
-	inline __device__ float3 BaseColorToSpecular(const float3 baseColor, const float metalness, const float reflectance = 0.5f) {
+	inline __device__ float3 BaseColorToSpecular(const float3 baseColor, const float metalness, const float etaT, const float reflectance = 0.5f) {
+		float etaI = 1.0f;
+		float R0 = (etaT - etaI) / (etaT + etaI);
+		R0 *= R0;
+		R0 *= reflectance * 2;
 
-		const float minDielectricsF0 = 0.16f * reflectance * reflectance;
-
-		return lerp(make_float3(minDielectricsF0), baseColor, metalness);
+		return lerp(make_float3(R0), baseColor, metalness);
 	}
 
 	inline __device__ float3 BaseColorToDiffuseReflectance(float3 baseColor, float metalness)
@@ -146,16 +136,16 @@ struct BSDF {
 		return 1.0f;
 	}
 
-	inline __device__ float3 LambertianEval() {
+	inline __device__ float3 LambertianEval(float NdotL) {
 		return diffuseReflectance * ONE_DIV_PI * NdotL;
 	}
 
-	inline __device__ float SpecularSampleWeightBeckmannWalter()
+	inline __device__ float SpecularSampleWeightBeckmannWalter(float LdotH, float NdotL, float NdotV, float NdotH)
 	{
 		return (LdotH * Smith_G2(alpha, alphaSquared, NdotL, NdotV)) / (NdotV * NdotH);
 	}
 
-	inline __device__ float SampleWalterReflectionPdf()
+	inline __device__ float SampleWalterReflectionPdf(float NdotH, float LdotH)
 	{
 		return Beckmann_D(max(0.00001f, alphaSquared), NdotH) * NdotH / (4.0f * LdotH);
 	}
@@ -217,43 +207,64 @@ struct BSDF {
 		float3 Vlocal = RotatePoint(qRotationToZ, -hitResult.rIn.direction);
 		float3 Nlocal = make_float3(0.0f, 0.0f, 1.0f);
 		float3 Llocal;
-		N = Nlocal;
-		V = Vlocal;
 
-		float fr = FresnelDielectric(hitResult.material.ior) * hitResult.material.iorLevel;
+		PrepareBSDFData(Llocal, Vlocal, hitResult.material);
+
+		float3 Hlocal;
+
+		if (alpha == 0.0f)
+		{
+			// Perfect mirror
+			Hlocal = make_float3(0.0f, 0.0f, 1.0f);
+		}
+		else
+			Hlocal = SampleSpecularHalfBeckWalt(rngState);
+
+		float NdotV = clamp(dot(Nlocal, Vlocal), 0.00001f, 1.0f);
+
+		float NdotH = clamp(dot(Nlocal, Hlocal), 0.00001f, 1.0f);
+		float VdotH = clamp(dot(Vlocal, Hlocal), 0.00001f, 1.0f);
+
+		float3 F = EvalFresnel(specularF0, shadowedF90(specularF0), VdotH);
+
+		//float ior = dot(Vlocal, Nlocal) < 0.0f ? 1.0f / hitResult.material.ior : hitResult.material.ior;
+		float cosThetaT = 0.0f;
+
+		float fr = FresnelDielectric(hitResult.material.ior, shadowedF90(specularF0), VdotH, cosThetaT);
 
 		// Randomly select a reflected or diffuse ray based on Fresnel reflectance
-		float r = Random::Rand(rngState);
-
-		if (r < fr)
+		if (Random::Rand(rngState) < fr)
 		{
 			// Specular
-			alpha = hitResult.material.roughness * hitResult.material.roughness;
-			float3 Hlocal;
-
-			if (alpha == 0.0f)
-			{
-				// Perfect mirror
-				Hlocal = make_float3(0.0f, 0.0f, 1.0f);
-			}
-			else
-			{
-				Hlocal = SampleSpecularHalfBeckWalt(rngState);
-			}
-
 			Llocal = reflect(Vlocal, Hlocal);
-			PrepareBSDFData(Llocal, Vlocal, hitResult.material);
+			float NdotL = clamp(dot(Nlocal, Llocal), 0.00001f, 1.0f);
+			float LdotH = clamp(dot(Llocal, Hlocal), 0.00001f, 1.0f);
+			float weight = SpecularSampleWeightBeckmannWalter(LdotH, NdotL, NdotV, NdotH);
 
-			attenuation = F * SpecularSampleWeightBeckmannWalter() / fr;
+			attenuation = F * weight / fr;
 		}
 
 		else
 		{
-			//Diffuse
-			Llocal = Random::RandomCosineHemisphere(rngState);
-			PrepareBSDFData(Llocal, Vlocal, hitResult.material);
-			attenuation = diffuseReflectance * (1.0f - EvalFresnel(specularF0, shadowedF90(specularF0), VdotH)) / (1.0f - fr);
+			if (fr == 1.0f)
+				return false;
+
+			//if (Random::Rand(rngState) < hitResult.material.transmissiveness)
+			//{
+			//	// Transmission
+			//	Llocal = 
+			//}
+			//else
+			//{
+				//Diffuse
+				Llocal = Random::RandomCosineHemisphere(rngState);
+			//}
+			attenuation = diffuseReflectance * (1.0f - F) / (1.0f - fr);
 		}
+
+		// If the new ray is under the hemisphere, return
+		if (Llocal.z <= 0.0f)
+			return false;
 
 		// Inverse ray transformation to world space
 		scattered = normalize(RotatePoint(InvertRotation(qRotationToZ), Llocal));
