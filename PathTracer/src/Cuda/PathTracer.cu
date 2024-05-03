@@ -1,7 +1,7 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
 #include "BRDF.cuh"
-#include "BSDF.cuh"
+#include "BSDF/DielectricBSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
@@ -28,7 +28,7 @@ inline __device__ uint32_t toColorUInt(float3 color)
 inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
-	float3 currentAttenuation = make_float3(1.0f);
+	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
 	for (int j = 0; j < 8; j++)
@@ -41,7 +41,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentAttenuation * make_float3(0.50f) + emission;
+			return currentThroughput * make_float3(0.50f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -65,31 +65,39 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.material.diffuse = textures[hitResult.material.diffuseMapId].GetPixel(uv.x, uv.y);
 		}
 		// Normal flipping
-		if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-			hitResult.normal = -hitResult.normal;
-
-		float3 attenuation = make_float3(1.0f);
-		float3 scatteredDir = make_float3(0.0f);
+		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
+		//	hitResult.normal = -hitResult.normal;
 
 		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
-			emission += hitResult.material.emissive * currentAttenuation;
+			emission += hitResult.material.emissive * currentThroughput;
 
-		BSDF bsdf;
-		if (bsdf.Eval(hitResult, attenuation, scatteredDir, rngState))
+
+		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
+		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
+		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+
+		float3 throughput;
+		float3 wo;
+		DielectricBSDF bsdf;
+		bsdf.PrepareBSDFData(wi, hitResult.material);
+
+		if (bsdf.Eval(hitResult, wi, wo, throughput, rngState))
 		{
-			currentAttenuation *= attenuation;
+			currentThroughput *= throughput;
 			currentRay.origin = hitResult.p;
-			currentRay.direction = scatteredDir;
+			// Inverse ray transformation to world space
+			currentRay.direction = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
 		}
 
+
 		// Russian roulette
-		float p = clamp(fmax(currentAttenuation.x, fmax(currentAttenuation.y, currentAttenuation.z)), 0.01f, 1.0f);
+		float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
 		if (Random::Rand(rngState) > p)
 			return emission;
 
 		// To get unbiased results, we need to increase the contribution of
 		// the non-terminated rays with their probability of being terminated
-		currentAttenuation *= 1.0f / p;
+		currentThroughput *= 1.0f / p;
 	}
 
 	return emission;
