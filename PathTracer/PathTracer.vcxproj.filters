@@ -214,11 +214,13 @@
     <ClInclude Include="src\Geometry\MeshInstance.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cuda\BSDF.cuh" />
+    <ClInclude Include="src\Cuda\BSDF\DielectricBSDF.cuh" />
     <ClInclude Include="src\Renderer\FileDialog.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Cuda\BSDF\Fresnel.cuh" />
+    <ClInclude Include="src\Cuda\BSDF\Microfacet.cuh" />
+    <ClInclude Include="src\Cuda\BSDF\LambertianBSDF.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

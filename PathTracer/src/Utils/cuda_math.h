@@ -1503,4 +1503,27 @@ inline __device__ __host__ float4 smoothstep(float4 a, float4 b, float4 x)
     return (y*y*(make_float4(3.0f) - (make_float4(2.0f)*y)));
 }
 
+inline __device__ __host__ float4 getRotationToZAxis(float3 direction)
+{
+	if (direction.z < -0.99999f) return make_float4(1.0f, 0.0f, 0.0f, 0.0f);
+	return normalize(make_float4(direction.y, -direction.x, 0.0f, 1.0f + direction.z));
+}
+
+inline __device__ __host__ float4 getRotationFromZAxis(float3 direction)
+{
+	if (direction.z < -0.99999f) return make_float4(1.0f, 0.0f, 0.0f, 0.0f);
+	return normalize(make_float4(-direction.y, direction.x, 0.0f, 1.0f + direction.z));
+}
+
+inline __device__ __host__ float4 invertRotation(float4 q)
+{
+	return make_float4(-q.x, -q.y, -q.z, q.w);
+}
+
+inline __device__ __host__ float3 rotatePoint(float4 q, float3 v)
+{
+	const float3 qAxis = make_float3(q.x, q.y, q.z);
+	return 2.0f * dot(qAxis, v) * qAxis + (q.w * q.w - dot(qAxis, qAxis)) * v + 2.0f * q.w * cross(qAxis, v);
+}
+
 #endif

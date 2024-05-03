@@ -5,6 +5,9 @@
 #include "cuda_math.h"
 
 #define M_PI  3.14159265358979323846
+#define ONE_DIV_PI (0.31830988618f)
+#define TWO_TIMES_PI 6.28318530718f
+
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const* const func, const char* const file, int const line);
 
