@@ -24,12 +24,12 @@ public:
 	}
 
 	// Schlick reflectance approximation
-	inline static __device__ float SchlickDielectricReflectance(const float R0, const float R90, const float cosThetaI)
+	inline static __device__ float SchlickDielectricReflectance(const float F0, const float F90, const float cosThetaI)
 	{
-		return R0 + (R90 - R0) * pow(1.0f - cosThetaI, 5.0f);
+		return F0 + (F90 - F0) * pow(1.0f - cosThetaI, 5.0f);
 	}
 
-	// Custom fresnel reflectance at grazing angles (90°) depending on R0. See https://boksajak.github.io/files/CrashCourseBRDF.pdf
+	// Modified fresnel reflectance at grazing angles (90°) depending on R0. See https://boksajak.github.io/files/CrashCourseBRDF.pdf
 	inline static __device__ float ShadowedF90(const float3 F0) {
 		const float t = (1.0f / 0.04f);
 		return min(1.0f, t * Luminance(F0));

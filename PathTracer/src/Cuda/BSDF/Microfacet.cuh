@@ -7,17 +7,17 @@ class Microfacet
 {
 public:
 
-	inline static __device__ float BeckmannD(const float alpha, const float NdotH)
+	inline static __device__ float BeckmannD(const float alpha, const float mDotN)
 	{
 		float alphaSq = alpha * alpha;
-		float cosThetaSq = NdotH * NdotH;
+		float cosThetaSq = mDotN * mDotN;
 		float numerator = exp((cosThetaSq - 1.0f) / (alphaSq * cosThetaSq));
 		float denominator = M_PI * alphaSq * cosThetaSq * cosThetaSq;
 		return numerator / denominator;
 	}
 
-	inline static __device__ float Smith_G_a(const float alpha, const float NdotS) {
-		return NdotS / (max(0.00001f, alpha) * sqrt(1.0f - min(0.99999f, NdotS * NdotS)));
+	inline static __device__ float Smith_G_a(const float alpha, const float sDotN) {
+		return sDotN / (max(0.00001f, alpha) * sqrt(1.0f - min(0.99999f, sDotN * sDotN)));
 	}
 
 	inline static __device__ float Smith_G1_Beckmann_Walter(const float a) {
@@ -29,28 +29,29 @@ public:
 		}
 	}
 
-	inline static __device__ float Smith_G1_Beckmann_Walter(const float alpha, const float NdotS, const float alphaSquared, const float NdotSSquared)
+	inline static __device__ float Smith_G1_Beckmann_Walter(const float alpha, const float sDotN, const float alphaSquared, const float NdotSSquared)
 	{
-		return Smith_G1_Beckmann_Walter(Smith_G_a(alpha, NdotS));
+		return Smith_G1_Beckmann_Walter(Smith_G_a(alpha, sDotN));
 	}
 
-	inline static __device__ float Smith_G2(const float alpha, const float NdotL, const float NdotV)
+	inline static __device__ float Smith_G2(const float alpha, const float NdotL, const float wiDotN)
 	{
 		float aL = Smith_G_a(alpha, NdotL);
-		float aV = Smith_G_a(alpha, NdotV);
+		float aV = Smith_G_a(alpha, wiDotN);
 		return Smith_G1_Beckmann_Walter(aL) * Smith_G1_Beckmann_Walter(aV);
 	}
 
-	inline static __device__ float SpecularSampleWeightBeckmannWalter(
-		const float alpha, const float LdotH, const float NdotL,
-		const float NdotV, const float NdotH
+	// Weight of the sample for a Walter Beckmann sampling
+	inline static __device__ float WeightBeckmannWalter(
+		const float alpha, const float wiDotM, const float woDotN,
+		const float wiDotN, const float mDotN
 	) {
-		return (LdotH * Smith_G2(alpha, NdotL, NdotV)) / (NdotV * NdotH);
+		return (wiDotM * Smith_G2(alpha, woDotN, wiDotN)) / (wiDotN * mDotN);
 	}
 
-	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float NdotH, const float LdotH)
+	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float mDotN, const float woDotM)
 	{
-		return BeckmannD(max(0.00001f, alpha), NdotH) * NdotH / (4.0f * LdotH);
+		return BeckmannD(max(0.00001f, alpha), mDotN) * mDotN / (4.0f * woDotM);
 	}
 
 	inline static __device__ float3 SampleSpecularHalfBeckWalt(const float alpha, unsigned int& rngState)
