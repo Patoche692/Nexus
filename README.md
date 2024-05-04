@@ -18,9 +18,9 @@ A real-time path tracer from scratch written in C++ using CUDA and OpenGL.
 ![lamp](https://github.com/Patoche692/PathTracer/assets/54531293/d8344999-7289-43be-bf91-b9e99ff67e7d)
 ![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)
 ![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)
+![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
 ![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)
 ![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
-![cream](https://github.com/Patoche692/PathTracer/assets/54531293/e42bb0fb-dedb-41fa-aea2-b2ab2f864161)
 <!--![harry_potter](https://github.com/Patoche692/PathTracer/assets/54531293/eaf5fdb6-845c-4a3d-9dde-4c61c1286af2) -->
 ![bathroom4](https://github.com/Patoche692/PathTracer/assets/54531293/56532d4a-ebc6-4102-9830-bd66089fcd19)
 <!--![bathroom2](https://github.com/Patoche692/PathTracer/assets/54531293/47cddedc-bea7-43db-9d60-f91815e12622) -->
