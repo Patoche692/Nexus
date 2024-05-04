@@ -41,7 +41,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentThroughput * make_float3(0.50f) + emission;
+			return currentThroughput * make_float3(0.00f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -81,23 +81,38 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		DielectricBSDF bsdf;
 		bsdf.PrepareBSDFData(wi, hitResult.material);
 
-		if (bsdf.Eval(hitResult, wi, wo, throughput, rngState))
+		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+		if (bsdf.Eval(hitResult, wi, wo, throughput, rngState, gNormal))
 		{
-			currentThroughput *= throughput;
-			currentRay.origin = hitResult.p;
-			// Inverse ray transformation to world space
-			currentRay.direction = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+			float3 outDir = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+			bool geometryBackSide = dot(outDir, gNormal) < 0.0f;
+			// TODO: take into account instance rotation
+			bool shadingBackSide = dot(outDir, hitResult.normal) < 0.0f;
+
+			if (geometryBackSide == shadingBackSide)
+			{
+				currentThroughput *= throughput;
+				float offsetDirection = geometryBackSide ? -1.0f : 1.0f;
+				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
+				// Inverse ray transformation to world space
+				currentRay.direction = outDir;
+			}
 		}
 
 
 		// Russian roulette
 		float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
-		if (Random::Rand(rngState) > p)
-			return emission;
-
-		// To get unbiased results, we need to increase the contribution of
-		// the non-terminated rays with their probability of being terminated
-		currentThroughput *= 1.0f / p;
+		if (j > 2)
+		{
+			if (Random::Rand(rngState) < p)
+			{
+				// To get unbiased results, we need to increase the contribution of
+				// the non-terminated rays with their probability of being terminated
+				currentThroughput *= 1.0f / p;
+			}
+			else
+				return emission;
+		}
 	}
 
 	return emission;
