@@ -33,7 +33,6 @@ struct Triangle
 
 
 	// Möller-Trumbore intersection algorithm. See https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-
 	inline __host__ __device__ void Hit(Ray& r, const uint32_t instIdx, const uint32_t primIdx)
 	{
 		float3 edge0 = pos1 - pos0;
@@ -62,7 +61,7 @@ struct Triangle
 
 		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0001f && t < r.hit.t)
+		if (t > 0.0000f && t < r.hit.t)
 		{
 			r.hit.t = t;
 			r.hit.u = u;
@@ -72,11 +71,12 @@ struct Triangle
 		}
 	}
 
+	// Normal (not normalized)
 	inline __host__ __device__ float3 Normal()
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
-		return normalize(cross(edge0, edge1));
+		return cross(edge0, edge1);
 	}
 };

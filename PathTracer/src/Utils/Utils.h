@@ -21,6 +21,12 @@ namespace Utils
 		b = c;
 	}
 
+	template<typename T>
+	inline __host__ __device__ T SgnE(T val)
+	{
+		return val < T(0) ? T(-1) : T(1);
+	}
+
 	inline __host__ __device__ float ToRadians(float angle)
 	{
 		return angle * M_PI / 180.0f;
