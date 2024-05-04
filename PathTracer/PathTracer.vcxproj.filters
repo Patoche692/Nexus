@@ -221,6 +221,7 @@
     <ClInclude Include="src\Cuda\BSDF\Fresnel.cuh" />
     <ClInclude Include="src\Cuda\BSDF\Microfacet.cuh" />
     <ClInclude Include="src\Cuda\BSDF\LambertianBSDF.cuh" />
+    <ClInclude Include="src\Cuda\BSDF\ConductorBSDF.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

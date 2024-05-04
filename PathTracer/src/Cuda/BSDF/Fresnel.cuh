@@ -5,8 +5,14 @@ class Fresnel
 {
 public:
 	// Fresnel reflectance for dieletric materials. See https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission
-	inline static __device__ float DieletricReflectance(const float eta, const float cosThetaI, float& cosThetaT)
+	inline static __device__ float DieletricReflectance(float eta, float cosThetaI, float& cosThetaT)
 	{
+		if (cosThetaI < 0.0f)
+		{
+			eta = 1.0f / eta;
+			cosThetaI = -cosThetaI;
+		}
+
 		float sinThetaTSq = eta * eta * (1.0f - cosThetaI * cosThetaI);
 
 		if (sinThetaTSq > 1.0f)

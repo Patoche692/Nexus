@@ -41,7 +41,7 @@ public:
 		return Smith_G1_Beckmann_Walter(aL) * Smith_G1_Beckmann_Walter(aV);
 	}
 
-	// Weight of the sample for a Walter Beckmann sampling
+	// Weight of the sample for a Walter-Beckmann sampling
 	inline static __device__ float WeightBeckmannWalter(
 		const float alpha, const float wiDotM, const float woDotN,
 		const float wiDotN, const float mDotN
@@ -62,11 +62,11 @@ public:
 		float tanThetaSquared = -(a * a) * log(1.0f - u.x);
 		float phi = TWO_TIMES_PI * u.y;
 
-		// Calculate cosTheta and sinTheta needed for conversion to H vector
+		// Calculate cosTheta and sinTheta needed for conversion to m vector
 		float cosTheta = 1.0 / sqrt(1.0f + tanThetaSquared);
 		float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
 
-		// Convert sampled spherical coordinates to H vector
+		// Convert sampled spherical coordinates to m vector
 		return normalize(make_float3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
 	}
 };
