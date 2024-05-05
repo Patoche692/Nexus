@@ -1140,6 +1140,14 @@ inline __host__ __device__ float2 fmaxf(float2 a, float2 b)
 {
     return make_float2(fmaxf(a.x,b.x), fmaxf(a.y,b.y));
 }
+inline __host__ __device__ float fmaxf(float3 a)
+{
+    return fmaxf(a.x, fmaxf(a.y, a.z));
+}
+inline __host__ __device__ float fminf(float3 a)
+{
+    return fminf(a.x, fminf(a.y, a.z));
+}
 inline __host__ __device__ float3 fmaxf(float3 a, float3 b)
 {
     return make_float3(fmaxf(a.x,b.x), fmaxf(a.y,b.y), fmaxf(a.z,b.z));
