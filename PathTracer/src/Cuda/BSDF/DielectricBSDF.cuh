@@ -70,6 +70,8 @@ struct DielectricBSDF
 				return false;
 
 			throughput = F * weight / fr;
+			if (throughput.x < 0.0f || throughput.y < 0 || throughput.z < 0)
+				printf("yes: %f", weight);
 		}
 
 		else
@@ -80,23 +82,40 @@ struct DielectricBSDF
 				wo = (eta * wiDotM - Utils::SgnE(wiDotM) * cosThetaT) * m - eta * wi;
 
 				if (wo.z * wi.z > 0.0f)
+				{
 					return false;
+				}
+				//if (threadIdx.x == 0 && threadIdx.y == 0 && blockIdx.x == 0 && blockIdx.y == 0)
+				//	printf("fr: %f", fr);
 
 				const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
 
 				if (weight > 1.0e10)
+				{
+					printf("transmission weight too high\n");
 					return false;
+				}
 
 				throughput = hitResult.material.diffuse * weight;
 			}
 			else
 			{
 				//Diffuse
-				wo = Random::RandomCosineHemisphere(rngState);
+				wo = Utils::SgnE(wi.z) * Random::RandomCosineHemisphere(rngState);
 				throughput = hitResult.material.diffuse;
 			}
 			throughput = throughput * (1.0f - F) / (1.0f - fr);
+
+			//if (throughput.x == 0 && throughput.y == 0 && throughput.z == 0)
+			//	printf("yes");
+
+			if (throughput.x > 1e3f || throughput.y > 1e3f || throughput.z > 1e3f)
+				printf("throughput too high: x: %f", throughput.x);
+			if (throughput.x < 0.0f || throughput.y < 0 || throughput.z < 0)
+				printf("negative");
 		}
+		if (throughput.x > 1e3f || throughput.y > 1e3f || throughput.z > 1e3f)
+			printf("throughput too high 2: x: %f", throughput.x);
 
 		return true;
 	}

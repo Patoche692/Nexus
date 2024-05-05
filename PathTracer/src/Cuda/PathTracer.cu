@@ -31,7 +31,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 8; j++)
+	for (int j = 0; j < 15; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -55,6 +55,8 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
 		hitResult.normal = normalize(instance.transform.TransformVector(hitResult.normal));
 
+		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
 		hitResult.material = materials[instance.materialId];
 
 		if (hitResult.material.diffuseMapId == -1)
@@ -68,6 +70,10 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 		//	hitResult.normal = -hitResult.normal;
 
+		// Invert shading normal for non transmissive material if it is backfacing the ray
+		if (dot(hitResult.normal, currentRay.direction) > 0.0f && hitResult.material.transmittance == 0.0f)
+			hitResult.normal = -hitResult.normal;
+
 		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
 			emission += hitResult.material.emissive * currentThroughput;
 
@@ -76,27 +82,35 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
 		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
 
+		//bool wiGeometryBackSide = dot(wi, gNormal) < 0.0f;
+		//bool wiShadingBackSide = dot(wi, hitResult.normal) < 0.0f;
+
+		//if (wiGeometryBackSide != wiShadingBackSide)
+		//	continue;
+
 		float3 throughput;
 		float3 wo;
 		DielectricBSDF bsdf;
 		bsdf.PrepareBSDFData(wi, hitResult.material);
 
-		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 		if (bsdf.Eval(hitResult, wi, wo, throughput, rngState, gNormal))
 		{
-			float3 outDir = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-			bool geometryBackSide = dot(outDir, gNormal) < 0.0f;
-			// TODO: take into account instance rotation
-			bool shadingBackSide = dot(outDir, hitResult.normal) < 0.0f;
+			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+			bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
+			bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
 
-			if (geometryBackSide == shadingBackSide)
+			if (woGeometryBackSide == woShadingBackSide)
 			{
 				currentThroughput *= throughput;
-				float offsetDirection = geometryBackSide ? -1.0f : 1.0f;
-				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
+				float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
+				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * gNormal;
 				// Inverse ray transformation to world space
-				currentRay.direction = outDir;
+				currentRay.direction = wo;
 			}
+			//else
+			//{
+			//	return make_float3(1e5, 0.0f, 0.0f);
+			//}
 		}
 
 
