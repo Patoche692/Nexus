@@ -12,27 +12,16 @@
 */
 struct DielectricBSDF 
 {
-	float F0;
 	float eta;
-
 	float alpha;
-	float reflectance;
 
 	inline __device__ void PrepareBSDFData(float3& wi,  Material& material)
 	{
-		//alpha = max(material.roughness * material.roughness, 1.0e-3);
 		alpha = max(1.0e-3, (1.2f - 0.2f * sqrt(abs(wi.z))) * material.roughness);
-		reflectance = material.iorLevel;
-
-		// TODO: include etaI in ray structure
-		float etaI = 1.0f;
-		eta = wi.z < 0.0f ? material.ior / etaI : etaI / material.ior;
-		F0 = (material.ior - etaI) / (etaI + material.ior);
-		F0 *= F0;
-		//F0 *= reflectance * 2;
+		eta = wi.z < 0.0f ? material.ior : 1 / material.ior;
 	}
 
-	inline __device__ bool Eval(HitResult& hitResult, float3& wi, float3& wo, float3& throughput, unsigned int& rngState, float3 gnormal)
+	inline __device__ bool Sample(HitResult& hitResult, float3& wi, float3& wo, float3& throughput, unsigned int& rngState, float3 gnormal)
 	{
 		float3 m;
 
@@ -50,10 +39,9 @@ struct DielectricBSDF
 		const float fr = Fresnel::DieletricReflectance(1 / hitResult.material.ior, wiDotM, cosThetaT);
 		bool sampleT = hitResult.material.transmittance > 0.0f;
 
-		float3 F = make_float3(fr);
-
 		// Randomly select a reflected or diffuse ray based on Fresnel reflectance
-		if (Random::Rand(rngState) < fr)
+		float r = Random::Rand(rngState);
+		if (r < fr)
 		{
 			// Specular
 			wo = reflect(-wi, m);
@@ -69,9 +57,9 @@ struct DielectricBSDF
 			if (weight > 1.0e10)
 				return false;
 
-			throughput = F * weight / fr;
-			if (throughput.x < 0.0f || throughput.y < 0 || throughput.z < 0)
-				printf("yes: %f", weight);
+			// We dont need to include the Fresnel term since it's already included when
+			// we select between reflection and refraction (see paper page 7)
+			throughput = make_float3(weight); // * F / fr
 		}
 
 		else
@@ -85,16 +73,11 @@ struct DielectricBSDF
 				{
 					return false;
 				}
-				//if (threadIdx.x == 0 && threadIdx.y == 0 && blockIdx.x == 0 && blockIdx.y == 0)
-				//	printf("fr: %f", fr);
 
 				const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
 
 				if (weight > 1.0e10)
-				{
-					printf("transmission weight too high\n");
 					return false;
-				}
 
 				throughput = hitResult.material.diffuse * weight;
 			}
@@ -104,19 +87,9 @@ struct DielectricBSDF
 				wo = Utils::SgnE(wi.z) * Random::RandomCosineHemisphere(rngState);
 				throughput = hitResult.material.diffuse;
 			}
-			throughput = throughput * (1.0f - F) / (1.0f - fr);
-
-			//if (throughput.x == 0 && throughput.y == 0 && throughput.z == 0)
-			//	printf("yes");
-
-			if (throughput.x > 1e3f || throughput.y > 1e3f || throughput.z > 1e3f)
-				printf("throughput too high: x: %f", throughput.x);
-			if (throughput.x < 0.0f || throughput.y < 0 || throughput.z < 0)
-				printf("negative");
+			// Same here, we don't need to include the Fresnel term
+			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 		}
-		if (throughput.x > 1e3f || throughput.y > 1e3f || throughput.z > 1e3f)
-			printf("throughput too high 2: x: %f", throughput.x);
-
 		return true;
 	}
 };
