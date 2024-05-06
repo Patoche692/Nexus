@@ -93,8 +93,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		DielectricBSDF bsdf;
 		bsdf.PrepareBSDFData(wi, hitResult.material);
 
-		if (bsdf.Eval(hitResult, wi, wo, throughput, rngState, gNormal))
+		if (bsdf.Sample(hitResult, wi, wo, throughput, rngState, gNormal))
 		{
+			// Inverse ray transformation to world space
 			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
 			bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
 			bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
@@ -103,16 +104,10 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			{
 				currentThroughput *= throughput;
 				float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
-				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * gNormal;
-				// Inverse ray transformation to world space
+				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
 				currentRay.direction = wo;
 			}
-			//else
-			//{
-			//	return make_float3(1e5, 0.0f, 0.0f);
-			//}
 		}
-
 
 		// Russian roulette
 		float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
