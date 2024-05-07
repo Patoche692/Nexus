@@ -11,7 +11,6 @@
 __constant__ __device__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Texture* textures;
-extern __constant__ __device__ Mesh* bvhs;
 extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
@@ -93,7 +92,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		DielectricBSDF bsdf;
 		bsdf.PrepareBSDFData(wi, hitResult.material);
 
-		if (bsdf.Sample(hitResult, wi, wo, throughput, rngState, gNormal))
+		if (bsdf.Sample(hitResult, wi, wo, throughput, rngState))
 		{
 			// Inverse ray transformation to world space
 			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));

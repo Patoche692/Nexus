@@ -262,7 +262,7 @@ void Renderer::RenderUI(Scene& scene)
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::DragFloat("Metalness", &material.metalness, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Transmissiveness", &material.transmittance, 0.01f, 0.0f, 1.0f))
+						if (ImGui::DragFloat("Transmittance", &material.transmittance, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 						if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);

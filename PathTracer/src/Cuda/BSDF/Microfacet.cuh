@@ -9,10 +9,10 @@ public:
 
 	inline static __device__ float BeckmannD(const float alpha, const float mDotN)
 	{
-		float alphaSq = alpha * alpha;
-		float cosThetaSq = mDotN * mDotN;
-		float numerator = exp((cosThetaSq - 1.0f) / (alphaSq * cosThetaSq));
-		float denominator = M_PI * alphaSq * cosThetaSq * cosThetaSq;
+		const float alphaSq = alpha * alpha;
+		const float cosThetaSq = mDotN * mDotN;
+		const float numerator = exp((cosThetaSq - 1.0f) / (alphaSq * cosThetaSq));
+		const float denominator = M_PI * alphaSq * cosThetaSq * cosThetaSq;
 		return numerator / denominator;
 	}
 
@@ -42,6 +42,7 @@ public:
 	}
 
 	// Weight of the sample for a Walter-Beckmann sampling
+	// See https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf
 	inline static __device__ float WeightBeckmannWalter(
 		const float alpha, const float wiDotM, const float woDotN,
 		const float wiDotN, const float mDotN
@@ -56,15 +57,15 @@ public:
 
 	inline static __device__ float3 SampleSpecularHalfBeckWalt(const float alpha, unsigned int& rngState)
 	{
-		float a = dot(make_float2(alpha), make_float2(0.5f, 0.5f));
+		const float a = dot(make_float2(alpha), make_float2(0.5f, 0.5f));
 
-		float2 u = make_float2(Random::Rand(rngState), Random::Rand(rngState));
-		float tanThetaSquared = -(a * a) * log(1.0f - u.x);
-		float phi = TWO_TIMES_PI * u.y;
+		const float2 u = make_float2(Random::Rand(rngState), Random::Rand(rngState));
+		const float tanThetaSquared = -(a * a) * log(1.0f - u.x);
+		const float phi = TWO_TIMES_PI * u.y;
 
 		// Calculate cosTheta and sinTheta needed for conversion to m vector
-		float cosTheta = 1.0 / sqrt(1.0f + tanThetaSquared);
-		float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+		const float cosTheta = 1.0 / sqrt(1.0f + tanThetaSquared);
+		const float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
 
 		// Convert sampled spherical coordinates to m vector
 		return normalize(make_float3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
