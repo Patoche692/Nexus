@@ -5,11 +5,9 @@
 struct Material {
 
 	enum struct Type : char {
-		LIGHT,
 		DIFFUSE,
-		METAL,
-		DIELECTRIC,
-		CONDUCTOR
+		CONDUCTOR,
+		DIELECTRIC
 	};
 
 	//union {
@@ -29,17 +27,13 @@ struct Material {
 	//	} dielectric;
 	//};
 	float3 diffuse;
-	float iorLevel;
-	float metalness;
+	float ior;
 
 	float3 emissive;
 	float roughness;
-	float shininess;
 
 	float transmittance;
-	float reflectance;
 	float opacity;
-	float ior;
 
 	int diffuseMapId = -1;
 	//Type type;

@@ -10,28 +10,30 @@
 	Rough dielectric BSDF based on the paper "Microfacet Models for Refraction through Rough Surfaces"
 	See https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf
 */
-struct DielectricBSDF 
+struct DielectricBSDF
 {
 	float eta;
 	float alpha;
 
 	inline __device__ void PrepareBSDFData(const float3& wi,  const Material& material)
 	{
-		alpha = max(1.0e-3, (1.2f - 0.2f * sqrt(abs(wi.z))) * material.roughness);
+		alpha = max(1.0e-3, (1.2f - 0.2f * sqrt(abs(wi.z))) * material.roughness * material.roughness);
 		eta = wi.z < 0.0f ? material.ior : 1 / material.ior;
 	}
 
 	inline __device__ bool Sample(const HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
 	{
-		float3 m;
-
-		m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
+		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
 		const float wiDotM = dot(wi, m);
+		const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
+
+		// Handle divisions by zero
+		if (weight > 1.0e10)
+			return false;
 
 		float cosThetaT;
 		const float fr = Fresnel::DieletricReflectance(1 / hitResult.material.ior, wiDotM, cosThetaT);
-		const bool sampleT = hitResult.material.transmittance > 0.0f;
 
 		// Randomly select a reflected or transmitted ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
@@ -41,13 +43,6 @@ struct DielectricBSDF
 
 			// If the new ray is under the hemisphere, return
 			if (wo.z * wi.z < 0.0f)
-				return false;
-
-			const float wiDotM = dot(wi, m);
-			const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
-
-			// Handle divisions by zero
-			if (weight > 1.0e10)
 				return false;
 
 			// We dont need to include the Fresnel term since it's already included when
@@ -64,13 +59,6 @@ struct DielectricBSDF
 				wo = (eta * wiDotM - Utils::SgnE(wiDotM) * cosThetaT) * m - eta * wi;
 
 				if (wo.z * wi.z > 0.0f)
-				{
-					return false;
-				}
-
-				const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
-
-				if (weight > 1.0e10)
 					return false;
 
 				throughput = hitResult.material.diffuse * weight;

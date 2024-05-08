@@ -27,10 +27,6 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
 		newMaterial.diffuse = make_float3(diffuse.r, diffuse.g, diffuse.b);
 
-		aiColor3D specular(0.0f);
-		material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
-		newMaterial.iorLevel = specular.r;
-
 		aiColor3D emission(0.0f);
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
 		newMaterial.emissive = make_float3(emission.r, emission.g, emission.b);
@@ -45,8 +41,6 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 			shininess = 20.0f;
 		}
 		newMaterial.roughness = clamp(1.0f - sqrt(shininess) / 30.0f, 0.0f, 1.0f);
-		newMaterial.metalness = 0.0f;
-		newMaterial.shininess = shininess;
 		newMaterial.transmittance = 0.0f;
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
