@@ -22,19 +22,26 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 	{
 		aiMaterial* material = scene->mMaterials[i];
 		Material newMaterial;
-		newMaterial.type = Material::Type::DIFFUSE;
 
 		aiColor3D diffuse(0.0f);
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-		newMaterial.diffuse.albedo = make_float3(diffuse.r, diffuse.g, diffuse.b);
+		newMaterial.diffuse = make_float3(diffuse.r, diffuse.g, diffuse.b);
 
 		aiColor3D emission(0.0f);
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
-		if (!emission.IsBlack())
+		newMaterial.emissive = make_float3(emission.r, emission.g, emission.b);
+
+		float ior = 1.45f;
+		aiGetMaterialFloat(material, AI_MATKEY_REFRACTI, &ior);
+		newMaterial.ior = ior;
+
+		float shininess = 0.0f;
+		if (AI_SUCCESS != aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess))
 		{
-			newMaterial.type = Material::Type::LIGHT;
-			newMaterial.light.emission = make_float3(emission.r, emission.g, emission.b);
+			shininess = 20.0f;
 		}
+		newMaterial.roughness = clamp(1.0f - sqrt(shininess) / 30.0f, 0.0f, 1.0f);
+		newMaterial.transmittance = 0.0f;
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{
@@ -44,7 +51,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 			{
 				materialPath = mPath.data;
 				materialPath = path + materialPath;
-				newMaterial.textureId = assetManager->AddTexture(materialPath);
+				newMaterial.diffuseMapId = assetManager->AddTexture(materialPath);
 			}
 		}
 		materialIdx[i] = assetManager->AddMaterial(newMaterial);

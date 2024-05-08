@@ -29,7 +29,7 @@ public:
 	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
 	int AddTexture(const std::string& filename);
-	void ApplyTextureToMaterial(int materialId, int textureId);
+	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
 
 	bool SendDataToDevice();
 

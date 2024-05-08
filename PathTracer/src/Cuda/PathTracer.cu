@@ -1,6 +1,7 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
 #include "BRDF.cuh"
+#include "BSDF/DielectricBSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
@@ -10,7 +11,6 @@
 __constant__ __device__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ Texture* textures;
-extern __constant__ __device__ Mesh* bvhs;
 extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
@@ -27,9 +27,10 @@ inline __device__ uint32_t toColorUInt(float3 color)
 inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
-	float3 currentAttenuation = make_float3(1.0f);
+	float3 currentThroughput = make_float3(1.0f);
+	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 8; j++)
+	for (int j = 0; j < 15; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -39,7 +40,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentAttenuation * make_float3(0.2f);
+			return currentThroughput * make_float3(0.00f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -53,67 +54,76 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
 		hitResult.normal = normalize(instance.transform.TransformVector(hitResult.normal));
 
+		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
 		hitResult.material = materials[instance.materialId];
 
+		if (hitResult.material.diffuseMapId == -1)
+			hitResult.albedo = hitResult.material.diffuse;
+		else
+		{
+			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+			hitResult.material.diffuse = textures[hitResult.material.diffuseMapId].GetPixel(uv.x, uv.y);
+		}
 		// Normal flipping
 		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 		//	hitResult.normal = -hitResult.normal;
 
-		float3 attenuation = make_float3(1.0f);
+		// Invert shading normal for non transmissive material if it is backfacing the ray
+		if (dot(hitResult.normal, currentRay.direction) > 0.0f && hitResult.material.transmittance == 0.0f)
+			hitResult.normal = -hitResult.normal;
 
-		switch (hitResult.material.type)
+		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
+			emission += hitResult.material.emissive * currentThroughput;
+
+
+		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
+		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
+		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+
+		//bool wiGeometryBackSide = dot(wi, gNormal) < 0.0f;
+		//bool wiShadingBackSide = dot(wi, hitResult.normal) < 0.0f;
+
+		//if (wiGeometryBackSide != wiShadingBackSide)
+		//	continue;
+
+		float3 throughput;
+		float3 wo;
+		DielectricBSDF bsdf;
+		bsdf.PrepareBSDFData(wi, hitResult.material);
+
+		if (bsdf.Sample(hitResult, wi, wo, throughput, rngState))
 		{
-		case Material::Type::DIFFUSE:
-			if (hitResult.material.textureId == -1)
-				hitResult.albedo = hitResult.material.diffuse.albedo;
-			else
-			{
-				float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-				hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-			}
+			// Inverse ray transformation to world space
+			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+			bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
+			bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
 
-			if (diffuseScatter(hitResult, attenuation, currentRay, rngState))
+			if (woGeometryBackSide == woShadingBackSide)
 			{
-				currentAttenuation *= attenuation;
+				currentThroughput *= throughput;
+				float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
+				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
+				currentRay.direction = wo;
 			}
-			break;
-		case Material::Type::METAL:
-			if (hitResult.material.textureId == -1)
-				hitResult.albedo = hitResult.material.diffuse.albedo;
-			else
-			{
-				float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-				hitResult.albedo = textures[hitResult.material.textureId].GetPixel(uv.x, uv.y);
-			}
-			if (plasticScattter(hitResult, attenuation, currentRay, rngState))
-			{
-				currentAttenuation *= attenuation;
-			}
-			break;
-		case Material::Type::DIELECTRIC:
-			if (dielectricScattter(hitResult, attenuation, currentRay, rngState))
-			{
-				currentAttenuation *= attenuation;
-			}
-			break;
-		case Material::Type::LIGHT:
-			return currentAttenuation * hitResult.material.light.emission;
-			break;
-		default:
-			break;
 		}
 
 		// Russian roulette
-		float p = fmax(currentAttenuation.x, fmax(currentAttenuation.y, currentAttenuation.z));
-		if (Random::Rand(rngState) > p)
-			return make_float3(0.0f);
-
-		// To get unbiased results, we need to increase the contribution of
-		// the non-terminated rays with their probability to be terminated
-		currentAttenuation *= 1.0f / p;
+		float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
+		if (j > 2)
+		{
+			if (Random::Rand(rngState) < p)
+			{
+				// To get unbiased results, we need to increase the contribution of
+				// the non-terminated rays with their probability of being terminated
+				currentThroughput *= 1.0f / p;
+			}
+			else
+				return emission;
+		}
 	}
 
-	return make_float3(0.0f);
+	return emission;
 }
 
 __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)

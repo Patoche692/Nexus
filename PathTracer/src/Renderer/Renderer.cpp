@@ -41,6 +41,8 @@ Renderer::~Renderer()
 void Renderer::Reset()
 {
 	m_FrameNumber = 0;
+	m_MRPS = 0;
+	m_NumRaysProcessed = 0;
 	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
 	m_DisplayFPSTimer = glfwGetTime();
@@ -64,10 +66,12 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (!scene.IsEmpty())
 	{
 		m_FrameNumber++;
+
 		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
+
 	}
 	else
 		m_FrameNumber = 0;
@@ -178,6 +182,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
 	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
 	ImGui::Text("Frame: %d", m_FrameNumber);
+	ImGui::Text("Megarays/sec: %.2f", m_MRPS);
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -231,36 +236,40 @@ void Renderer::RenderUI(Scene& scene)
 						scene.InvalidateMeshInstance(i);
 
 					Material& material = materials[meshInstance.materialId];
-					int type = (int)material.type;
+					//int type = (int)material.type;
 
-					if (ImGui::Combo("Type", &type, materialTypes.c_str()))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
+					//if (ImGui::Combo("Type", &type, materialTypes.c_str()))
+					//	assetManager.InvalidateMaterial(meshInstance.materialId);
 
-					material.type = (Material::Type)type;
+					//material.type = (Material::Type)type;
 
-					switch (material.type)
-					{
-					case Material::Type::LIGHT:
-						if (ImGui::DragFloat3("Emission", (float*)&material.light.emission, 0.01f))
+					//switch (material.type)
+					//{
+					//case Material::Type::LIGHT:
+					//	break;
+					//case Material::Type::DIFFUSE:
+						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::DIFFUSE:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+						if (ImGui::DragFloat("IOR", &material.ior, 0.01f, 0.0f, 4.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::METAL:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+					//	break;
+					//case Material::Type::METAL:
+					//	if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+						if (ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+						if (ImGui::DragFloat("Transmittance", &material.transmittance, 0.01f, 0.0f, 1.0f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::DIELECTRIC:
-						if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+						if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
 							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					}
+					//	break;
+					//case Material::Type::DIELECTRIC:
+					//	if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+					//		assetManager.InvalidateMaterial(meshInstance.materialId);
+					//	break;
+					//}
 				}
 				ImGui::TreePop();
 				ImGui::Spacing();
@@ -294,13 +303,18 @@ void Renderer::RenderUI(Scene& scene)
 void Renderer::UpdateTimer(float deltaTime)
 {
 	m_NAccumulatedFrame++;
+	m_NumRaysProcessed += m_ViewportHeight * m_ViewportWidth;
+
 	m_AccumulatedTime += deltaTime;
 	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f || m_DeltaTime == 0)
 	{
 		m_DisplayFPSTimer = glfwGetTime();
 		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
+		m_MRPS = static_cast<float>(m_NumRaysProcessed) / m_AccumulatedTime / 1000.0f;		// millisecond * 1.000.000
+		
 		m_NAccumulatedFrame = 0;
 		m_AccumulatedTime = 0.0f;
+		m_NumRaysProcessed = 0;
 	}
 }
 
@@ -317,6 +331,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
 		m_FrameNumber = 0;
+		m_MRPS = 0;
+		m_NumRaysProcessed = 0;
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));

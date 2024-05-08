@@ -14,6 +14,7 @@ public:
 	static inline __host__ __device__ float3 RandomUnitVector(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomInUnitSphere(unsigned int& rngState);
 	static inline __host__ __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
+	static inline __host__ __device__ float3 RandomCosineHemisphere(unsigned int& rngState);
 	static inline __host__ __device__ float2 RandomInUnitDisk(unsigned int& rngState);
 };
 
@@ -101,6 +102,20 @@ inline __host__ __device__ float3 Random::RandomOnHemisphere(unsigned int& rngSt
 		return r;
 	else
 		return -r;
+}
+
+inline __host__ __device__ float3 Random::RandomCosineHemisphere(unsigned int& rngState)
+{
+	float r1 = Rand(rngState);
+	float r2 = Rand(rngState);
+	float B = sqrt(r2);
+
+	float phi = 2 * M_PI * r1;
+	float x = cos(phi) * B;
+	float y = sin(phi) * B;
+	float z = sqrt(1 - r2);
+
+	return make_float3(x, y, z);
 }
 
 inline __host__ __device__ float2 Random::RandomInUnitDisk(unsigned int& rngState)

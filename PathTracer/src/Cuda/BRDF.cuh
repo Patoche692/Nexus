@@ -15,7 +15,7 @@ inline __device__ bool diffuseScatter(HitResult& hitResult, float3& attenuation,
 inline __device__ bool plasticScattter(HitResult& hitResult, float3& attenuation, Ray& scattered, uint32_t& rngState)
 {
 	float3 reflected = reflect(normalize(hitResult.rIn.direction), hitResult.normal);
-	scattered = Ray(hitResult.p, normalize(reflected + hitResult.material.plastic.roughness * Random::RandomUnitVector(rngState)));
+	scattered = Ray(hitResult.p, normalize(reflected + hitResult.material.roughness * Random::RandomUnitVector(rngState)));
 	attenuation = hitResult.albedo;
 	return dot(scattered.direction, hitResult.normal) > 0.0f;
 }
@@ -52,19 +52,19 @@ inline __device__ bool dielectricScattter(HitResult& hitResult, float3& attenuat
 	if (dot(hitResult.rIn.direction, hitResult.normal) > 0.0f)
 	{
 		outwardNormal = -hitResult.normal;
-		niOverNt = hitResult.material.dielectric.ior;
+		niOverNt = hitResult.material.ior;
 		cosine = dot(hitResult.rIn.direction, hitResult.normal) / length(hitResult.rIn.direction);
-		cosine = sqrt(1.0f - hitResult.material.dielectric.ior * hitResult.material.dielectric.ior * (1.0f - cosine * cosine));
+		cosine = sqrt(1.0f - hitResult.material.ior * hitResult.material.ior * (1.0f - cosine * cosine));
 	}
 	else
 	{
 		outwardNormal = hitResult.normal;
-		niOverNt = 1.0f / hitResult.material.dielectric.ior;
+		niOverNt = 1.0f / hitResult.material.ior;
 		cosine = -dot(hitResult.rIn.direction, hitResult.normal) / length(hitResult.rIn.direction);
 	}
 	if (refract(hitResult.rIn.direction, outwardNormal, niOverNt, refracted))
 		//reflectProb = 0.0f;
-		reflectProb = schlick(cosine, hitResult.material.dielectric.ior);
+		reflectProb = schlick(cosine, hitResult.material.ior);
 	else
 		reflectProb = 1.0f;
 
