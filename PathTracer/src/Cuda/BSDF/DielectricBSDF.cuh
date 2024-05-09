@@ -17,7 +17,7 @@ struct DielectricBSDF
 
 	inline __device__ void PrepareBSDFData(const float3& wi,  const Material& material)
 	{
-		alpha = max(1.0e-3, (1.2f - 0.2f * sqrt(abs(wi.z))) * material.roughness * material.roughness);
+		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.roughness * material.roughness, 1.0e-4f, 1.0f);
 		eta = wi.z < 0.0f ? material.ior : 1 / material.ior;
 	}
 
@@ -26,11 +26,6 @@ struct DielectricBSDF
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
 		const float wiDotM = dot(wi, m);
-		const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
-
-		// Handle divisions by zero
-		if (weight > 1.0e10)
-			return false;
 
 		float cosThetaT;
 		const float fr = Fresnel::DieletricReflectance(1 / hitResult.material.ior, wiDotM, cosThetaT);
@@ -40,6 +35,12 @@ struct DielectricBSDF
 		{
 			// Specular
 			wo = reflect(-wi, m);
+
+			const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
+
+			// Handle divisions by zero
+			if (weight > 1.0e10)
+				return false;
 
 			// If the new ray is under the hemisphere, return
 			if (wo.z * wi.z < 0.0f)
@@ -57,6 +58,12 @@ struct DielectricBSDF
 			{
 				// Refraction
 				wo = (eta * wiDotM - Utils::SgnE(wiDotM) * cosThetaT) * m - eta * wi;
+
+				const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
+
+				// Handle divisions by zero
+				if (weight > 1.0e10)
+					return false;
 
 				if (wo.z * wi.z > 0.0f)
 					return false;
