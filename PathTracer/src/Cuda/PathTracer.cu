@@ -24,6 +24,20 @@ inline __device__ uint32_t toColorUInt(float3 color)
 	return alpha << 24 | blue << 16 | green << 8 | red;
 }
 
+// Approximated ACES tonemapping by Krzysztof Narkowicz. See https://graphics-programming.org/resources/tonemapping/index.html
+inline __device__ float3 tonemap(float3 color)
+{
+	//float3 x = fmaxf(make_float3(0.0f), color - 0.004f);
+	//return (x * (6.2f * x + 0.5f)) / (x * (6.2f * x + 1.7f) + 0.06f);
+	color *= 0.6f; // Exposure
+	const float a = 2.51f;
+	const float b = 0.03f;
+	const float c = 2.43f;
+	const float d = 0.59f;
+	const float e = 0.14f;
+	return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0f, 1.0f);
+}
+
 inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
@@ -40,7 +54,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentThroughput * make_float3(0.00f) + emission;
+			return currentThroughput * make_float3(0.0f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -69,11 +83,14 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
 		//	hitResult.normal = -hitResult.normal;
 
-		// Invert shading normal for non transmissive material if it is backfacing the ray
-		if (dot(hitResult.normal, currentRay.direction) > 0.0f && hitResult.material.transmittance == 0.0f)
+		// Invert normals for non transmissive material if the primitive is backfacing the ray
+		if (dot(gNormal, currentRay.direction) > 0.0f && hitResult.material.transmittance == 0.0f)
+		{
 			hitResult.normal = -hitResult.normal;
+			gNormal = -gNormal;
+		}
 
-		if (dot(hitResult.material.emissive, hitResult.material.emissive) > 0.0f)
+		if (fmaxf(hitResult.material.emissive) > 0.0f)
 			emission += hitResult.material.emissive * currentThroughput;
 
 
@@ -109,9 +126,9 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		}
 
 		// Russian roulette
-		float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
 		if (j > 2)
 		{
+			float p = clamp(fmax(currentThroughput.x, fmax(currentThroughput.y, currentThroughput.z)), 0.01f, 1.0f);
 			if (Random::Rand(rngState) < p)
 			{
 				// To get unbiased results, we need to increase the contribution of
@@ -152,7 +169,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
-	float3 c = color(ray, rngState);	// get new color
+	float3 c = color(ray, rngState);
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
 	else
@@ -160,10 +177,7 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 
-	// Gamma correction
-	c = make_float3(pow(c.x, 0.455), pow(c.y, 0.455), pow(c.z, 0.455));
-
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(c);	// convert color
+	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(Utils::LinearToGamma(tonemap(c)));
 }
 
 void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)

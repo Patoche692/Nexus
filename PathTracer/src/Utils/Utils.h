@@ -37,12 +37,12 @@ namespace Utils
 		return angle * 180.0f / M_PI;
 	}
 
-	inline __host__ __device__ float3 LinearToGamma(float3 color)
+	inline __host__ __device__ float3 LinearToGamma(const float3& color)
 	{
-		return make_float3(pow(color.x, 0.455), pow(color.y, 0.455), pow(color.z, 0.455));
+		return make_float3(pow(color.x, 0.45454545454), pow(color.y, 0.45454545454), pow(color.z, 0.45454545454));
 	}
 
-	inline __host__ __device__ float3 GammaToLinear(float3 color)
+	inline __host__ __device__ float3 GammaToLinear(const float3& color)
 	{
 		return make_float3(pow(color.x, 2.2), pow(color.y, 2.2), pow(color.z, 2.2));
 	}
