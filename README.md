@@ -12,7 +12,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 ## Screenshots
 
 ![cannelle_et_fromage3](https://github.com/Patoche692/PathTracer/assets/54531293/1356478c-4c1c-4192-93fb-3798a642b5f4)
-![sormtrooper2](https://github.com/Patoche692/PathTracer/assets/54531293/2de0eb11-19db-48f7-860c-96747e73c734)
+![stormtrooper](https://github.com/Patoche692/PathTracer/assets/54531293/865d00db-9711-469a-be3f-c5fe647e4d72)
 ![mustang](https://github.com/Patoche692/PathTracer/assets/54531293/ffa3f777-da30-4935-92d9-2c21f2d0bc0b)
 ![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
 ![bathroom5](https://github.com/Patoche692/PathTracer/assets/54531293/d3a828f9-3cb1-4bf7-abce-e193a9968538)
