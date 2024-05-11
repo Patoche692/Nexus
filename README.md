@@ -11,16 +11,17 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 
 ## Screenshots
 
-![cannelle_et_fromage2](https://github.com/Patoche692/PathTracer/assets/54531293/9a2f440f-2556-4e9c-9d65-308bf2416424)
-![sormtrooper2](https://github.com/Patoche692/PathTracer/assets/54531293/2de0eb11-19db-48f7-860c-96747e73c734)
+![cannelle_et_fromage3](https://github.com/Patoche692/PathTracer/assets/54531293/1356478c-4c1c-4192-93fb-3798a642b5f4)
+![stormtrooper](https://github.com/Patoche692/PathTracer/assets/54531293/865d00db-9711-469a-be3f-c5fe647e4d72)
 ![mustang](https://github.com/Patoche692/PathTracer/assets/54531293/ffa3f777-da30-4935-92d9-2c21f2d0bc0b)
 ![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
-![bathroom4](https://github.com/Patoche692/PathTracer/assets/54531293/56532d4a-ebc6-4102-9830-bd66089fcd19)
+![bathroom5](https://github.com/Patoche692/PathTracer/assets/54531293/d3a828f9-3cb1-4bf7-abce-e193a9968538)
 ![piano3](https://github.com/Patoche692/PathTracer/assets/54531293/905c2bce-2aac-4b43-818e-ff928d16aab4)
 ![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
+![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
 ![lamp](https://github.com/Patoche692/PathTracer/assets/54531293/d8344999-7289-43be-bf91-b9e99ff67e7d)
 <!--![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)-->
-![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)
+<!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
 ![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
 <!--![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)-->
 ![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
@@ -68,6 +69,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 - [Ford mustang](https://sketchfab.com/3d-models/ford-mustang-1965-5f4e3965f79540a9888b5d05acea5943) by [Pooya_dh](https://sketchfab.com/Pooya_dh)
 - [Bathroom](https://www.blendswap.com/blend/12584) by [nacimus](https://www.blendswap.com/profile/72536)
 - [Piano](https://blendswap.com/blend/29080) by [Roy](https://blendswap.com/profile/1508348)
+- [Iphone 15 Pro Max](https://sketchfab.com/3d-models/free-iphone15-pro-max-ultra-high-quality-1fb1717d5e204302bfe9969ea77293a4) by [Navarion](https://sketchfab.com/Navarion)
 - [Lamp](https://www.blendswap.com/blend/6885) by [UP3D](https://www.blendswap.com/profile/4758)
-- [Rolls Royce](https://www.blenderkit.com/asset-gallery-detail/3654527a-4b8d-4392-a863-515276fbf541/) by [Jayrenn Reeve](https://www.blenderkit.com/asset-gallery?query=author_id:114910)
+<!--- [Rolls Royce](https://www.blenderkit.com/asset-gallery-detail/3654527a-4b8d-4392-a863-515276fbf541/) by [Jayrenn Reeve](https://www.blenderkit.com/asset-gallery?query=author_id:114910)-->
 - [Coffee Maker](https://blendswap.com/blend/16368) by [cekuhnen](https://blendswap.com/profile/13522)
