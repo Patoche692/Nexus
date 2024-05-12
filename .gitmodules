@@ -1,0 +1,13 @@
+[submodule "PathTracer/vendor/assimp"]
+	path = PathTracer/vendor/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "PathTracer/vendor/glm"]
+	path = PathTracer/vendor/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "PathTracer/vendor/GLFW"]
+	path = PathTracer/vendor/GLFW
+	url = https://github.com/glfw/glfw.git
+[submodule "PathTracer/vendor/imgui"]
+	path = PathTracer/vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
