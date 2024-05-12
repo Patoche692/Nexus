@@ -1,6 +1,6 @@
-prefix=C:/Program Files (x86)/Nexus
+prefix=C:/Program Files (x86)/Nexus Renderer
 exec_prefix=${prefix}
-libdir=C:/Program Files (x86)/Nexus/lib
+libdir=C:/Program Files (x86)/Nexus Renderer/lib
 includedir=${prefix}/include
 
 Name: glew

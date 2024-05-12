@@ -8,6 +8,9 @@
 #include "imgui_impl_opengl3.h"
 #include "FileDialog.h"
 
+#include "windows.h"
+#include <string>
+#include <iostream>
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	:m_ViewportWidth(width), m_ViewportHeight(height)
@@ -17,8 +20,11 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	TCHAR NPath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, NPath);
+	std::cout << NPath;
 	io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/opensans/OpenSans-Regular.ttf", 16.0f);
-    //ImGui::StyleColorsCustomDark();
+    ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 

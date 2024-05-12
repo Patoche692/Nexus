@@ -394,7 +394,6 @@ FodyWeavers.xsd
 **/CMakeScripts
 **/compile_commands.json
 **.cmake
-**.cmake.in
 
 # Local
 lib/*
