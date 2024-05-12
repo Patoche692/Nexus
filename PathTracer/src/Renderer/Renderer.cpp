@@ -1,11 +1,11 @@
-#include <gtc/type_ptr.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Renderer.h"
 #include "Cuda/PathTracer.cuh"
 #include "Utils/Utils.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "FileDialog.h"
 
 
@@ -18,7 +18,7 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/opensans/OpenSans-Regular.ttf", 16.0f);
-    ImGui::StyleColorsCustomDark();
+    //ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 

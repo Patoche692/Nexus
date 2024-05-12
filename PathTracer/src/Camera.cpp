@@ -2,10 +2,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/quaternion.hpp>
-#include <gtx/quaternion.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <math.h>
 
 #include "Utils/Utils.h"

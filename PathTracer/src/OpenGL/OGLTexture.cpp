@@ -1,7 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <vector_types.h>
-#include <common.hpp>
 #include "Utils/cuda_math.h"
 #include "OGLTexture.h"
 

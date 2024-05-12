@@ -1,13 +1,17 @@
 [submodule "PathTracer/vendor/assimp"]
 	path = PathTracer/vendor/assimp
 	url = https://github.com/assimp/assimp.git
+	ignore = dirty
 [submodule "PathTracer/vendor/glm"]
 	path = PathTracer/vendor/glm
 	url = https://github.com/g-truc/glm.git
+	ignore = dirty
 [submodule "PathTracer/vendor/GLFW"]
 	path = PathTracer/vendor/GLFW
 	url = https://github.com/glfw/glfw.git
+	ignore = dirty
 [submodule "PathTracer/vendor/imgui"]
 	path = PathTracer/vendor/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+	ignore = dirty

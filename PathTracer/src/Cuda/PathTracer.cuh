@@ -2,7 +2,7 @@
 
 #include <device_launch_parameters.h>
 #include <iostream>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include "OpenGL/PixelBuffer.h"
 #include "Scene.h"
 #include "AssetManager.cuh"

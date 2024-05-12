@@ -27,7 +27,7 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 
 #include <vector_types.h>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 #ifndef __CUDACC__
 #include <math.h>

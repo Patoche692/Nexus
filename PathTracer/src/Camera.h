@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <vector>
 #include <cuda_runtime_api.h>
 
