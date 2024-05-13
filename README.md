@@ -36,7 +36,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 - Diffuse textures mapping
 - BSDF:
    - Diffuse (Lambertian)
-   - Dielectric (Microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
+   - Rough dielectric (Microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
 
 ## Prerequisites
 Nexus requires the following:
@@ -50,14 +50,17 @@ Nexus requires the following:
    git clone https://github.com/Patoche692/PathTracer
    ```
 - Launch the setup.bat script. It will generate a Visual Studio solution in the build folder
-- Alternatively, you can generate the solution with cmake
+
+  Alternatively, you can generate the solution with cmake:
   ```sh
   mkdir build
   cd build
   cmake ..
   ```
+- Open the Visual Studio solution. Right click on the Nexus solution and set it as startup project. Press F5 to build the project
 
 ## Usage
+- Go to file -> open to load a new OBJ scene. The OBJ loading is not multithreaded and the BVH construction might take some time depending on the model size
 - Controls: hold right click and use WASD keys to move and the mouse to change the camera orientation
 - You can change the meshes and camera properties in the UI
 
