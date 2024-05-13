@@ -47,7 +47,7 @@ Nexus requires the following:
 ## Build
 - Clone the repo
    ```sh
-   git clone https://github.com/Patoche692/PathTracer
+   git clone --recurse-submodules https://github.com/Patoche692/Nexus
    ```
 - Launch the setup.bat script. It will generate a Visual Studio solution in the build folder
 
