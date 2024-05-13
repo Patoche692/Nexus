@@ -3,8 +3,8 @@
 Interactive physically based GPU path tracer from scratch written in C++ using CUDA and OpenGL.
 
 - [Screenshots](#screenshots)
-- [Prerequisites](#prerequisites)
 - [Features](#features)
+- [Prerequisites](#prerequisites)
 - [Build](#build)
 - [Usage](#usage)
 - [Dependencies](#dependencies)
@@ -50,7 +50,7 @@ Nexus requires the following:
    git clone https://github.com/Patoche692/PathTracer
    ```
 - Launch the setup.bat script. It will generate a Visual Studio solution in the build folder
-- Alternatively, you generate the solution with cmake
+- Alternatively, you can generate the solution with cmake
   ```sh
   mkdir build
   cd build
