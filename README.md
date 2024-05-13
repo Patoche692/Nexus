@@ -1,9 +1,10 @@
-# PathTracer
+# Nexus Renderer
 
 Interactive physically based GPU path tracer from scratch written in C++ using CUDA and OpenGL.
 
 - [Screenshots](#screenshots)
 - [Prerequisites](#prerequisites)
+- [Features](#features)
 - [Build](#build)
 - [Usage](#usage)
 - [Dependencies](#dependencies)
@@ -27,18 +28,34 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 ![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 
+## Features
+- Interactive camera: FOV, defocus blur
+- Triangle meshes with an SAH-based BVH (built on the CPU, ray traversal on the GPU)
+- The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh 
+- OBJ file loader
+- Diffuse textures mapping
+- BSDF:
+   - Diffuse (Lambertian)
+   - Dielectric (Microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
 
 ## Prerequisites
-- Having Microsoft Visual Studio installed
-- Having Nvidia's [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) installed
-- Having [Git LFS](https://git-lfs.com) installed
+Nexus requires the following:
+- Microsoft Visual Studio
+- Nvidia's [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)
+- [CMake](https://cmake.org/download/) 3.22 or higher
 
 ## Build
 - Clone the repo
    ```sh
    git clone https://github.com/Patoche692/PathTracer
    ```
-- The project should compile and run as is by pressing F5 in Visual Studio.
+- Launch the setup.bat script. It will generate a Visual Studio solution in the build folder
+- Alternatively, you generate the solution with cmake
+  ```sh
+  mkdir build
+  cd build
+  cmake ..
+  ```
 
 ## Usage
 - Controls: hold right click and use WASD keys to move and the mouse to change the camera orientation
