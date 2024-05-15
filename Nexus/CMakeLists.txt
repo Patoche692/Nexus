@@ -73,8 +73,3 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
 	FILES ${src_files}
 )
 
-add_custom_command(TARGET Nexus PRE_BUILD
-	COMMAND ${CMAKE_COMMAND} -E create_symlink
-	${CMAKE_SOURCE_DIR}/Nexus/assets $<TARGET_FILE_DIR:Nexus>/assets
-)
-

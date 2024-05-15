@@ -8,3 +8,5 @@ project("Nexus Renderer")
 
 add_subdirectory(Nexus)
 
+file(COPY ${CMAKE_SOURCE_DIR}/Nexus/assets DESTINATION ${CMAKE_BINARY_DIR}/Nexus/)
+
