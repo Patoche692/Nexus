@@ -400,6 +400,9 @@ lib/*
 bin/*
 build/*
 
+#ImGui
+imgui.ini
+
 # Visual Studio files and folder
 **.sln
 **.vcxproj
