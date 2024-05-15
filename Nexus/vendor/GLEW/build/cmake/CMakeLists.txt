@@ -15,9 +15,13 @@ endif()
 
 set(CMAKE_DEBUG_POSTFIX d)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 option (BUILD_UTILS "utilities" ON)
 option (GLEW_REGAL "Regal mode" OFF)
 option (GLEW_OSMESA "OSMesa mode" OFF)
+option (GLEW_INSTALL "Install mode" OFF)
+
 if (APPLE)
     option (BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
 endif ()
@@ -96,8 +100,10 @@ add_library (glew SHARED ${GLEW_PUBLIC_HEADERS_FILES} ${GLEW_SRC_FILES})
 set_target_properties (glew PROPERTIES COMPILE_DEFINITIONS "GLEW_BUILD" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX "${DLL_PREFIX}"
                                        VERSION ${GLEW_VERSION}
                                        SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR})
+set_target_properties(glew PROPERTIES FOLDER "GLEW")
 add_library (glew_s STATIC ${GLEW_PUBLIC_HEADERS_FILES} ${GLEW_SRC_FILES})
 set_target_properties (glew_s PROPERTIES COMPILE_DEFINITIONS "GLEW_STATIC" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX lib)
+set_target_properties(glew_s PROPERTIES FOLDER "GLEW")
 
 if (MSVC)
   # add options from visual studio project
@@ -229,7 +235,7 @@ if(MAYBE_EXPORT)
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/glew)
 endif()
 
-if(NOT TARGET uninstall)
+if(GLEW_INSTALL AND NOT TARGET uninstall)
   configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake

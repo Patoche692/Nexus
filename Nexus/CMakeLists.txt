@@ -7,6 +7,8 @@ set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
+
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp lib only")
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "Assimp lib only")
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp lib only")
@@ -32,7 +34,7 @@ add_subdirectory(vendor/imgui)
 
 file(GLOB_RECURSE src_files src/*.h src/*.cpp src/*.cuh src/*.cu)
 
-set (header_files
+set (include_files
 	src
 	vendor/assimp/include
 	vendor/GLFW/include
@@ -54,7 +56,7 @@ target_link_libraries(Nexus
 
 target_include_directories(Nexus
 	PUBLIC
-	${header_files}
+	${include_files}
 )
 
 # CUDA optimizations
