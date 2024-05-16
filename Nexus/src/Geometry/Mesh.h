@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Geometry/BVH/BVH.h"
+#include "Math/Mat4.h"
 
 
 struct Mesh
@@ -14,6 +15,9 @@ struct Mesh
 	}
 
 	std::shared_ptr<BVH> bvh;
-	std::string name;
+	// Projection matrix of the mesh at loading
+	Mat4 projection;
+
 	int materialId;
+	std::string name;
 };

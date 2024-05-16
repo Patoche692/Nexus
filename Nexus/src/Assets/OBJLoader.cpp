@@ -13,7 +13,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
-		std::cout << "OBJLoader: Error loading model " << filePath << std::endl;
+		std::cout << std::endl << "OBJLoader: Error loading model " << filePath << std::endl;
 		return meshes;
 	}
 
