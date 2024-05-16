@@ -6,11 +6,12 @@
 #include "Utils/Utils.h"
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
+#include "texture_indirect_functions.h"
 
 
 __constant__ __device__ CameraData cameraData;
 extern __constant__ __device__ Material* materials;
-extern __constant__ __device__ Texture* textures;
+extern __constant__ __device__ cudaTextureObject_t* textures;
 extern __constant__ __device__ TLAS tlas;
 
 inline __device__ uint32_t toColorUInt(float3 color)
@@ -77,7 +78,8 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		else
 		{
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.diffuse = textures[hitResult.material.diffuseMapId].GetPixel(uv.x, uv.y);
+			hitResult.material.diffuse = make_float3(tex2D<float4>(textures[hitResult.material.diffuseMapId], uv.x, uv.y));
+
 		}
 		// Normal flipping
 		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)

@@ -8,7 +8,7 @@
 #include "Geometry/Triangle.h"
 
 __constant__ __device__ Material* materials;
-__constant__ __device__ Texture* textures;
+__constant__ __device__ cudaTextureObject_t* textures;
 __constant__ __device__ BVH* bvhs;
 __constant__ __device__ TLAS tlas;
 
@@ -45,19 +45,37 @@ void newDeviceMaterial(Material& material, uint32_t size)
 
 void newDeviceTexture(Texture& texture, uint32_t size) {
 	
-	Texture** texturesSymbolAddress;
+	cudaTextureObject_t** texturesSymbolAddress;
 
 	checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, textures));
 
 	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
 
-	Texture newTexture = texture;
-	float3* pixels = CudaMemory::Allocate<float3>(texture.width * texture.height);
-	CudaMemory::MemCpy(pixels, texture.pixels, texture.width * texture.height, cudaMemcpyHostToDevice);
+	// Channel descriptor for 4 Channels (RGBA)
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+	cudaArray_t cuArray;
+	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, texture.width, texture.height));
 
-	newTexture.pixels = pixels;
+	const size_t spitch = texture.width * 4 * sizeof(float);
+	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, texture.pixels, spitch, texture.width * 4 * sizeof(float), texture.height, cudaMemcpyHostToDevice));
 
-	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, newTexture);
+	cudaResourceDesc resDesc;
+	memset(&resDesc, 0, sizeof(resDesc));
+	resDesc.resType = cudaResourceTypeArray;
+	resDesc.res.array.array = cuArray;
+
+	cudaTextureDesc texDesc;
+	memset(&texDesc, 0, sizeof(texDesc));
+	texDesc.addressMode[0] = cudaAddressModeWrap;
+	texDesc.addressMode[1] = cudaAddressModeWrap;
+	texDesc.filterMode = cudaFilterModeLinear;
+	texDesc.readMode = cudaReadModeElementType;
+	texDesc.normalizedCoords = 1;
+
+	cudaTextureObject_t texObject = 0;
+	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
+
+	CudaMemory::SetToIndex(texturesSymbolAddress, size - 1, texObject);
 }
 
 __global__ void freeMeshesKernel(int meshesCount)
@@ -86,10 +104,10 @@ void freeDeviceMaterials()
 
 __global__ void freeTexturesKernel(int texturesCount)
 {
-	for (int i = 0; i < texturesCount; i++)
-		free(textures[i].pixels);
+	//for (int i = 0; i < texturesCount; i++)
+	//	free(textures[i].pixels);
 
-	free(textures);
+	//free(textures);
 }
 
 void freeDeviceTextures(int texturesCount)
