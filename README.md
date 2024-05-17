@@ -29,14 +29,15 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 
 ## Features
-- Interactive camera: FOV, defocus blur
+- Interactive camera with thin lens approximation: FOV, defocus blur
 - Triangle meshes with an SAH-based BVH (built on the CPU, ray traversal on the GPU)
-- The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh 
-- OBJ file loader
-- Diffuse textures mapping
+- The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh as well as dynamic scenes with objects transform
+- Model loader: obj, ply, fbx, glb, gltf, 3ds, blend with Assimp
+- Diffuse texture mapping
 - BSDF:
    - Diffuse (Lambertian)
    - Rough dielectric (Microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
+- Importance sampling: cosine weighted for diffuse materials, VNDF sampling for dielectrics
 
 ## Prerequisites
 Nexus requires the following:
@@ -45,13 +46,13 @@ Nexus requires the following:
 - [CMake](https://cmake.org/download/) 3.22 or higher
 
 ## Build
-- Clone the repo
+- Clone the repository
    ```sh
    git clone --recurse-submodules https://github.com/Patoche692/Nexus
    ```
 - Launch the setup.bat script. It will generate a Visual Studio solution in the build folder
 
-  Alternatively, you can generate the solution with cmake:
+  Alternatively, you can generate the solution via cmake:
   ```sh
   mkdir build
   cd build
