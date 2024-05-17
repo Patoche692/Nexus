@@ -3,21 +3,73 @@
 
 Assimp::Importer OBJLoader::m_Importer;
 
-std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
+static std::vector<Triangle> GetTrianglesFromAiMesh(const aiMesh* mesh)
 {
-	const std::string filePath = path + filename;
-	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
-		| aiProcess_FlipUVs);
-	
-	std::vector<Mesh> meshes;
+	std::vector<Triangle> triangles(mesh->mNumFaces);
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	for (int i = 0; i < mesh->mNumFaces; i++)
 	{
-		std::cout << std::endl << "OBJLoader: Error loading model " << filePath << std::endl;
-		return meshes;
-	}
+		float3 pos[3] = { };
+		float3 normal[3] = { };
+		float2 texCoord[3] = { };
+		bool skipFace = false;
 
-	int* materialIdx = new int[scene->mNumMaterials];
+		for (int k = 0; k < 3; k++)
+		{
+			if (mesh->mFaces[i].mNumIndices != 3)
+			{
+				std::cout << "ObjLoader: a non triangle primitive with " << mesh->mFaces[i].mNumIndices << " vertices has been discarded" << std::endl;
+				skipFace = true;
+				continue;
+			}
+			unsigned int vertexIndex = mesh->mFaces[i].mIndices[k];
+
+			aiVector3D v = mesh->mVertices[vertexIndex];
+			pos[k].x = v.x;
+			pos[k].y = v.y;
+			pos[k].z = v.z;
+
+			if (mesh->HasNormals())
+			{
+				v = mesh->mNormals[vertexIndex];
+				normal[k].x = v.x;
+				normal[k].y = v.y;
+				normal[k].z = v.z;
+			}
+
+			// We only deal with one tex coord per vertex for now
+			if (mesh->HasTextureCoords(0))
+			{
+				v = mesh->mTextureCoords[0][vertexIndex];
+				texCoord[k].x = v.x;
+				texCoord[k].y = v.y;
+
+			}
+		}
+		if (skipFace)
+			continue;
+
+		Triangle triangle(
+			pos[0],
+			pos[1],
+			pos[2],
+			normal[0],
+			normal[1],
+			normal[2],
+			texCoord[0],
+			texCoord[1],
+			texCoord[2]
+		);
+		triangles[i] = triangle;
+	}
+	return triangles;
+}
+
+// Return the list of IDs of the created materials
+static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetManager* assetManager, const std::string& path)
+{
+	std::vector<int> materialIdx(scene->mNumMaterials);
+
 	for (int i = 0; i < scene->mNumMaterials; i++)
 	{
 		aiMaterial* material = scene->mMaterials[i];
@@ -40,7 +92,7 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		{
 			shininess = 20.0f;
 		}
-		newMaterial.roughness = clamp(1.0f - sqrt(shininess) / 30.0f, 0.0f, 1.0f);
+		newMaterial.roughness = clamp(1.0f - sqrt(shininess) / 31.62278f, 0.0f, 1.0f);
 		newMaterial.transmittance = 0.0f;
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
@@ -56,76 +108,62 @@ std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string&
 		}
 		materialIdx[i] = assetManager->AddMaterial(newMaterial);
 	}
+	return materialIdx;
+}
 
-	for (int i = 0; i < scene->mNumMeshes; i++)
+static void GetMeshesFromAiNode(const aiScene* scene, const aiNode* node, std::vector<Mesh>& meshes, aiMatrix4x4 aiTransform, std::vector<int>& materialIds)
+{
+	aiTransform = node->mTransformation * aiTransform;
+	for (int i = 0; i < node->mNumMeshes; i++)
 	{
-		aiMesh* mesh = scene->mMeshes[i];
-		std::string name = mesh->mName.data;
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		std::vector<Triangle> triangles = GetTrianglesFromAiMesh(mesh);
+		std::string meshName = mesh->mName.data;
 
-		std::vector<Triangle> triangles = std::vector<Triangle>(mesh->mNumFaces);
-		
-		for (int j = 0; j < mesh->mNumFaces; j++)
-		{
-			float3 pos[3] = { };
-			float3 normal[3] = { };
-			float2 texCoord[3] = { };
-			bool skipFace = false;
+		aiVector3D aiPosition, aiRotation, aiScale;
+		aiTransform.Decompose(aiScale, aiRotation, aiPosition);
+		float3 position = { aiPosition.x, aiPosition.y, aiPosition.z };
+		float3 rotation = { Utils::ToDegrees(aiRotation.x), Utils::ToDegrees(aiRotation.y), Utils::ToDegrees(aiRotation.z) };
+		float3 scale = { aiScale.x, aiScale.y, aiScale.z };
 
-			for (int k = 0; k < 3; k++)
-			{
-				if (mesh->mFaces[j].mNumIndices != 3)
-				{
-					skipFace = true;
-					continue;
-				}
-				unsigned int vertexIndex = mesh->mFaces[j].mIndices[k];
+		double scaleFactor = 1.0f;
+		bool result = scene->mMetaData->Get("UnitScaleFactor", scaleFactor);
+		scale /= scaleFactor;
+		position /= scaleFactor;
 
-				aiVector3D v = mesh->mVertices[vertexIndex];
-				pos[k].x = v.x;
-				pos[k].y = v.y;
-				pos[k].z = v.z;
-
-				if (mesh->HasNormals())
-				{
-					v = mesh->mNormals[vertexIndex];
-					normal[k].x = v.x;
-					normal[k].y = v.y;
-					normal[k].z = v.z;
-				}
-
-				// We only deal with one tex coord per vertex for now
-				if (mesh->HasTextureCoords(0))
-				{
-					v = mesh->mTextureCoords[0][vertexIndex];
-					texCoord[k].x = v.x;
-					texCoord[k].y = v.y;
-					
-				}
-			}
-			if (skipFace)
-				continue;
-
-			Triangle triangle(
-				pos[0],
-				pos[1],
-				pos[2],
-				normal[0],
-				normal[1],
-				normal[2],
-				texCoord[0],
-				texCoord[1],
-				texCoord[2]
-			);
-			triangles[j] = triangle;
-		}
-
-		const Mesh newMesh(name, triangles, materialIdx[mesh->mMaterialIndex]);
+		const Mesh newMesh(meshName, triangles, materialIds[mesh->mMaterialIndex], position, rotation, scale);
 		meshes.push_back(newMesh);
 	}
 
-	std::cout << "OBJLoader: loaded model " << filePath << " successfully" << std::endl;
+	for (int i = 0; i < node->mNumChildren; i++)
+	{
+		GetMeshesFromAiNode(scene, node->mChildren[i], meshes, aiTransform, materialIds);
+	}
+}
 
-	delete[] materialIdx;
+std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
+{
+	const std::string filePath = path + filename;
+	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
+		| aiProcess_FlipUVs);
+
+	std::vector<Mesh> meshes;
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		std::cout << "OBJLoader: Error loading model " << filePath << std::endl;
+		return meshes;
+	}
+
+	//double factor = 100.0f;
+	//// Fix for assimp scaling FBX with a factor 100
+	//scene->mMetaData->Set("UnitScaleFactor", factor);
+	
+
+	std::vector<int> materialIds = CreateMaterialsFromAiScene(scene, assetManager, path);
+	GetMeshesFromAiNode(scene, scene->mRootNode, meshes, aiMatrix4x4(), materialIds);
+
+	std::cout << "OBJLoader: loaded model " << filePath << " successfully" << std::endl;
 
 	return meshes;
 }

@@ -1,14 +1,22 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
+#include <assimp/BaseImporter.h>
 #include "Utils/cuda_math.h"
 
-// 4 x 4 row major matrix class from Jacco Bikker's guide. See https://github.com/jbikker/bvh_article/blob/main/template/precomp.h
+// 4 x 4 row major matrix class adapted from Jacco Bikker's guide. See https://github.com/jbikker/bvh_article/blob/main/template/precomp.h
 
 class Mat4
 {
 public:
 	__device__ __host__ Mat4() = default;
+
+	// From aiMatrix4x4
+	__device__ __host__ Mat4(const aiMatrix4x4& mat)
+	{
+		for (int i = 0; i < 16; i++)
+			cell[i] = mat[i / 4][i % 4];
+	}
 
 	float cell[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 
