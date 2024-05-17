@@ -55,7 +55,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentThroughput * make_float3(0.0f) + emission;
+			return currentThroughput * make_float3(0.02f) + emission;
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;

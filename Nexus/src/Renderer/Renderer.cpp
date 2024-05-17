@@ -162,7 +162,7 @@ void Renderer::RenderUI(Scene& scene)
 			if (ImGui::MenuItem("Open...", "Ctrl+O"))
 			{
 				std::string fullPath = FileDialog::OpenFile(
-					"3D model (*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend)\0*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend\0"
+					"3D model (*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend;*.dae)\0*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend;*.dae\0"
 				);
 				if (!fullPath.empty())
 				{

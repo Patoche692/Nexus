@@ -6,9 +6,12 @@
 struct MeshInstance
 {
 	MeshInstance() = default;
-	MeshInstance(const std::string n, int bvhInstIdx, int mId = -1)
+	MeshInstance(const Mesh& mesh, int bvhInstIdx, int mId = -1)
 	{
-		name = n;
+		name = mesh.name;
+		rotation = mesh.rotation;
+		scale = mesh.scale;
+		position = mesh.position;
 		bvhInstanceIdx = bvhInstIdx;
 		materialId = mId;
 	}

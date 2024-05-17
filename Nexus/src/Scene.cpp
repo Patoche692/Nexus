@@ -35,7 +35,7 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 	// Get the raw ptr for BVHInstance because CUDA doesnt support shared_ptr
 	m_BVHInstances.push_back(BVHInstance(mesh.bvh.get()));
 
-	MeshInstance meshInstance(mesh.name, m_BVHInstances.size() - 1, mesh.materialId);
+	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
 
 	InvalidateMeshInstance(m_MeshInstances.size() - 1);
@@ -48,7 +48,8 @@ void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::strin
 	m_AssetManager.AddMesh(path, fileName);
 	for (int i = 0; i < m_AssetManager.GetMeshes().size(); i++)
 		CreateMeshInstance(i);
-	BuildTLAS();
+	if (m_MeshInstances.size() > 0)
+		BuildTLAS();
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
