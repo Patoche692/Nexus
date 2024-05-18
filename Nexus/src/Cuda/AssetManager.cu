@@ -8,7 +8,8 @@
 #include "Geometry/Triangle.h"
 
 __constant__ __device__ Material* materials;
-__constant__ __device__ cudaTextureObject_t* textures;
+__constant__ __device__ cudaTextureObject_t* diffuseMaps;
+__constant__ __device__ cudaTextureObject_t* emissiveMaps;
 __constant__ __device__ BVH* bvhs;
 __constant__ __device__ TLAS tlas;
 
@@ -43,11 +44,17 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
 }
 
-void newDeviceTexture(Texture& texture, uint32_t size) {
+void newDeviceTexture(Texture& texture, uint32_t size, Texture::Type type) {
 	
 	cudaTextureObject_t** texturesSymbolAddress;
 
-	checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, textures));
+	if (type == Texture::Type::DIFFUSE) {
+		checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, diffuseMaps));
+	}
+	else if (type == Texture::Type::EMISSIVE) {
+		checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, emissiveMaps));
+	}
+		
 
 	CudaMemory::ResizeDeviceArray(texturesSymbolAddress, size);
 

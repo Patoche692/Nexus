@@ -67,7 +67,6 @@ public:
 		return make_float3(ComplexReflectance(cosThetaI, eta.x, k.x), ComplexReflectance(cosThetaI, eta.y, k.y), ComplexReflectance(cosThetaI, eta.z, k.z));
 	}
 
-
 private:
 	inline static __device__ float Luminance(const float3& rgb)
 	{

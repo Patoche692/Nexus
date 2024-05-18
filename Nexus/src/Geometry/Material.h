@@ -31,6 +31,7 @@ struct Material {
 	float opacity;
 
 	int diffuseMapId = -1;
+	int emissiveMapId = -1;
 	Type type;
 };
 

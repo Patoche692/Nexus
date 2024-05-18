@@ -5,6 +5,13 @@
 
 struct Texture
 {
+	enum struct Type {
+		DIFFUSE,
+		ROUGHNESS,
+		METALLIC,
+		EMISSIVE
+	};
+
 	Texture() = default;
 	Texture(uint32_t w, uint32_t h, uint32_t c, float3* d);
 	inline __host__ __device__ float3 GetPixel(float x, float y) const
