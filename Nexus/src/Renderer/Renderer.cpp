@@ -7,6 +7,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "FileDialog.h"
+#include <stb_image_write.h>
 
 #include "windows.h"
 #include <string>
@@ -177,6 +178,12 @@ void Renderer::RenderUI(Scene& scene)
 					checkCudaErrors(cudaDeviceSynchronize());
 				}
 			}
+
+			// TODO or here
+			if (ImGui::MenuItem("Save Screenshot", "Ctrl+S")) {
+				SaveScreenshot("screenshot.png"); // Or prompt for a file path
+			}
+
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -351,3 +358,16 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	}
 }
 
+void Renderer::SaveScreenshot(const std::string& filepath)
+{
+	int width = m_ViewportWidth;
+	int height = m_ViewportHeight;
+	std::vector<unsigned char> pixels(width * height * 3);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+
+	stbi_flip_vertically_on_write(1); // flip image before writing => necessary?
+	stbi_write_png(filepath.c_str(), width, height, 3, pixels.data(), width * 3);
+}

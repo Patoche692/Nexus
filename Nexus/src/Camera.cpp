@@ -97,6 +97,12 @@ void Camera::OnUpdate(float ts)
 
 		m_Invalid = true;
 	}
+
+	// TODO either here
+	//if (Input::IsKeyDown(GLFW_KEY_F12)) {
+	//	RendererSaveScreenshot("screenshot.png", m_ViewportWidth, m_ViewportHeight);
+	//	std::cout << "Screenshot saved!" << std::endl;
+	//}
 }
 
 void Camera::OnResize(uint32_t width, uint32_t height)

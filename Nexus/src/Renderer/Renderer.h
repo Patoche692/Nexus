@@ -17,6 +17,7 @@ public:
 
 	void Reset();
 	void OnResize(uint32_t width, uint32_t height);
+	void SaveScreenshot(const std::string& filepath);
 	void Render(Scene& scene, float deltaTime);
 	void RenderUI(Scene& scene);
 	void UnpackToTexture();
