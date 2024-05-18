@@ -43,6 +43,27 @@ inline __device__ float3 tonemap(float3 color)
 	return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0f, 1.0f);
 }
 
+// If necessary, sample the HDR map (from spherical to equirectangular projection)
+inline __device__ float3 sampleBackground(float3 direction)
+{
+	float3 backgroundColor;
+	if (sceneData.hasHdrMap)
+	{
+		// Theta goes from -PI to PI, phi from -PI/2 to PI/2
+		const float theta = atan2(direction.z, direction.x);
+		const float phi = asin(direction.y);
+
+		// Equirectangular projection
+		const float u = (theta + M_PI) * INV_PI * 0.5;
+		const float v = 1.0f - (phi + M_PI * 0.5f) * INV_PI;
+
+		backgroundColor = make_float3(tex2D<float4>(sceneData.hdrMap, u, v));
+	}
+	else
+		backgroundColor = make_float3(0.02f);
+	return backgroundColor;
+}
+
 inline __device__ float3 color(Ray& r, unsigned int& rngState)
 {
 	Ray currentRay = r;
@@ -60,31 +81,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
 		{ 
-			float3 backgroundColor;
-			if (sceneData.hasHdrMap)
-			{
-				float3 direction = currentRay.direction;
-				//float r = sqrtf(dot(direction, direction));
-				//float theta = acos(direction.y / r);
-				//float phi = Utils::SgnE(direction.x) * acos(direction.z / sqrtf(direction.z * direction.z + direction.x * direction.x));
-				//float longitude = Utils::ToDegrees(theta);
-				//float latitude = Utils::ToDegrees(phi);
-
-				//float2 pixel = make_float2(
-				//	(longitude + 180) / 100.0f,
-				//	(latitude + 90) / 100.0f
-				//);
-
-				float2 pixel = make_float2(atan(direction.z / direction.x), asin(direction.y));
-				pixel *= make_float2(-0.1591, 0.3183);
-				pixel += 0.5;
-				pixel.y = 1. - pixel.y;
-				pixel.x *= 2;
-
-				backgroundColor = make_float3(tex2D<float4>(sceneData.hdrMap, pixel.x, pixel.y));
-			}
-			else
-				backgroundColor = make_float3(0.02f);
+			float3 backgroundColor = sampleBackground(currentRay.direction);
 			return currentThroughput * backgroundColor + emission;
 		}
 
