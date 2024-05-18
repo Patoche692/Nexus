@@ -1,12 +1,14 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
-#include "BRDF.cuh"
 #include "BSDF/DielectricBSDF.cuh"
+#include "BSDF/LambertianBSDF.cuh"
+#include "BSDF/BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "Camera.h"
 #include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
+#include "BSDF/ConductorBSDF.cuh"
 
 
 __constant__ __device__ CameraData cameraData;
@@ -74,11 +76,11 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		hitResult.material = materials[instance.materialId];
 
 		if (hitResult.material.diffuseMapId == -1)
-			hitResult.albedo = hitResult.material.diffuse;
+			hitResult.albedo = hitResult.material.diffuse.albedo;
 		else
 		{
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.diffuse = make_float3(tex2D<float4>(textures[hitResult.material.diffuseMapId], uv.x, uv.y));
+			hitResult.material.diffuse.albedo = make_float3(tex2D<float4>(textures[hitResult.material.diffuseMapId], uv.x, uv.y));
 
 		}
 		// Normal flipping
@@ -86,7 +88,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		//	hitResult.normal = -hitResult.normal;
 
 		// Invert normals for non transmissive material if the primitive is backfacing the ray
-		if (dot(gNormal, currentRay.direction) > 0.0f && hitResult.material.transmittance == 0.0f)
+		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != Material::Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
 		{
 			hitResult.normal = -hitResult.normal;
 			gNormal = -gNormal;
@@ -108,10 +110,24 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		float3 throughput;
 		float3 wo;
-		DielectricBSDF bsdf;
-		bsdf.PrepareBSDFData(wi, hitResult.material);
 
-		if (bsdf.Sample(hitResult, wi, wo, throughput, rngState))
+		bool scattered = false;
+		switch (hitResult.material.type)
+		{
+		case Material::Type::DIFFUSE:
+			scattered = BSDF::Sample<LambertianBSDF>(hitResult, wi, wo, throughput, rngState);
+			break;
+		case Material::Type::DIELECTRIC:
+			scattered = BSDF::Sample<DielectricBSDF>(hitResult, wi, wo, throughput, rngState);
+			break;
+		case Material::Type::CONDUCTOR:
+			scattered = BSDF::Sample<ConductorBSDF>(hitResult, wi, wo, throughput, rngState);
+			break;
+		default:
+			break;
+		}
+
+		if (scattered)
 		{
 			// Inverse ray transformation to world space
 			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));

@@ -6,37 +6,32 @@ struct Material {
 
 	enum struct Type : char {
 		DIFFUSE,
-		CONDUCTOR,
-		DIELECTRIC
+		DIELECTRIC,
+		CONDUCTOR
 	};
 
-	//union {
-	//	struct {
-	//		float3 emission;
-	//	} light;
-	//	struct {
-	//		float3 albedo;
-	//	} diffuse;
-	//	struct {
-	//		float3 albedo;
-	//		float roughness;
-	//	} plastic;
-	//	struct {
-	//		float ior;
-	//		float roughness;
-	//	} dielectric;
-	//};
-	float3 diffuse;
-	float ior;
+	union {
+		struct {
+			float3 albedo;
+		} diffuse;
+		struct {
+			float3 albedo;
+			float roughness;
+			float transmittance;
+			float ior;
+		} dielectric;
+		struct {
+			float3 ior;
+			float3 k;
+			float roughness;
+		} conductor;
+	};
 
 	float3 emissive;
-	float roughness;
-
-	float transmittance;
 	float opacity;
 
 	int diffuseMapId = -1;
-	//Type type;
+	Type type;
 };
 
 struct HitResult
