@@ -28,7 +28,7 @@ public:
 	std::vector<BVH*> GetBVH() { return m_Bvh; }
 	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
-	int AddTexture(const std::string& filename, Texture::Type type);
+	int AddTexture(Texture& texture);
 	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
 
 	bool SendDataToDevice();

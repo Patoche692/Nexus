@@ -1,5 +1,7 @@
 #include "OBJLoader.h"
 #include <vector>
+#include "stb_image.h"
+#include "IMGLoader.h"
 
 Assimp::Importer OBJLoader::m_Importer;
 
@@ -84,6 +86,10 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
 		newMaterial.emissive = make_float3(emission.r, emission.g, emission.b);
 
+		float intensity = 1.0f;
+		material->Get(AI_MATKEY_EMISSIVE_INTENSITY, intensity);
+		newMaterial.emissive *= intensity;
+
 		float ior = 1.45f;
 		aiGetMaterialFloat(material, AI_MATKEY_REFRACTI, &ior);
 		newMaterial.dielectric.ior = ior;
@@ -99,23 +105,46 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{
 			aiString mPath;
-			std::string materialPath;
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &mPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
 			{
-				materialPath = mPath.data;
-				materialPath = path + materialPath;
-				newMaterial.diffuseMapId = assetManager->AddTexture(materialPath, Texture::Type::DIFFUSE);
+				Texture newTexture;
+				const aiTexture* texture = scene->GetEmbeddedTexture(mPath.data);
+				if (texture)
+				{
+					if (texture->mHeight == 0)
+					{
+						newTexture = IMGLoader::LoadIMG(texture);
+					}
+				}
+				else{
+					const std::string materialPath = path + mPath.C_Str();
+					newTexture = IMGLoader::LoadIMG(materialPath);
+				}
+				newTexture.type = Texture::Type::DIFFUSE;
+				newMaterial.diffuseMapId = assetManager->AddTexture(newTexture);
 			}
 		}
 		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
 		{
 			aiString mPath;
-			std::string materialPath;
 			if (material->GetTexture(aiTextureType_EMISSIVE, 0, &mPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
 			{
-				materialPath = mPath.data;
-				materialPath = path + materialPath;
-				newMaterial.emissiveMapId = assetManager->AddTexture(materialPath, Texture::Type::EMISSIVE);
+				Texture newTexture;
+				const aiTexture* texture = scene->GetEmbeddedTexture(mPath.data);
+				if (texture)
+				{
+					if (texture->mHeight == 0)
+					{
+						newTexture = IMGLoader::LoadIMG(texture);
+					}
+				}
+				else
+				{
+					const std::string materialPath = path + mPath.C_Str();
+					newTexture = IMGLoader::LoadIMG(materialPath);
+				}
+				newTexture.type = Texture::Type::EMISSIVE;
+				newMaterial.emissiveMapId = assetManager->AddTexture(newTexture);
 			}
 		}
 		materialIdx[i] = assetManager->AddMaterial(newMaterial);

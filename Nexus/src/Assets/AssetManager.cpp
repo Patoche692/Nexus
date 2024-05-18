@@ -47,26 +47,23 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 	m_InvalidMaterials.insert(index);
 }
 
-int AssetManager::AddTexture(const std::string& filename, Texture::Type type)
+int AssetManager::AddTexture(Texture& texture)
 {
-	Texture newTexture = IMGLoader::LoadIMG(filename);
-	newTexture.type = type;
-	if (newTexture.pixels == NULL)
+	if (texture.pixels == NULL)
 	{
-		std::cout << "AssetManager: Failed to load texture " << filename << std::endl;
 		return -1;
 	}
 
-	if (newTexture.type == Texture::Type::DIFFUSE)
+	if (texture.type == Texture::Type::DIFFUSE)
 	{
-		m_DiffuseMaps.push_back(newTexture);
+		m_DiffuseMaps.push_back(texture);
 		Texture& m = m_DiffuseMaps[m_DiffuseMaps.size() - 1];
 		newDeviceTexture(m, m_DiffuseMaps.size());
 		return m_DiffuseMaps.size() - 1;
 	}
-	else if (newTexture.type == Texture::Type::EMISSIVE)
+	else if (texture.type == Texture::Type::EMISSIVE)
 	{
-		m_EmissiveMaps.push_back(newTexture);
+		m_EmissiveMaps.push_back(texture);
 		Texture& m = m_EmissiveMaps[m_EmissiveMaps.size() - 1];
 		newDeviceTexture(m, m_EmissiveMaps.size());
 		return m_EmissiveMaps.size() - 1;

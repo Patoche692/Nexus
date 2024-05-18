@@ -32,8 +32,10 @@ inline __device__ uint32_t toColorUInt(float3 color)
 // Approximated ACES tonemapping by Krzysztof Narkowicz. See https://graphics-programming.org/resources/tonemapping/index.html
 inline __device__ float3 tonemap(float3 color)
 {
+	// Tungsten renderer filmic tonemapping to compare my results
 	//float3 x = fmaxf(make_float3(0.0f), color - 0.004f);
 	//return (x * (6.2f * x + 0.5f)) / (x * (6.2f * x + 1.7f) + 0.06f);
+
 	color *= 0.6f; // Exposure
 	const float a = 2.51f;
 	const float b = 0.03f;
@@ -114,7 +116,6 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 			hitResult.material.emissive = 3 *make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
 			//if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0)
 			//	printf("emissive map: %f, %f, %f\n", hitResult.material.emissive.x, hitResult.material.emissive.y, hitResult.material.emissive.z);
-
 		}
 
 		// Normal flipping
