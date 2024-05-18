@@ -1,10 +1,13 @@
 #include "Scene.h"
 #include "Cuda/Pathtracer.cuh"
 #include "Utils/cuda_math.h"
+#include "Assets/IMGLoader.h"
+
 
 Scene::Scene(uint32_t width, uint32_t height)
 	:m_Camera(std::make_shared<Camera>(make_float3(0.0f, 4.0f, 14.0f), make_float3(0.0f, 0.0f, -1.0f), 45.0f, width, height, 5.0f, 0.0f))
 {
+	InitDeviceSceneData();
 }
 
 void Scene::Reset()
@@ -50,6 +53,12 @@ void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::strin
 		CreateMeshInstance(i);
 	if (m_MeshInstances.size() > 0)
 		BuildTLAS();
+}
+
+void Scene::AddHDRMap(const std::string& filePath, const std::string& fileName)
+{
+	m_HdrMap = IMGLoader::LoadIMG(filePath + fileName);
+	SendHDRMapToDevice(m_HdrMap);
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)

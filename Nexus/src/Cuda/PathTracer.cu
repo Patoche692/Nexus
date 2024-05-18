@@ -12,6 +12,7 @@
 
 
 __constant__ __device__ CameraData cameraData;
+__constant__ __device__ SceneData sceneData;
 extern __constant__ __device__ Material* materials;
 extern __constant__ __device__ cudaTextureObject_t* diffuseMaps;
 extern __constant__ __device__ cudaTextureObject_t* emissiveMaps;
@@ -58,7 +59,34 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
-			return currentThroughput * make_float3(0.02f) + emission;
+		{ 
+			float3 backgroundColor;
+			if (sceneData.hasHdrMap)
+			{
+				float3 direction = currentRay.direction;
+				//float r = sqrtf(dot(direction, direction));
+				//float theta = acos(direction.y / r);
+				//float phi = Utils::SgnE(direction.x) * acos(direction.z / sqrtf(direction.z * direction.z + direction.x * direction.x));
+				//float longitude = Utils::ToDegrees(theta);
+				//float latitude = Utils::ToDegrees(phi);
+
+				//float2 pixel = make_float2(
+				//	(longitude + 180) / 100.0f,
+				//	(latitude + 90) / 100.0f
+				//);
+
+				float2 pixel = make_float2(atan(direction.z / direction.x), asin(direction.y));
+				pixel *= make_float2(-0.1591, 0.3183);
+				pixel += 0.5;
+				pixel.y = 1. - pixel.y;
+				pixel.x *= 2;
+
+				backgroundColor = make_float3(tex2D<float4>(sceneData.hdrMap, pixel.x, pixel.y));
+			}
+			else
+				backgroundColor = make_float3(0.02f);
+			return currentThroughput * backgroundColor + emission;
+		}
 
 		HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
@@ -86,7 +114,10 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		}
 		if (hitResult.material.emissiveMapId != -1) {
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.emissive = make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
+			hitResult.material.emissive = 3 *make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
+			//if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0)
+			//	printf("emissive map: %f, %f, %f\n", hitResult.material.emissive.x, hitResult.material.emissive.y, hitResult.material.emissive.z);
+
 		}
 
 		// Normal flipping
@@ -219,6 +250,45 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumb
 
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
+}
+
+void InitDeviceSceneData()
+{
+	SceneData scene;
+	scene.hasHdrMap = false;
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
+}
+
+void SendHDRMapToDevice(const Texture& map)
+{
+	// Channel descriptor for 4 Channels (RGBA)
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+	cudaArray_t cuArray;
+	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, map.width, map.height));
+
+	const size_t spitch = map.width * 4 * sizeof(float);
+	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, map.pixels, spitch, map.width * 4 * sizeof(float), map.height, cudaMemcpyHostToDevice));
+
+	cudaResourceDesc resDesc;
+	memset(&resDesc, 0, sizeof(resDesc));
+	resDesc.resType = cudaResourceTypeArray;
+	resDesc.res.array.array = cuArray;
+
+	cudaTextureDesc texDesc;
+	memset(&texDesc, 0, sizeof(texDesc));
+	texDesc.addressMode[0] = cudaAddressModeWrap;
+	texDesc.addressMode[1] = cudaAddressModeWrap;
+	texDesc.filterMode = cudaFilterModeLinear;
+	texDesc.readMode = cudaReadModeElementType;
+	texDesc.normalizedCoords = 1;
+
+	cudaTextureObject_t texObject = 0;
+	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
+
+	SceneData scene;
+	scene.hasHdrMap = true;
+	scene.hdrMap = texObject;
+	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
 }
 
 void SendCameraDataToDevice(Camera* camera)

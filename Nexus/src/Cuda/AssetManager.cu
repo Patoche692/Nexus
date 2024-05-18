@@ -44,14 +44,14 @@ void newDeviceMaterial(Material& material, uint32_t size)
 	CudaMemory::SetToIndex(materialsSymbolAddress, size - 1, material);
 }
 
-void newDeviceTexture(Texture& texture, uint32_t size, Texture::Type type) {
+void newDeviceTexture(Texture& texture, uint32_t size) {
 	
 	cudaTextureObject_t** texturesSymbolAddress;
 
-	if (type == Texture::Type::DIFFUSE) {
+	if (texture.type == Texture::Type::DIFFUSE) {
 		checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, diffuseMaps));
 	}
-	else if (type == Texture::Type::EMISSIVE) {
+	else if (texture.type == Texture::Type::EMISSIVE) {
 		checkCudaErrors(cudaGetSymbolAddress((void**)&texturesSymbolAddress, emissiveMaps));
 	}
 		

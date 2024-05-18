@@ -104,7 +104,18 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 			{
 				materialPath = mPath.data;
 				materialPath = path + materialPath;
-				newMaterial.diffuseMapId = assetManager->AddTexture(materialPath);
+				newMaterial.diffuseMapId = assetManager->AddTexture(materialPath, Texture::Type::DIFFUSE);
+			}
+		}
+		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
+		{
+			aiString mPath;
+			std::string materialPath;
+			if (material->GetTexture(aiTextureType_EMISSIVE, 0, &mPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			{
+				materialPath = mPath.data;
+				materialPath = path + materialPath;
+				newMaterial.emissiveMapId = assetManager->AddTexture(materialPath, Texture::Type::EMISSIVE);
 			}
 		}
 		materialIdx[i] = assetManager->AddMaterial(newMaterial);

@@ -23,9 +23,10 @@ struct Texture
 		return pixels[index];
 	}
 
-	uint32_t width;
-	uint32_t height;
-	uint32_t channels;
+	uint32_t width = 0;
+	uint32_t height = 0;
+	uint32_t channels = 0;
 
-	float3* pixels;
+	float3* pixels = nullptr;
+	Type type = Type::DIFFUSE;
 };

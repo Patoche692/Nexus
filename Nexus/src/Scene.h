@@ -36,6 +36,7 @@ public:
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
 	std::vector<MeshInstance>& GetMeshInstances() { return m_MeshInstances; }
 	void CreateMeshInstanceFromFile(const std::string& filePath, const std::string& fileName);
+	void AddHDRMap(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
 	bool SendDataToDevice();
@@ -47,6 +48,7 @@ private:
 	std::vector<MeshInstance> m_MeshInstances;
 	std::set<uint32_t> m_InvalidMeshInstances;
 	std::shared_ptr<TLAS> m_Tlas;
+	Texture m_HdrMap;
 
 	AssetManager m_AssetManager;
 };

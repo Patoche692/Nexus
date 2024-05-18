@@ -177,6 +177,19 @@ void Renderer::RenderUI(Scene& scene)
 					checkCudaErrors(cudaDeviceSynchronize());
 				}
 			}
+			if (ImGui::MenuItem("Load HDR map", "Ctrl+H"))
+			{
+				std::string fullPath = FileDialog::OpenFile(
+					"HDR file (*.hdr)\0*.hdr;*.exr\0"
+				);
+				if (!fullPath.empty())
+				{
+					std::string fileName, filePath;
+					Utils::GetPathAndFileName(fullPath, filePath, fileName);
+					scene.AddHDRMap(filePath, fileName);
+					m_FrameNumber = 0;
+				}
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
