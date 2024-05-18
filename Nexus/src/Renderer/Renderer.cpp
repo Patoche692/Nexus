@@ -7,11 +7,14 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "FileDialog.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
 #include "windows.h"
 #include <string>
 #include <iostream>
+#include <direct.h>
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	:m_ViewportWidth(width), m_ViewportHeight(height)
@@ -35,6 +38,9 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
 	m_DisplayFPSTimer = glfwGetTime();
+
+	GLFWwindow* glfwWindow = window; 
+
 }
 
 Renderer::~Renderer()
@@ -179,11 +185,6 @@ void Renderer::RenderUI(Scene& scene)
 				}
 			}
 
-			// TODO or here
-			if (ImGui::MenuItem("Save Screenshot", "Ctrl+S")) {
-				SaveScreenshot("screenshot.png"); // Or prompt for a file path
-			}
-
 			if (ImGui::MenuItem("Load HDR map", "Ctrl+H"))
 			{
 				std::string fullPath = FileDialog::OpenFile(
@@ -197,6 +198,11 @@ void Renderer::RenderUI(Scene& scene)
 					m_FrameNumber = 0;
 				}
 			}
+
+			if (ImGui::MenuItem("Save Screenshot", "Ctrl+S")) {
+				SaveScreenshot("screenshot.png");
+			}
+
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -371,16 +377,25 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	}
 }
 
-void Renderer::SaveScreenshot(const std::string& filepath)
+void Renderer::SaveScreenshot(const std::string& filename)
 {
-	int width = m_ViewportWidth;
-	int height = m_ViewportHeight;
-	std::vector<unsigned char> pixels(width * height * 3);
+	char buffer[FILENAME_MAX];
+	std::string cwd = _getcwd(buffer, FILENAME_MAX);
+	std::string filepath = cwd + "\\" + filename;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+	int width = m_Texture->GetWidth();
+	int height = m_Texture->GetHeight();
+	std::vector<unsigned char> pixels(width * height * 4);
 
-	stbi_flip_vertically_on_write(1); // flip image before writing => necessary?
-	stbi_write_png(filepath.c_str(), width, height, 3, pixels.data(), width * 3);
+	glBindTexture(GL_TEXTURE_2D, m_Texture->GetHandle());
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_flip_vertically_on_write(1);
+	if (!stbi_write_png(filepath.c_str(), width, height, 4, pixels.data(), width * 4))
+	{
+		std::cerr << "Failed to save screenshot to " << filepath << std::endl;
+	}
+
+	std::cout << "Screenshot saved at: " << filepath.c_str() << std::endl;
 }
