@@ -30,7 +30,7 @@ void AssetManager::AddMesh(const std::string& path, const std::string filename)
 void AssetManager::AddMaterial()
 {
 	Material material;
-	material.diffuse = make_float3(0.2f, 0.2f, 0.2f);
+	material.diffuse.albedo = make_float3(0.2f, 0.2f, 0.2f);
 	AddMaterial(material);
 }
 
@@ -94,11 +94,7 @@ std::string AssetManager::GetMaterialsString()
 std::string AssetManager::GetMaterialTypesString()
 {
 	std::string materialTypes;
-	materialTypes.append("Light");
-	materialTypes.push_back('\0');
 	materialTypes.append("Diffuse");
-	materialTypes.push_back('\0');
-	materialTypes.append("Plastic");
 	materialTypes.push_back('\0');
 	materialTypes.append("Dielectric");
 	materialTypes.push_back('\0');
