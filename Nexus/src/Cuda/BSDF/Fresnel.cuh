@@ -41,6 +41,32 @@ public:
 		return min(1.0f, t * Luminance(F0));
 	}
 
+	inline static __device__ float ComplexReflectance(float cosThetaI, const float eta, const float k)
+	{
+		cosThetaI = clamp(cosThetaI, 0.0f, 1.0f);
+
+		float cosThetaISq = cosThetaI * cosThetaI;
+		float sinThetaISq = max(1.0f - cosThetaISq, 0.0f);
+		float sinThetaIQu = sinThetaISq * sinThetaISq;
+
+		float innerTerm = eta * eta - k * k - sinThetaISq;
+		float aSqPlusBSq = sqrtf(max(innerTerm * innerTerm + 4.0f * eta * eta * k * k, 0.0f));
+		float a = sqrtf(max((aSqPlusBSq + innerTerm) * 0.5f, 0.0f));
+
+		float Rs = ((aSqPlusBSq + cosThetaISq) - (2.0f * a * cosThetaI)) /
+			((aSqPlusBSq + cosThetaISq) + (2.0f * a * cosThetaI));
+		float Rp = ((cosThetaISq * aSqPlusBSq + sinThetaIQu) - (2.0f * a * cosThetaI * sinThetaISq)) /
+			((cosThetaISq * aSqPlusBSq + sinThetaIQu) + (2.0f * a * cosThetaI * sinThetaISq));
+
+		return 0.5f * (Rs + Rs * Rp);
+	}
+
+	inline static __device__ float3 ComplexReflectance(float cosThetaI, const float eta, const float3 k)
+	{
+		return make_float3(ComplexReflectance(cosThetaI, eta, k.x), ComplexReflectance(cosThetaI, eta, k.y), ComplexReflectance(cosThetaI, eta, k.z));
+	}
+
+
 private:
 	inline static __device__ float Luminance(const float3& rgb)
 	{
