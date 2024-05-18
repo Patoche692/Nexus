@@ -1,3 +1,4 @@
+#pragma once
 #include <cuda_runtime_api.h>
 #include "Utils/cuda_math.h"
 
@@ -61,9 +62,9 @@ public:
 		return 0.5f * (Rs + Rs * Rp);
 	}
 
-	inline static __device__ float3 ComplexReflectance(float cosThetaI, const float eta, const float3 k)
+	inline static __device__ float3 ComplexReflectance(float cosThetaI, const float3 eta, const float3 k)
 	{
-		return make_float3(ComplexReflectance(cosThetaI, eta, k.x), ComplexReflectance(cosThetaI, eta, k.y), ComplexReflectance(cosThetaI, eta, k.z));
+		return make_float3(ComplexReflectance(cosThetaI, eta.x, k.x), ComplexReflectance(cosThetaI, eta.y, k.y), ComplexReflectance(cosThetaI, eta.z, k.z));
 	}
 
 

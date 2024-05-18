@@ -1,3 +1,4 @@
+#pragma once
 
 #include "Cuda/Random.cuh"
 #include "Utils/cuda_math.h"
@@ -8,8 +9,8 @@
 struct ConductorBSDF
 {
 	float alpha;
-	float eta;
-	float3 k = make_float3(1.0, 0.5, 1.0);
+	float3 eta;
+	float3 k;
 
 	inline __device__ bool Sample(const HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
 	{
@@ -18,7 +19,7 @@ struct ConductorBSDF
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		float3 F = Fresnel::ComplexReflectance(wiDotM, 1 / hitResult.material.ior, k);
+		float3 F = Fresnel::ComplexReflectance(wiDotM, hitResult.material.conductor.ior, k);
 
 		wo = reflect(-wi, m);
 
@@ -39,8 +40,9 @@ struct ConductorBSDF
 
 	inline __device__ void PrepareBSDFData(const float3& wi, const Material& material)
 	{
-		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.roughness * material.roughness, 1.0e-4f, 1.0f);
-		eta = wi.z < 0.0f ? material.ior : 1 / material.ior;
+		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.conductor.roughness * material.conductor.roughness, 1.0e-4f, 1.0f);
+		eta = wi.z < 0.0f ? material.conductor.ior : 1 / material.conductor.ior;
+		k = material.conductor.k;
 	}
 
 

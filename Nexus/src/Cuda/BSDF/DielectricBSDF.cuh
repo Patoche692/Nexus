@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cuda_runtime_api.h>
 #include "Utils/cuda_math.h"
 #include "Geometry/Material.h"
@@ -17,8 +18,8 @@ struct DielectricBSDF
 
 	inline __device__ void PrepareBSDFData(const float3& wi,  const Material& material)
 	{
-		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.roughness * material.roughness, 1.0e-4f, 1.0f);
-		eta = wi.z < 0.0f ? material.ior : 1 / material.ior;
+		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.dielectric.roughness * material.dielectric.roughness, 1.0e-4f, 1.0f);
+		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
 	}
 
 	inline __device__ bool Sample(const HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
@@ -28,7 +29,7 @@ struct DielectricBSDF
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		const float fr = Fresnel::DieletricReflectance(1 / hitResult.material.ior, wiDotM, cosThetaT);
+		const float fr = Fresnel::DieletricReflectance(1 / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
 
 		// Randomly select a reflected or transmitted ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
@@ -54,7 +55,7 @@ struct DielectricBSDF
 		else
 		{
 			// Choose between diffuse and refraction
-			if (Random::Rand(rngState) < hitResult.material.transmittance)
+			if (Random::Rand(rngState) < hitResult.material.dielectric.transmittance)
 			{
 				// Refraction
 				wo = (eta * wiDotM - Utils::SgnE(wiDotM) * cosThetaT) * m - eta * wi;
@@ -68,13 +69,13 @@ struct DielectricBSDF
 				if (wo.z * wi.z > 0.0f)
 					return false;
 
-				throughput = hitResult.material.diffuse * weight;
+				throughput = hitResult.material.dielectric.albedo * weight;
 			}
 			else
 			{
 				//Diffuse
 				wo = Utils::SgnE(wi.z) * Random::RandomCosineHemisphere(rngState);
-				throughput = hitResult.material.diffuse;
+				throughput = hitResult.material.dielectric.albedo;
 			}
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)

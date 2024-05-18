@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cuda_runtime_api.h>
 #include "Utils/Utils.h"
 #include "Utils/cuda_math.h"
