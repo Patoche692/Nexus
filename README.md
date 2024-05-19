@@ -15,16 +15,16 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 ![cannelle_et_fromage3](https://github.com/Patoche692/PathTracer/assets/54531293/1356478c-4c1c-4192-93fb-3798a642b5f4)
 ![stormtrooper](https://github.com/Patoche692/PathTracer/assets/54531293/865d00db-9711-469a-be3f-c5fe647e4d72)
 ![mustang](https://github.com/Patoche692/PathTracer/assets/54531293/ffa3f777-da30-4935-92d9-2c21f2d0bc0b)
-![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
+![water2](https://github.com/Patoche692/Nexus/assets/54531293/7d4a0d12-b630-4024-915d-b26194f49ca7)
+![spider](https://github.com/Patoche692/Nexus/assets/54531293/8b7cdec1-ff7e-42b2-a093-f76261d4e108)
 ![bathroom5](https://github.com/Patoche692/PathTracer/assets/54531293/d3a828f9-3cb1-4bf7-abce-e193a9968538)
 ![piano3](https://github.com/Patoche692/PathTracer/assets/54531293/905c2bce-2aac-4b43-818e-ff928d16aab4)
 ![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
 ![lamp](https://github.com/Patoche692/PathTracer/assets/54531293/d8344999-7289-43be-bf91-b9e99ff67e7d)
-![water](https://github.com/Patoche692/Nexus/assets/54531293/155c32d7-f0c1-4c2d-9e0e-6745d73c67e6)
-![spider](https://github.com/Patoche692/Nexus/assets/54531293/8b7cdec1-ff7e-42b2-a093-f76261d4e108)
 <!--![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)-->
 <!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
 ![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
+![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
 ![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
 <!--![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)-->
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
@@ -40,6 +40,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 - Materials:
    - Diffuse BSDF (Lambertian)
    - Rough dielectric BSDF (Beckmann microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
+   - Rough conductor BSDF
 - Importance sampling: cosine weighted for diffuse materials, VNDF for dielectrics
 
 ## Prerequisites
@@ -75,6 +76,7 @@ Nexus requires the following:
 - [CUDA math helper](https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_math.h) for common operations on CUDA vector types
 - [Assimp](https://github.com/assimp/assimp) for model loading
 - [ImGui](https://github.com/ocornut/imgui) for user interface
+- [stb](https://github.com/nothings/stb) for importing and exporting images
 
 
 ## Resources
