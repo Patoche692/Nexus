@@ -19,25 +19,28 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 ![bathroom5](https://github.com/Patoche692/PathTracer/assets/54531293/d3a828f9-3cb1-4bf7-abce-e193a9968538)
 ![piano3](https://github.com/Patoche692/PathTracer/assets/54531293/905c2bce-2aac-4b43-818e-ff928d16aab4)
 ![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
-![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
 ![lamp](https://github.com/Patoche692/PathTracer/assets/54531293/d8344999-7289-43be-bf91-b9e99ff67e7d)
+![water](https://github.com/Patoche692/Nexus/assets/54531293/155c32d7-f0c1-4c2d-9e0e-6745d73c67e6)
+![spider](https://github.com/Patoche692/Nexus/assets/54531293/8b7cdec1-ff7e-42b2-a093-f76261d4e108)
 <!--![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)-->
 <!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
 ![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
+![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
 <!--![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)-->
-![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)
+<!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 
 ## Features
 - Interactive camera with thin lens approximation: FOV, defocus blur
 - Triangle meshes with an SAH-based BVH (built on the CPU, ray traversal on the GPU)
-- The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh as well as dynamic scenes with objects transform
+- The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh as well as dynamic scenes with object transforms
 - Model loader: obj, ply, fbx, glb, gltf, 3ds, blend with Assimp
-- Diffuse texture mapping
-- BSDF:
-   - Diffuse (Lambertian)
-   - Rough dielectric (Microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
-- Importance sampling: cosine weighted for diffuse materials, VNDF sampling for dielectrics
+- Texture mapping (diffuse, emissive)
+- HDR environment maps
+- Materials:
+   - Diffuse BSDF (Lambertian)
+   - Rough dielectric BSDF (Beckmann microfacet model based on the paper [Microfacet Models for Refraction through Rough Surfaces](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449))
+- Importance sampling: cosine weighted for diffuse materials, VNDF for dielectrics
 
 ## Prerequisites
 Nexus requires the following:
@@ -61,7 +64,7 @@ Nexus requires the following:
 - Open the Visual Studio solution. Right click on the Nexus solution and set it as startup project. Press F5 to build the project
 
 ## Usage
-- Go to file -> open to load a new OBJ scene. The OBJ loading is not multithreaded and the BVH construction might take some time depending on the model size
+- Go to file -> open to load a new scene. The model loading is not multithreaded and the BVH construction might take some time depending on the model size
 - Controls: hold right click and use WASD keys to move and the mouse to change the camera orientation
 - You can change the meshes and camera properties in the UI
 
@@ -92,5 +95,4 @@ Nexus requires the following:
 - [Piano](https://blendswap.com/blend/29080) by [Roy](https://blendswap.com/profile/1508348)
 - [Iphone 15 Pro Max](https://sketchfab.com/3d-models/free-iphone15-pro-max-ultra-high-quality-1fb1717d5e204302bfe9969ea77293a4) by [Navarion](https://sketchfab.com/Navarion)
 - [Lamp](https://www.blendswap.com/blend/6885) by [UP3D](https://www.blendswap.com/profile/4758)
-<!--- [Rolls Royce](https://www.blenderkit.com/asset-gallery-detail/3654527a-4b8d-4392-a863-515276fbf541/) by [Jayrenn Reeve](https://www.blenderkit.com/asset-gallery?query=author_id:114910)-->
 - [Coffee Maker](https://blendswap.com/blend/16368) by [cekuhnen](https://blendswap.com/profile/13522)
