@@ -11,8 +11,8 @@
 #include "FileDialog.h"
 
 
-Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
-	:m_ViewportWidth(width), m_ViewportHeight(height)
+Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene)
+	:m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -30,9 +30,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
 	m_DisplayFPSTimer = glfwGetTime();
-
-	GLFWwindow* glfwWindow = window; 
-
 }
 
 Renderer::~Renderer()
@@ -86,70 +83,6 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-static bool DrawFloat3Control(const std::string& label, float3& values, float resetValue = 0.0f, float columnWidth = 80.0f)
-{
-	ImGui::PushID(label.c_str());
-
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::Text(label.c_str());
-	ImGui::NextColumn();
-
-	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-
-	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-	bool modified = false;
-
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-	if (ImGui::Button("X", buttonSize))
-		values.x = resetValue, modified = true;
-	ImGui::PopStyleColor(3);
-
-	ImGui::SameLine();
-	if (ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f"))
-		modified = true;
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-	if (ImGui::Button("Y", buttonSize))
-		values.y = resetValue, modified = true;;
-	ImGui::PopStyleColor(3);
-
-	ImGui::SameLine();
-	if (ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f"))
-		modified = true;
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-	if (ImGui::Button("Z", buttonSize))
-		values.z = resetValue, modified = true;
-	ImGui::PopStyleColor(3);
-
-	ImGui::SameLine();
-	if (ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f"))
-		modified = true;
-	ImGui::PopItemWidth();
-
-	ImGui::PopStyleVar();
-
-	ImGui::Columns(1);
-
-	ImGui::PopID();
-
-	return modified;
-}
-
 void Renderer::RenderUI(Scene& scene)
 {
 	ImGui::DockSpaceOverViewport();
@@ -200,6 +133,40 @@ void Renderer::RenderUI(Scene& scene)
 		ImGui::EndMainMenuBar();
 	}
 
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("Viewport");
+
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && !scene.IsEmpty())
+	{
+		ImVec2 viewportPos = ImGui::GetCursorScreenPos();
+		ImVec2 mousePos = ImGui::GetMousePos();
+		int2 hoveredPixel = make_int2(mousePos.x - viewportPos.x, mousePos.y - viewportPos.y);
+		hoveredPixel.y = m_ViewportHeight - hoveredPixel.y;
+
+		if (hoveredPixel.x >= 0 && hoveredPixel.x < m_ViewportWidth && hoveredPixel.y >= 0 && hoveredPixel.y < m_ViewportHeight)
+		{
+			std::shared_ptr<Camera> camera = scene.GetCamera();
+			Ray ray = camera->RayThroughPixel(hoveredPixel);
+			std::shared_ptr<TLAS> tlas = scene.GetTLAS();
+			tlas->Intersect(ray);
+			m_HierarchyPannel.SetSelectionContext(ray.hit.instanceIdx);
+		}
+	}
+
+
+	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
+	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
+
+	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
+	OnResize(viewportWidth, viewportHeight);
+
+	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+
+	ImGui::End();
+	ImGui::PopStyleVar();
+	
+	m_HierarchyPannel.OnImGuiRender();
+
 	ImGui::Begin("Settings");
 
 	ImGui::Spacing();
@@ -222,110 +189,6 @@ void Renderer::RenderUI(Scene& scene)
 
 	ImGui::End();
 
-	ImGui::Begin("Scene");
-
-	AssetManager& assetManager = scene.GetAssetManager();
-	std::vector<Material>& materials = assetManager.GetMaterials();
-	std::string materialsString = assetManager.GetMaterialsString();
-	std::string materialTypes = assetManager.GetMaterialTypesString();
-	std::vector<MeshInstance>& meshInstances = scene.GetMeshInstances();
-
-	for (int i = 0; i < meshInstances.size(); i++)
-	{
-		MeshInstance& meshInstance = meshInstances[i];
-		ImGui::PushID(i);
-
-		if (ImGui::CollapsingHeader(meshInstance.name.c_str()))
-		{
-			ImGui::SeparatorText("Transform");
-
-			if (DrawFloat3Control("Location", meshInstance.position))
-				scene.InvalidateMeshInstance(i);
-
-			if (DrawFloat3Control("Rotation", meshInstance.rotation))
-				scene.InvalidateMeshInstance(i);
-
-			if (DrawFloat3Control("Scale", meshInstance.scale, 1.0f))
-				scene.InvalidateMeshInstance(i);
-
-			if (ImGui::TreeNode("Material"))
-			{
-				if (meshInstance.materialId == -1)
-				{
-					if (ImGui::Button("Custom material"))
-						meshInstance.materialId = 0;
-				}
-				else
-				{
-
-					if (ImGui::Combo("Id", &meshInstance.materialId, materialsString.c_str()))
-						scene.InvalidateMeshInstance(i);
-
-					Material& material = materials[meshInstance.materialId];
-					int type = (int)material.type;
-
-					if (ImGui::Combo("Type", &type, materialTypes.c_str()))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-
-					material.type = (Material::Type)type;
-
-					switch (material.type)
-					{
-					case Material::Type::DIFFUSE:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.diffuse.albedo))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::DIELECTRIC:
-						if (ImGui::ColorEdit3("Albedo", (float*)&material.dielectric.albedo))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Transmittance", &material.dielectric.transmittance, 0.01f, 0.0f, 1.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					case Material::Type::CONDUCTOR:
-						if (ImGui::DragFloat("Roughness", &material.conductor.roughness, 0.01f, 0.0f, 1.0f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat3("Refraction index", (float*)&material.conductor.ior, 0.01f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						if (ImGui::DragFloat3("k", (float*)&material.conductor.k, 0.01f))
-							assetManager.InvalidateMaterial(meshInstance.materialId);
-						break;
-					}
-					if (ImGui::ColorEdit3("Emission", (float*)&material.emissive))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-					if (ImGui::DragFloat("Intensity", (float*)&material.intensity, 0.1f, 0.0f, 1000.0f))
-						assetManager.InvalidateMaterial(meshInstance.materialId);
-				}
-				ImGui::TreePop();
-				ImGui::Spacing();
-			}
-
-		}
-		ImGui::PopID();
-	}
-
-	ImGui::Spacing();
-	ImGui::Separator();
-
-	ImGui::End();
-
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("Viewport");
-	
-	uint32_t viewportWidth = ImGui::GetContentRegionAvail().x;
-	uint32_t viewportHeight = ImGui::GetContentRegionAvail().y;
-
-	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
-	OnResize(viewportWidth, viewportHeight);
-
-	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
-
-	ImGui::End();
-
-	ImGui::PopStyleVar();
 }
 
 void Renderer::UpdateTimer(float deltaTime)

@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "Utils/cuda_math.h"
 #include "Ray.h"
 
@@ -34,6 +35,18 @@ struct Material {
 	int diffuseMapId = -1;
 	int emissiveMapId = -1;
 	Type type;
+
+	static std::string GetMaterialTypesString()
+	{
+		std::string materialTypes;
+		materialTypes.append("Diffuse");
+		materialTypes.push_back('\0');
+		materialTypes.append("Dielectric");
+		materialTypes.push_back('\0');
+		materialTypes.append("Conductor");
+		materialTypes.push_back('\0');
+		return materialTypes;
+	}
 };
 
 struct HitResult

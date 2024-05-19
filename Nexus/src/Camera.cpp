@@ -97,12 +97,6 @@ void Camera::OnUpdate(float ts)
 
 		m_Invalid = true;
 	}
-
-	// TODO either here
-	//if (Input::IsKeyDown(GLFW_KEY_F12)) {
-	//	RendererSaveScreenshot("screenshot.png", m_ViewportWidth, m_ViewportHeight);
-	//	std::cout << "Screenshot saved!" << std::endl;
-	//}
 }
 
 void Camera::OnResize(uint32_t width, uint32_t height)
@@ -123,6 +117,26 @@ void Camera::SetVerticalFOV(float verticalFOV)
 float Camera::GetRotationSpeed()
 {
 	return 0.0008f;
+}
+
+// Returns the ray traversing the given pixel
+Ray Camera::RayThroughPixel(int2 pixel)
+{
+	float3 upDirection = cross(m_RightDirection, m_ForwardDirection);
+
+	float x = pixel.x / (float)m_ViewportWidth;
+	float y = pixel.y / (float)m_ViewportHeight;
+
+	float aspectRatio = m_ViewportWidth / (float)m_ViewportHeight;
+	float halfHeight = m_FocusDist * tanf(m_VerticalFOV / 2.0f * M_PI / 180.0f);
+	float halfWidth = aspectRatio * halfHeight;
+
+	float3 viewportX = 2 * halfWidth * m_RightDirection;
+	float3 viewportY = 2 * halfHeight * upDirection;
+	float3 lowerLeftCorner = m_Position - viewportX / 2.0f - viewportY / 2.0f + m_ForwardDirection * m_FocusDist;
+	float3 direction = normalize(lowerLeftCorner + x * viewportX + y * viewportY - m_Position);
+
+	return Ray(m_Position, direction);
 }
 
 bool Camera::SendDataToDevice()

@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <cuda_runtime_api.h>
+#include "Geometry/Ray.h"
 
 class Camera 
 {
@@ -24,6 +25,7 @@ public:
 	float3& GetPosition() { return m_Position; }
 	float3& GetForwardDirection() { return m_ForwardDirection; }
 	float3& GetRightDirection() { return m_RightDirection; }
+	Ray RayThroughPixel(int2 pixel);
 
 	bool IsInvalid() { return m_Invalid; }
 	void Invalidate() { m_Invalid = true; }

@@ -8,11 +8,12 @@
 #include "OpenGL/PixelBuffer.h"
 #include "OpenGL/OGLTexture.h"
 #include "Scene.h"
+#include "Panels/SceneHierarchyPanel.h"
 
 class Renderer
 {
 public:
-	Renderer(uint32_t width, uint32_t height, GLFWwindow* window);
+	Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene);
 	~Renderer();
 
 	void Reset();
@@ -38,5 +39,7 @@ private:
 	float m_MRPS = 0;
 	uint32_t m_NumRaysProcessed = 0;
 	float3* m_AccumulationBuffer;
+	Scene* m_Scene;
+	SceneHierarchyPanel m_HierarchyPannel;
 };
 

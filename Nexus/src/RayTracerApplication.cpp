@@ -3,8 +3,7 @@
 GLFWwindow* RayTracerApplication::m_Window;
 
 RayTracerApplication::RayTracerApplication(int width, int height, GLFWwindow *window)
-	:m_Renderer(width, height, window), m_Scene(width, height)
-{
+	: m_Scene(width, height), m_Renderer(width, height, window, &m_Scene) {
 	m_Window = window;
 }
 

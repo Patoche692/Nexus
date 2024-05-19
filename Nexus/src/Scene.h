@@ -18,6 +18,7 @@ public:
 	void AddMaterial(Material& material);
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
+	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }
 
 	void BuildTLAS();
