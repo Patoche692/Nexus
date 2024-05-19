@@ -113,7 +113,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		}
 		if (hitResult.material.emissiveMapId != -1) {
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.emissive = 3 *make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
+			hitResult.material.emissive = make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
 			//if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0)
 			//	printf("emissive map: %f, %f, %f\n", hitResult.material.emissive.x, hitResult.material.emissive.y, hitResult.material.emissive.z);
 		}
@@ -130,7 +130,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		}
 
 		if (fmaxf(hitResult.material.emissive) > 0.0f)
-			emission += hitResult.material.emissive * currentThroughput;
+			emission += hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
 
 
 		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)

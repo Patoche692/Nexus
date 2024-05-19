@@ -88,7 +88,15 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 
 		float intensity = 1.0f;
 		material->Get(AI_MATKEY_EMISSIVE_INTENSITY, intensity);
-		newMaterial.emissive *= intensity;
+		newMaterial.intensity = intensity;
+
+		float opacity = 1.0f;
+		material->Get(AI_MATKEY_OPACITY, opacity);
+		newMaterial.opacity = opacity;
+
+		float transmissionFactor = 0.0f;
+		material->Get(AI_MATKEY_TRANSMISSION_FACTOR, transmissionFactor);
+		newMaterial.dielectric.transmittance = transmissionFactor;
 
 		float ior = 1.45f;
 		aiGetMaterialFloat(material, AI_MATKEY_REFRACTI, &ior);
@@ -100,7 +108,6 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 			shininess = 20.0f;
 		}
 		newMaterial.dielectric.roughness = clamp(1.0f - sqrt(shininess) / 31.62278f, 0.0f, 1.0f);
-		newMaterial.dielectric.transmittance = 0.0f;
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{

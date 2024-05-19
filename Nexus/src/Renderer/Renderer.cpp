@@ -169,7 +169,7 @@ void Renderer::RenderUI(Scene& scene)
 			if (ImGui::MenuItem("Open...", "Ctrl+O"))
 			{
 				std::string fullPath = FileDialog::OpenFile(
-					"3D model (*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend;*.dae)\0*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend;*.dae\0"
+					"3D model (*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.blend;*.dae)\0*.obj;*.ply;*.stl;*.glb;*.gltf;*.fbx;*.3ds;*.x3d;*.blend;*.dae\0"
 				);
 				if (!fullPath.empty())
 				{
@@ -302,7 +302,9 @@ void Renderer::RenderUI(Scene& scene)
 							assetManager.InvalidateMaterial(meshInstance.materialId);
 						break;
 					}
-					if (ImGui::DragFloat3("Emission", (float*)&material.emissive, 0.01f))
+					if (ImGui::ColorEdit3("Emission", (float*)&material.emissive))
+						assetManager.InvalidateMaterial(meshInstance.materialId);
+					if (ImGui::DragFloat("Intensity", (float*)&material.intensity, 0.1f, 0.0f, 1000.0f))
 						assetManager.InvalidateMaterial(meshInstance.materialId);
 				}
 				ImGui::TreePop();
