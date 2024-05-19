@@ -10,6 +10,8 @@ public:
 	~IMGLoader();
 
 	static Texture LoadIMG(const std::string& pathfile);
+
+	// Load a texture embedded in an Assimp model
 	static Texture LoadIMG(const aiTexture* texture);
 
 private:

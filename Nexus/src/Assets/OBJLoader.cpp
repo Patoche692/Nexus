@@ -192,8 +192,11 @@ static void GetMeshesFromAiNode(const aiScene* scene, const aiNode* node, std::v
 std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
 {
 	const std::string filePath = path + filename;
+
+	// Pretransform all meshes for simplicity, but this will need to be removed
+	// in the future to implement proper scene hierarchy
 	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
-		| aiProcess_FlipUVs);
+		| aiProcess_FlipUVs | aiProcess_PreTransformVertices);
 
 	std::vector<Mesh> meshes;
 

@@ -7,18 +7,6 @@
 #include "Assets/AssetManager.h"
 #include "Geometry/MeshInstance.h"
 
-enum struct SceneType
-{
-	CORNELL_BOX,
-	CORNELL_BOX_SPHERE,
-	DINING_ROOM,
-	LIVING_ROOM,
-	BATHROOM,
-	ELLIE,
-	DRAGONS,
-	NEONS
-};
-
 class Scene
 {
 public:
