@@ -1,4 +1,6 @@
-#include <glm/gtc/type_ptr.hpp>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 #include "Renderer.h"
 #include "Cuda/PathTracer.cuh"
 #include "Utils/Utils.h"
@@ -8,13 +10,6 @@
 #include "imgui_impl_opengl3.h"
 #include "FileDialog.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-
-#include "windows.h"
-#include <string>
-#include <iostream>
-#include <direct.h>
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	:m_ViewportWidth(width), m_ViewportHeight(height)
@@ -24,9 +19,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	TCHAR NPath[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, NPath);
-	std::cout << NPath;
 	io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/opensans/OpenSans-Regular.ttf", 16.0f);
     ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -200,7 +192,7 @@ void Renderer::RenderUI(Scene& scene)
 			}
 
 			if (ImGui::MenuItem("Save Screenshot", "Ctrl+S")) {
-				SaveScreenshot("screenshot.png");
+				SaveScreenshot();
 			}
 
 			ImGui::EndMenu();
@@ -379,12 +371,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	}
 }
 
-void Renderer::SaveScreenshot(const std::string& filename)
+void Renderer::SaveScreenshot()
 {
-	char buffer[FILENAME_MAX];
-	std::string cwd = _getcwd(buffer, FILENAME_MAX);
-	std::string filepath = cwd + "\\" + filename;
-
 	int width = m_Texture->GetWidth();
 	int height = m_Texture->GetHeight();
 	std::vector<unsigned char> pixels(width * height * 4);
@@ -394,9 +382,24 @@ void Renderer::SaveScreenshot(const std::string& filename)
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	stbi_flip_vertically_on_write(1);
-	if (!stbi_write_png(filepath.c_str(), width, height, 4, pixels.data(), width * 4))
+
+	std::string filepath = FileDialog::SaveFile(
+		"PNG image (*.png)\0*.png\0"
+	);
+
+	const std::string extension = ".png";
+
+	if (!filepath.empty())
 	{
-		std::cerr << "Failed to save screenshot to " << filepath << std::endl;
+		// Add extension if necessary
+		if (filepath.length() < extension.length() ||
+			filepath.compare(filepath.size() - extension.size(), extension.size(), extension) != 0)
+			filepath += extension;
+
+		if (!stbi_write_png(filepath.c_str(), width, height, 4, pixels.data(), width * 4))
+		{
+			std::cerr << "Failed to save screenshot to " << filepath << std::endl;
+		}
 	}
 
 	std::cout << "Screenshot saved at: " << filepath.c_str() << std::endl;
