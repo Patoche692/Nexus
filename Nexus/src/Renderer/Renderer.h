@@ -9,6 +9,7 @@
 #include "OpenGL/OGLTexture.h"
 #include "Scene.h"
 #include "Panels/SceneHierarchyPanel.h"
+#include "Panels/MetricsPanel.h"
 
 class Renderer
 {
@@ -31,15 +32,10 @@ private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
 	std::shared_ptr<PixelBuffer> m_PixelBuffer;
 	std::shared_ptr<OGLTexture> m_Texture;
-	float m_DisplayFPSTimer;
-	float m_DeltaTime = 0.0f;
-	float m_AccumulatedTime = 0.0f;
-	uint32_t m_NAccumulatedFrame = 0;
 	uint32_t m_FrameNumber = 0;
-	float m_MRPS = 0;
-	uint32_t m_NumRaysProcessed = 0;
 	float3* m_AccumulationBuffer;
 	Scene* m_Scene;
 	SceneHierarchyPanel m_HierarchyPannel;
+	MetricsPanel m_MetricsPanel;
 };
 

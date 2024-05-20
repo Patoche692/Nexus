@@ -12,7 +12,7 @@
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene)
-	:m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene)
+	:m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene), m_MetricsPanel(scene)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -28,8 +28,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* s
 	m_Texture = std::make_shared<OGLTexture>(width, height);
 
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
-
-	m_DisplayFPSTimer = glfwGetTime();
 }
 
 Renderer::~Renderer()
@@ -43,11 +41,9 @@ Renderer::~Renderer()
 void Renderer::Reset()
 {
 	m_FrameNumber = 0;
-	m_MRPS = 0;
-	m_NumRaysProcessed = 0;
+	m_MetricsPanel.Reset();
 	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
-	m_DisplayFPSTimer = glfwGetTime();
 }
 
 void Renderer::Render(Scene& scene, float deltaTime)
@@ -56,7 +52,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	UpdateTimer(deltaTime);
+	m_MetricsPanel.UpdateMetrics(deltaTime);
 
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(scene);
@@ -167,46 +163,7 @@ void Renderer::RenderUI(Scene& scene)
 	
 	m_HierarchyPannel.OnImGuiRender();
 
-	ImGui::Begin("Settings");
-
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Text("Time info");
-	ImGui::Text("Render time millisec: %.3f", m_DeltaTime);
-	ImGui::Text("FPS: %d", (int)(1000.0f / m_DeltaTime));
-	ImGui::Text("Frame: %d", m_FrameNumber);
-	ImGui::Text("Megarays/sec: %.2f", m_MRPS);
-
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Text("Camera");
-	if (ImGui::SliderFloat("Field of view", &scene.GetCamera()->GetVerticalFOV(), 1.0f, 180.0f))
-		scene.GetCamera()->Invalidate();
-	if (ImGui::DragFloat("Focus distance", &scene.GetCamera()->GetFocusDist(), 0.02f, 0.01f, 1000.0f))
-		scene.GetCamera()->Invalidate();
-	if (ImGui::DragFloat("Defocus angle", &scene.GetCamera()->GetDefocusAngle(), 0.2f, 0.0f, 180.0f))
-		scene.GetCamera()->Invalidate();
-
-	ImGui::End();
-
-}
-
-void Renderer::UpdateTimer(float deltaTime)
-{
-	m_NAccumulatedFrame++;
-	m_NumRaysProcessed += m_ViewportHeight * m_ViewportWidth;
-
-	m_AccumulatedTime += deltaTime;
-	if (glfwGetTime() - m_DisplayFPSTimer >= 0.2f || m_DeltaTime == 0)
-	{
-		m_DisplayFPSTimer = glfwGetTime();
-		m_DeltaTime = m_AccumulatedTime / m_NAccumulatedFrame;
-		m_MRPS = static_cast<float>(m_NumRaysProcessed) / m_AccumulatedTime / 1000.0f;		// millisecond * 1.000.000
-		
-		m_NAccumulatedFrame = 0;
-		m_AccumulatedTime = 0.0f;
-		m_NumRaysProcessed = 0;
-	}
+	m_MetricsPanel.OnImGuiRender(m_FrameNumber);
 }
 
 void Renderer::UnpackToTexture()
@@ -222,8 +179,7 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
 		m_FrameNumber = 0;
-		m_MRPS = 0;
-		m_NumRaysProcessed = 0;
+		m_MetricsPanel.Reset();
 		m_Texture->OnResize(width, height);
 		m_PixelBuffer->OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
