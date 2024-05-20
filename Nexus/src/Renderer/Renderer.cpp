@@ -132,7 +132,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	ImGui::Begin("Viewport");
 
-	if (ImGui::IsWindowFocused() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !scene.IsEmpty())
+	if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !scene.IsEmpty())
 	{
 		ImVec2 viewportPos = ImGui::GetCursorScreenPos();
 		ImVec2 mousePos = ImGui::GetMousePos();
