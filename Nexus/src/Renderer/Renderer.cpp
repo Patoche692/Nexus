@@ -16,7 +16,7 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* s
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/opensans/OpenSans-Regular.ttf", 16.0f);
@@ -132,7 +132,7 @@ void Renderer::RenderUI(Scene& scene)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	ImGui::Begin("Viewport");
 
-	if (ImGui::IsWindowFocused() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && !scene.IsEmpty())
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !scene.IsEmpty())
 	{
 		ImVec2 viewportPos = ImGui::GetCursorScreenPos();
 		ImVec2 mousePos = ImGui::GetMousePos();
