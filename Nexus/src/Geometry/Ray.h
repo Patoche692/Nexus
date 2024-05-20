@@ -10,8 +10,8 @@ struct Intersection
 	// Barycentric coordinates;
 	float u, v;
 
-	uint32_t triIdx = 0;
-	uint32_t instanceIdx = 0;
+	uint32_t triIdx = -1;
+	uint32_t instanceIdx = -1;
 };
 
 struct Ray
