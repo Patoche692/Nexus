@@ -1,9 +1,16 @@
 #pragma once
 #include <vector>
+#include <cuda_runtime_api.h>
+#include <cudart_platform.h>
 #include "Utils/Utils.h"
 #include "Geometry/AABB.h"
 #include "Geometry/Ray.h"
 #include "Geometry/Triangle.h"
+
+// Standard SAH-Based BVH with binned building adapted from Jacco Bikker's guides
+// See https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
+// The main difference is that the leaves contain only one primitive to allow
+// for collapsing the nodes to construct more advanced BVHs (e.g. compressed wide BVH)
 
 #define BINS 8
 
@@ -21,8 +28,8 @@ struct BVHNode
 	// Number of triangles in the node (0 if not leaf)
 	uint32_t triCount;
 
-	inline __host__ __device__ bool IsLeaf() { return triCount > 0; }
-	inline __host__ __device__ float Cost()
+	inline __host__ __device__ bool IsLeaf() const { return triCount > 0; }
+	inline __host__ __device__ float Cost() const
 	{
 		float3 diag = aabbMax - aabbMin;
 		return (diag.x * diag.y + diag.y * diag.z + diag.x * diag.z) * triCount;
@@ -41,7 +48,7 @@ public:
 private:
 	void Subdivide(uint32_t nodeIdx);
 	void UpdateNodeBounds(uint32_t nodeIdx);
-	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
+	float FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos);
 
 public:
 	Triangle* triangles = nullptr;

@@ -29,7 +29,7 @@ struct Triangle
 		float2 t0 = make_float2(0.0f), float2 t1 = make_float2(0.0f), float2 t2 = make_float2(0.0f)
 	): pos0(p0), pos1(p1), pos2(p2), normal0(n0), normal1(n1),
 		normal2(n2), texCoord0(t0), texCoord1(t1), texCoord2(t2),
-		centroid((pos0 + pos1 + pos2) * 0.33333333f) { }
+		centroid((pos0 + pos1 + pos2) / 3.0f) { }
 
 
 	// Möller-Trumbore intersection algorithm. See https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm

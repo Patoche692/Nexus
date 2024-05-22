@@ -4,8 +4,8 @@
 
 struct AABB
 {
-	float3 bMin = make_float3(1e30f);
-	float3 bMax = make_float3(-1e30f);
+	AABB() = default;
+	AABB(float3 min, float3 max) : bMin(min), bMax(max) { }
 
 	void Grow(float3 p)
 	{
@@ -40,5 +40,9 @@ struct AABB
 		tmin = fmax(tmin, fmin(tz1, tz2)), tmax = fmin(tmax, fmax(tz1, tz2));
 		if (tmax >= tmin && tmin < ray.hit.t && tmax > 0) return tmin; else return 1e30f;
 	}
+
+	float3 bMin = make_float3(1e30f);
+	float3 bMax = make_float3(-1e30f);
+
 };
 

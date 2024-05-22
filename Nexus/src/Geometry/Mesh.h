@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Geometry/BVH/BVH.h"
+#include "Geometry/BVH/BVH8Builder.h"
 #include "Math/Mat4.h"
 
 
@@ -13,6 +14,9 @@ struct Mesh
 		: name(n), materialId(mId), position(p), rotation(r), scale(s)
 	{
 		bvh = std::make_shared<BVH>(triangles);
+		BVH8Builder builder(bvh.get());
+		std::cout << n << std::endl;
+		builder.Init();
 	}
 
 	std::shared_ptr<BVH> bvh;

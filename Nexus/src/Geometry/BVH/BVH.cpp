@@ -40,13 +40,40 @@ void BVH::Build()
 void BVH::Subdivide(uint32_t nodeIdx)
 {
 	BVHNode& node = nodes[nodeIdx];
-	int axis;
+
+	int axis = -1;
 	float splitPos;
 	float splitCost = FindBestSplitPlane(node, axis, splitPos);
 	float nodeCost = node.Cost();
 
-	if (splitCost > nodeCost)
+	// Set every leaf primitive count to 1 to allow for collapsing nodes for constructing other BVHs
+	if (node.triCount == 1)
 		return;
+
+	// If in one node triangles have the same centroid, they cannot be 
+	// separated by chopped binning. We have to separate them manually
+	else if (axis == -1)
+	{
+		int leftChildIdx = nodesUsed++;
+		int rightChildIdx = nodesUsed++;
+
+		nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
+		nodes[leftChildIdx].triCount = 1;
+		nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + 1;
+		nodes[rightChildIdx].triCount = 1;
+		node.leftNode = leftChildIdx;
+		node.triCount = 0;
+
+		UpdateNodeBounds(leftChildIdx);
+		UpdateNodeBounds(rightChildIdx);
+
+		Subdivide(leftChildIdx);
+		Subdivide(rightChildIdx);
+	}
+
+	// Normally, we would return if the split cost is greater than the parent node cost
+	//if (splitCost > nodeCost)
+	//	return;
 
 	int i = node.firstTriIdx;
 	int j = i + node.triCount - 1;
@@ -99,7 +126,7 @@ void BVH::UpdateNodeBounds(uint32_t nodeIdx)
 	}
 }
 
-float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
+float BVH::FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos)
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)
