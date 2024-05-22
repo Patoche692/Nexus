@@ -14,7 +14,11 @@ BVH8* BVH8Builder::Build()
 float BVH8Builder::CLeaf(const BVHNode& node, int triCount)
 {
     if (triCount > P_MAX)
-        return 1.0e30f;
+    {
+        if (node.IsLeaf())
+            std::cout << "Grave pb: " << node.triCount << std::endl;
+		return 1.0e30f;
+    }
 
     AABB nodeAABB(node.aabbMin, node.aabbMax);
     return nodeAABB.Area() * triCount * C_PRIM;

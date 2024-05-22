@@ -37,6 +37,25 @@ void BVH::Build()
 	Subdivide(0);
 }
 
+void BVH::SplitNodeInHalf(BVHNode& node)
+{
+	int leftChildIdx = nodesUsed++;
+	int rightChildIdx = nodesUsed++;
+
+	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
+	nodes[leftChildIdx].triCount = node.triCount / 2;
+	nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + 1;
+	nodes[rightChildIdx].triCount = node.triCount - node.triCount / 2;
+	node.leftNode = leftChildIdx;
+	node.triCount = 0;
+
+	UpdateNodeBounds(leftChildIdx);
+	UpdateNodeBounds(rightChildIdx);
+
+	Subdivide(leftChildIdx);
+	Subdivide(rightChildIdx);
+}
+
 void BVH::Subdivide(uint32_t nodeIdx)
 {
 	BVHNode& node = nodes[nodeIdx];
@@ -54,21 +73,8 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	// separated by chopped binning. We have to separate them manually
 	else if (axis == -1)
 	{
-		int leftChildIdx = nodesUsed++;
-		int rightChildIdx = nodesUsed++;
-
-		nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
-		nodes[leftChildIdx].triCount = 1;
-		nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + 1;
-		nodes[rightChildIdx].triCount = 1;
-		node.leftNode = leftChildIdx;
-		node.triCount = 0;
-
-		UpdateNodeBounds(leftChildIdx);
-		UpdateNodeBounds(rightChildIdx);
-
-		Subdivide(leftChildIdx);
-		Subdivide(rightChildIdx);
+		SplitNodeInHalf(node);
+		return;
 	}
 
 	// Normally, we would return if the split cost is greater than the parent node cost
@@ -89,7 +95,13 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	
 	int leftCount = i - node.firstTriIdx;
 	if (leftCount == 0 || leftCount == node.triCount)
+	{
+		if (node.triCount == 1)
+			return;
+
+		SplitNodeInHalf(node);
 		return;
+	}
 
 	int leftChildIdx = nodesUsed++;
 	int rightChildIdx = nodesUsed++;

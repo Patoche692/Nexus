@@ -46,6 +46,7 @@ public:
 	void Build();
 
 private:
+	void SplitNodeInHalf(BVHNode& node);
 	void Subdivide(uint32_t nodeIdx);
 	void UpdateNodeBounds(uint32_t nodeIdx);
 	float FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos);
