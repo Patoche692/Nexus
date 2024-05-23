@@ -36,6 +36,9 @@ public:
 	int ComputeNodeTriCount(int nodeIdx);
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
+
+	// Returns the indices of the node's children
+	void GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t *indices, int i, int& indicesCount);
 	void CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8);
 
 private:
