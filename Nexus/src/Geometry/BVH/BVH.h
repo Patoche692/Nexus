@@ -10,7 +10,7 @@
 // Standard SAH-Based BVH with binned building adapted from Jacco Bikker's guides
 // See https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
 // The main difference is that the leaves contain only one primitive to allow
-// for collapsing the nodes to construct more advanced BVHs (e.g. compressed wide BVH)
+// for collapsing the nodes to construct more advanced BVHs (e.g. compressed wide BVHs)
 
 #define BINS 8
 

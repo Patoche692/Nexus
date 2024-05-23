@@ -44,8 +44,7 @@ struct BVH8Node
 struct BVH8
 {
 	BVH8(BVH* bvh2);
-
-	void CreateFromBVH2(BVH* bvh2);
+	~BVH8();
 
 	Triangle* triangles = nullptr;
 	uint32_t* triangleIdx = nullptr;
