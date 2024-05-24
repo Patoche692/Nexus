@@ -44,7 +44,7 @@ void BVH::SplitNodeInHalf(BVHNode& node)
 
 	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
 	nodes[leftChildIdx].triCount = node.triCount / 2;
-	nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + 1;
+	nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + node.triCount / 2;
 	nodes[rightChildIdx].triCount = node.triCount - node.triCount / 2;
 	node.leftNode = leftChildIdx;
 	node.triCount = 0;

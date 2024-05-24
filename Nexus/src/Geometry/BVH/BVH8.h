@@ -4,7 +4,7 @@
 
 
 // Compressed wide BVH based on the paper "Efficient
-// Incoherent Ray on GPUs Through Compressed Wide BVHs"
+// Incoherent Ray Traversal on GPUs Through Compressed Wide BVHs"
 // See https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf
 
 
@@ -13,6 +13,8 @@ typedef unsigned char byte;
 #define C_PRIM 0.3f // Cost of a ray-primitive intersection
 #define C_NODE 1.0f // Cost of a ray-node intersection
 #define P_MAX  3	// Maximum allowed leaf size
+#define N_Q 8		// Number of bits used to store the childs' AABB coordinates
+
 
 struct BVH8Node
 {
@@ -23,13 +25,13 @@ struct BVH8Node
 	byte e[3];
 
 	// 8-bit mask to indicate which of the children are internal nodes
-	byte imask;
+	byte imask = 0;
 
 	// Index of the first child
-	uint32_t childBaseIdx;
+	uint32_t childBaseIdx = 0;
 
 	// Index of the first triangle
-	uint32_t triangleBaseIdx;
+	uint32_t triangleBaseIdx = 0;
 
 	// Field encoding the indexing information of every child
 	byte meta[8];
@@ -52,9 +54,8 @@ struct BVH8
 
 	BVH8Node* nodes = nullptr;
 
-	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
+	inline __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
 	{
-
 	}
 
 };

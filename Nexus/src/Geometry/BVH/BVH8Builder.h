@@ -5,8 +5,6 @@
 
 #include "BVH.h"
 
-#define N_Q 8	// Number of bits used to store the childs' AABB coordinates
-
 class BVH8Builder
 {
 public:
@@ -32,14 +30,14 @@ public:
 		int leftCount, rightCount;
 	};
 
-	BVH8* Build();
+	std::shared_ptr<BVH8> Build();
 	int ComputeNodeTriCount(int nodeIdx);
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
 
 	// Returns the indices of the node's children
 	void GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t *indices, int i, int& indicesCount);
-	void CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8);
+	void CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx);
 
 private:
 
@@ -63,8 +61,8 @@ private:
 	std::vector<int> triCount;
 
 	// Number of nodes already in the BVH
-	uint32_t usedNodes = 1;
+	uint32_t usedNodes;
 
 	// Current base triangle index
-	uint32_t triBaseIdx = 0;
+	//uint32_t triBaseIdx = 0;
 };

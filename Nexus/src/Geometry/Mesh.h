@@ -17,6 +17,7 @@ struct Mesh
 		BVH8Builder builder(bvh.get());
 		std::cout << n << std::endl;
 		builder.Init();
+		std::shared_ptr<BVH8> bvh8 = builder.Build();
 	}
 
 	std::shared_ptr<BVH> bvh;

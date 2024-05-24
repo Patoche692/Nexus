@@ -6,9 +6,11 @@ BVH8Builder::BVH8Builder(BVH *bvh) : bvh2(bvh), bvh8(std::make_shared<BVH8>(bvh)
     triCount = std::vector<int>(bvh2->nodesUsed);
 }
 
-BVH8* BVH8Builder::Build()
+std::shared_ptr<BVH8> BVH8Builder::Build()
 {
-    return nullptr;
+    usedNodes = 1;
+    CollapseNode(0, 0, 0);
+    return bvh8;
 }
 
 float BVH8Builder::CLeaf(const BVHNode& node, int triCount)
@@ -154,11 +156,11 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t* indices, in
 		indices[indicesCount++] = node.leftNode + 1;   // We reached a BVH8 internal node or leaf => stop recursion
 }
 
-void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8)
+void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx)
 {
     const BVHNode& bvh2Node = bvh2->nodes[nodeIdxBvh2];
 
-    BVH8Node bvh8Node = { };
+    BVH8Node bvh8Node;
 
     const float denom = 1 / (powf(2, N_Q) - 1);
     
@@ -183,32 +185,84 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8
 
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
 
+    // Sum of triangles number in the node
+    int nTrianglesTotal = 0;
+
+	const float scaleX = 1 / pow(2, bvh8Node.e[0]);
+	const float scaleY = 1 / pow(2, bvh8Node.e[1]);
+	const float scaleZ = 1 / pow(2, bvh8Node.e[2]);
+
     for (int i = 0; i < 8; i++)
     {
-		const NodeEval& eval = evals[nodeIdxBvh2][i];
+        if (childrenIndices[i] == -1)
+        {
+            // Empty child slot, set meta to 0
+            bvh8Node.meta[i] = 0;
+            continue;
+        }
+        else
+        {
+			// Since the children are either internal or leaf nodes, we take their evaluation for i = 1
+			const NodeEval& eval = evals[childrenIndices[i]][0];
+
+            // Encode the child's bounding box origin
+            bvh8Node.qlox[i] = static_cast<byte>((bvh2Node.aabbMin.x - bvh8Node.p.x) / scaleX);
+            bvh8Node.qloy[i] = static_cast<byte>((bvh2Node.aabbMin.y - bvh8Node.p.y) / scaleY);
+            bvh8Node.qloz[i] = static_cast<byte>((bvh2Node.aabbMin.z - bvh8Node.p.z) / scaleZ);
+
+            // Encode the child's bounding box end point
+            bvh8Node.qhix[i] = static_cast<byte>((bvh2Node.aabbMax.x - bvh8Node.p.x) / scaleX);
+            bvh8Node.qhiy[i] = static_cast<byte>((bvh2Node.aabbMax.y - bvh8Node.p.y) / scaleY);
+            bvh8Node.qhiz[i] = static_cast<byte>((bvh2Node.aabbMax.z - bvh8Node.p.z) / scaleZ);
+
+            if (eval.decision == Decision::INTERNAL)
+            {
+                // High 3 bits to 001
+                bvh8Node.meta[i] = 0b00100000;
+                // Low 5 bits to 24 + child index
+                bvh8Node.meta[i] |= 24 + i;
+                // Set the child node as an internal node in the imask field
+                bvh8Node.imask |= 1 << i;
+            }
+            else if (eval.decision == Decision::LEAF)
+            {
+                const int nTriangles = triCount[childrenIndices[i]];
+                assert(nTriangles <= P_MAX);
+
+                // High 3 bits store the number of triangles in unary encoding
+                for (int j = 0; j < nTriangles; j++)
+                {
+                    bvh8Node.meta[i] |= 1 << (j + 5);
+                }
+                nTrianglesTotal += nTriangles;
+                assert(nTrianglesTotal <= 23);
+
+                // Low 5 bits store the index of first triangle relative to the triangle base index
+                bvh8Node.meta[i] |= nTrianglesTotal;
+                // Low 5 bits to 24 + child index
+                bvh8Node.meta[i] |= 24 + i;
+                // Set the child node as an internal node in the imask field
+                bvh8Node.imask |= 1 << i;
+            }
+        }
+        usedNodes++;
     }
+	bvh8->nodes[nodeIdxBvh8] = bvh8Node;
 
- //   switch (eval.decision)
-	//{
-	//case Decision::LEAF:
- //       int cPrim = triCount[nodeIdxBvh2];
- //       for (int i = 0; i < 8; i++)
- //       {
- //           bvh8Node.meta[i] = ;
- //       }
+    nTrianglesTotal = 0;
 
+    // Recursively collapse internal children nodes
+    for (int i = 0; i < 8; i++)
+    {
+        if (childrenIndices[i] == -1)
+            break;  // NOTE: we break since the end of the array only contains -1
 
-	//	break;
-	//case Decision::INTERNAL:
- //       int leftCount = eval.leftCount, rightCount = eval.rightCount;
+		nTrianglesTotal += triCount[childrenIndices[i]];
 
+        NodeEval& eval = evals[childrenIndices[i]][0];
 
-
-	//	break;
-	//case Decision::DISTRIBUTE:
-
-	//	break;
-	//}
-
+        if (eval.decision == Decision::INTERNAL)
+			CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + i, triBaseIdx + nTrianglesTotal);
+    }
 }
 
