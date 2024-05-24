@@ -61,7 +61,7 @@ private:
 	std::vector<int> triCount;
 
 	// Number of nodes already in the BVH
-	uint32_t usedNodes;
+	uint32_t usedNodes = 0;
 
 	// Current base triangle index
 	//uint32_t triBaseIdx = 0;

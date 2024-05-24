@@ -53,9 +53,4 @@ struct BVH8
 	uint32_t nodesUsed, triCount;
 
 	BVH8Node* nodes = nullptr;
-
-	inline __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
-	{
-	}
-
 };

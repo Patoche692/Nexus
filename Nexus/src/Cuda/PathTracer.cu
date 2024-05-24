@@ -9,6 +9,7 @@
 #include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
 #include "BSDF/ConductorBSDF.cuh"
+#include "BVH/TLAS.cuh"
 
 
 __constant__ __device__ CameraData cameraData;
@@ -78,7 +79,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		currentRay.hit.t = 1e30f;
 		currentRay.invDirection = 1 / currentRay.direction;
 
-		tlas.Intersect(currentRay);
+		IntersectTLAS(tlas, currentRay);
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
