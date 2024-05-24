@@ -125,6 +125,7 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t* indices, in
 {
 	const NodeEval& eval = evals[nodeIdxBvh2][i];
 
+    // If in the first call the node is a leaf, return
 	if (eval.decision == Decision::LEAF)
 	{
 		indices[indicesCount++] = nodeIdxBvh2;
@@ -145,12 +146,12 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t* indices, in
 	if (leftEval.decision == Decision::DISTRIBUTE)
 		GetChildrenIndices(node.leftNode, indices, leftCount, indicesCount);
 	else
-		indices[indicesCount++] = node.leftNode;
+		indices[indicesCount++] = node.leftNode;   // We reached a BVH8 internal node or leaf => stop recursion
 
 	if (rightEval.decision == Decision::DISTRIBUTE)
 		GetChildrenIndices(node.leftNode + 1, indices, rightCount, indicesCount);
 	else
-		indices[indicesCount++] = node.leftNode + 1;
+		indices[indicesCount++] = node.leftNode + 1;   // We reached a BVH8 internal node or leaf => stop recursion
 }
 
 void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8)
@@ -177,6 +178,9 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, int i, uint32_t nodeIdxBvh8
 
     uint32_t childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int indicesCount = 0;
+
+    // TODO: Sort the children as described in the paper
+
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
 
     for (int i = 0; i < 8; i++)
