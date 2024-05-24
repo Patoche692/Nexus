@@ -35,8 +35,6 @@ public:
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
 
-	// Returns the indices of the node's children
-	void GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t *indices, int i, int& indicesCount);
 	void CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx);
 
 private:
@@ -49,6 +47,12 @@ private:
 
 	// Cdistribute(n, j)
 	float CDistribute(const BVHNode& node, int j, int& leftCount, int& rightCount);
+
+	// Returns the indices of the node's children
+	void GetChildrenIndices(uint32_t nodeIdxBvh2, int *indices, int i, int& indicesCount);
+
+	// Order the children in a given node
+	void OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices);
 
 private:
 	BVH* bvh2 = nullptr;

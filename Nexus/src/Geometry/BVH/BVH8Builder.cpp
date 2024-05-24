@@ -10,6 +10,7 @@ std::shared_ptr<BVH8> BVH8Builder::Build()
 {
     usedNodes = 1;
     CollapseNode(0, 0, 0);
+    std::cout << "Used nodes: " << usedNodes << std::endl;
     return bvh8;
 }
 
@@ -123,7 +124,7 @@ void BVH8Builder::Init()
 	std::cout << rootCost << std::endl;
 }
 
-void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t* indices, int i, int& indicesCount)
+void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, int* indices, int i, int& indicesCount)
 {
 	const NodeEval& eval = evals[nodeIdxBvh2][i];
 
@@ -156,6 +157,85 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, uint32_t* indices, in
 		indices[indicesCount++] = node.leftNode + 1;   // We reached a BVH8 internal node or leaf => stop recursion
 }
 
+void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
+{
+    const BVHNode& parentNode = bvh2->nodes[nodeIdxBvh2];
+    const float3 parentCentroid = (parentNode.aabbMax + parentNode.aabbMin) * 0.5f;
+
+    // Fill the table cost(c, s)
+    int cost[8][8];
+    int childCount = 0;
+
+    for (int c = 0; c < 8; c++)
+    {
+        // If no more children, break
+        if (childrenIndices[c] == -1)
+            break;
+
+        for (int s = 0; s < 8; s++)
+        {
+            // Ray direction
+            const float dsx = (s & 0b001) ? -1.0f : 1.0f;
+            const float dsy = (s & 0b010) ? -1.0f : 1.0f;
+            const float dsz = (s & 0b100) ? -1.0f : 1.0f;
+            const float3 ds = make_float3(dsx, dsy, dsz);
+
+            const BVHNode& childNode = bvh2->nodes[childrenIndices[c]];
+            const float3 centroid = (childNode.aabbMin + childNode.aabbMax) * 0.5f;
+            cost[c][s] = dot(centroid - parentCentroid, ds);
+        }
+        childCount++;
+    }
+
+    // Greedy ordering
+
+    bool slotAssigned[8] = { 0 };
+    int assignment[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+
+    while (true)
+    {
+		int minCost = std::numeric_limits<int>::max();
+        int assignedNode = -1, assignedSlot = -1;
+
+        for (int c = 0; c < childCount; c++)
+        {
+            // If node already assigned, skip
+            if (assignment[c] != -1)
+                continue;
+
+            for (int s = 0; s < 8; s++)
+            {
+                // If slot already used, skip
+                if (slotAssigned[s])
+                    continue;
+
+                if (cost[c][s] < minCost)
+                {
+                    minCost = cost[c][s];
+                    assignedNode = c;
+                    assignedSlot = s;
+                }
+            }
+        }
+
+        // If all the nodes have been assigned
+        if (assignedNode == -1)
+            break;
+
+        // Assign the node to the specific position
+        assignment[assignedNode] = assignedSlot;
+        slotAssigned[assignedSlot] = true;
+    }
+
+    int indicesCpy[8];
+    memcpy(indicesCpy, childrenIndices, 8 * sizeof(int));
+
+    // Reorder the nodes
+    for (int i = 0; i < childCount; i++)
+        childrenIndices[assignment[i]] = indicesCpy[i];
+
+}
+
 void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx)
 {
     const BVHNode& bvh2Node = bvh2->nodes[nodeIdxBvh2];
@@ -178,12 +258,12 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
 
     bvh8Node.p = bvh2Node.aabbMin;
 
-    uint32_t childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+    int childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int indicesCount = 0;
 
-    // TODO: Sort the children as described in the paper
-
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
+
+    OrderChildren(nodeIdxBvh2, childrenIndices);
 
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;
