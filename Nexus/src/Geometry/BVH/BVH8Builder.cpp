@@ -27,8 +27,8 @@ float BVH8Builder::CDistribute(const BVHNode& node, int j, int& leftCount, int& 
 {
     float cDistribute = 1.0e30f;
 
-    // k in (1 .. j) in the paper
-	for (int k = 0; k < j - 1; k++)
+    // k in (1 .. j - 1) in the paper
+	for (int k = 0; k < j; k++)
 	{
         const float cLeft = ComputeNodeCost(node.leftNode, k);
         const float cRight = ComputeNodeCost(node.leftNode + 1, j - 1 - k);
@@ -188,6 +188,8 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
     }
 
     // Greedy ordering
+    // TODO: implement auction algorithm?
+    // See https://dspace.mit.edu/bitstream/handle/1721.1/3233/P-2064-24690022.pdf
 
     bool slotAssigned[8] = { 0 };
     int assignment[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
@@ -289,6 +291,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
         {
 			// Since the children are either internal or leaf nodes, we take their evaluation for i = 1
 			const NodeEval& eval = evals[childrenIndices[i]][0];
+            assert(eval.decision != Decision::UNDEFINED);
 
             // Encode the child's bounding box origin
             bvh8Node.qlox[i] = static_cast<byte>((bvh2Node.aabbMin.x - bvh8Node.p.x) / scaleX);
@@ -342,12 +345,12 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
         if (childrenIndices[i] == -1)
             continue;
 
-		nTrianglesTotal += triCount[childrenIndices[i]];
-
         NodeEval& eval = evals[childrenIndices[i]][0];
 
         if (eval.decision == Decision::INTERNAL)
 			CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + i, triBaseIdx + nTrianglesTotal);
+
+		nTrianglesTotal += triCount[childrenIndices[i]];
     }
 }
 
