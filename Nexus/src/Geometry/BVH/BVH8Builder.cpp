@@ -163,7 +163,7 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
     const float3 parentCentroid = (parentNode.aabbMax + parentNode.aabbMin) * 0.5f;
 
     // Fill the table cost(c, s)
-    int cost[8][8];
+    float cost[8][8];
     int childCount = 0;
 
     for (int c = 0; c < 8; c++)
@@ -175,9 +175,9 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
         for (int s = 0; s < 8; s++)
         {
             // Ray direction
-            const float dsx = (s & 0b001) ? -1.0f : 1.0f;
+            const float dsx = (s & 0b100) ? -1.0f : 1.0f;
             const float dsy = (s & 0b010) ? -1.0f : 1.0f;
-            const float dsz = (s & 0b100) ? -1.0f : 1.0f;
+            const float dsz = (s & 0b001) ? -1.0f : 1.0f;
             const float3 ds = make_float3(dsx, dsy, dsz);
 
             const BVHNode& childNode = bvh2->nodes[childrenIndices[c]];
@@ -194,7 +194,7 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
 
     while (true)
     {
-		int minCost = std::numeric_limits<int>::max();
+		float minCost = std::numeric_limits<float>::max();
         int assignedNode = -1, assignedSlot = -1;
 
         for (int c = 0; c < childCount; c++)
@@ -230,6 +230,9 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
     int indicesCpy[8];
     memcpy(indicesCpy, childrenIndices, 8 * sizeof(int));
 
+    for (int i = 0; i < 8; i++)
+        childrenIndices[i] = -1;
+
     // Reorder the nodes
     for (int i = 0; i < childCount; i++)
         childrenIndices[assignment[i]] = indicesCpy[i];
@@ -261,8 +264,10 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     int childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int indicesCount = 0;
 
+    // Fill the array of children indices
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
 
+    // Order the children according to the octant traversal order
     OrderChildren(nodeIdxBvh2, childrenIndices);
 
     // Sum of triangles number in the node
@@ -335,7 +340,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     for (int i = 0; i < 8; i++)
     {
         if (childrenIndices[i] == -1)
-            break;  // NOTE: we break since the end of the array only contains -1
+            continue;
 
 		nTrianglesTotal += triCount[childrenIndices[i]];
 
