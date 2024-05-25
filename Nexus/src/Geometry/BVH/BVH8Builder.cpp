@@ -1,17 +1,18 @@
 #include "BVH8Builder.h"
 
-BVH8Builder::BVH8Builder(BVH *bvh) : bvh2(bvh), bvh8(std::make_shared<BVH8>(bvh))
+BVH8Builder::BVH8Builder(BVH *bvh) : m_Bvh2(bvh), m_Bvh8(std::make_shared<BVH8>(bvh))
 {
-    evals = std::vector<std::vector<NodeEval>>(bvh2->nodesUsed, std::vector<NodeEval>(7));
-    triCount = std::vector<int>(bvh2->nodesUsed);
+    m_Evals = std::vector<std::vector<NodeEval>>(m_Bvh2->nodesUsed, std::vector<NodeEval>(7));
+    m_TriCount = std::vector<int>(m_Bvh2->nodesUsed);
+    m_TriBaseIdx = std::vector<int>(m_Bvh2->nodesUsed);
 }
 
 std::shared_ptr<BVH8> BVH8Builder::Build()
 {
-    usedNodes = 1;
+    m_UsedNodes = 1;
     CollapseNode(0, 0, 0);
-    std::cout << "Used nodes: " << usedNodes << std::endl;
-    return bvh8;
+    std::cout << "Used nodes: " << m_UsedNodes << std::endl;
+    return m_Bvh8;
 }
 
 float BVH8Builder::CLeaf(const BVHNode& node, int triCount)
@@ -51,40 +52,40 @@ float BVH8Builder::CInternal(const BVHNode& node, int& leftCount, int&rightCount
 
 float BVH8Builder::ComputeNodeCost(uint32_t nodeIdx, int i)
 {
-    if (evals[nodeIdx][i].decision != Decision::UNDEFINED)
-        return evals[nodeIdx][i].cost;
+    if (m_Evals[nodeIdx][i].decision != Decision::UNDEFINED)
+        return m_Evals[nodeIdx][i].cost;
 
-    const BVHNode& node = bvh2->nodes[nodeIdx];
+    const BVHNode& node = m_Bvh2->nodes[nodeIdx];
 
     if (node.IsLeaf())
     {
         // TODO: can be optimized by setting all costs for i in (0 .. 6) to cLeaf
-        evals[nodeIdx][i].decision = Decision::LEAF;
-        evals[nodeIdx][i].cost = CLeaf(node, node.triCount);
+        m_Evals[nodeIdx][i].decision = Decision::LEAF;
+        m_Evals[nodeIdx][i].cost = CLeaf(node, node.triCount);
 
-        return evals[nodeIdx][i].cost;
+        return m_Evals[nodeIdx][i].cost;
     }
 
     // i = 1 in the paper
     if (i == 0)
     {
         int leftCount, rightCount;
-        const float cLeaf = CLeaf(node, triCount[nodeIdx]);
+        const float cLeaf = CLeaf(node, m_TriCount[nodeIdx]);
         const float cInternal = CInternal(node, leftCount, rightCount);
 
         if (cLeaf < cInternal)
         {
-            evals[nodeIdx][i].decision = Decision::LEAF;
-            evals[nodeIdx][i].cost = cLeaf;
+            m_Evals[nodeIdx][i].decision = Decision::LEAF;
+            m_Evals[nodeIdx][i].cost = cLeaf;
         }
         else
         {
-            evals[nodeIdx][i].decision = Decision::INTERNAL;
-            evals[nodeIdx][i].cost = cInternal;
-			evals[nodeIdx][i].leftCount = leftCount;
-			evals[nodeIdx][i].rightCount = rightCount;
+            m_Evals[nodeIdx][i].decision = Decision::INTERNAL;
+            m_Evals[nodeIdx][i].cost = cInternal;
+			m_Evals[nodeIdx][i].leftCount = leftCount;
+			m_Evals[nodeIdx][i].rightCount = rightCount;
         }
-        return evals[nodeIdx][i].cost;
+        return m_Evals[nodeIdx][i].cost;
     }
 
     // i in (2 .. 7) in the paper
@@ -94,39 +95,45 @@ float BVH8Builder::ComputeNodeCost(uint32_t nodeIdx, int i)
 
     if (cDistribute < cFewerRoots)
     {
-        evals[nodeIdx][i].decision = Decision::DISTRIBUTE;
-        evals[nodeIdx][i].cost = cDistribute;
-        evals[nodeIdx][i].leftCount = leftCount;
-        evals[nodeIdx][i].rightCount = rightCount;
+        m_Evals[nodeIdx][i].decision = Decision::DISTRIBUTE;
+        m_Evals[nodeIdx][i].cost = cDistribute;
+        m_Evals[nodeIdx][i].leftCount = leftCount;
+        m_Evals[nodeIdx][i].rightCount = rightCount;
     }
     else
-        evals[nodeIdx][i] = evals[nodeIdx][i - 1];
+        m_Evals[nodeIdx][i] = m_Evals[nodeIdx][i - 1];
 
-    return evals[nodeIdx][i].cost;
+    return m_Evals[nodeIdx][i].cost;
 }
 
-int BVH8Builder::ComputeNodeTriCount(int nodeIdx)
+int BVH8Builder::ComputeNodeTriCount(int nodeIdx, int triBaseIdx)
 {
-    BVHNode& node = bvh2->nodes[nodeIdx];
+    BVHNode& node = m_Bvh2->nodes[nodeIdx];
 
     if (node.IsLeaf())
-        triCount[nodeIdx] = node.triCount;
+        m_TriCount[nodeIdx] = node.triCount;
     else
-		triCount[nodeIdx] = ComputeNodeTriCount(node.leftNode) + ComputeNodeTriCount(node.leftNode + 1);
+    {
+        int leftCount = ComputeNodeTriCount(node.leftNode, triBaseIdx);
+        int rightCount = ComputeNodeTriCount(node.leftNode + 1, leftCount);
+        m_TriCount[nodeIdx] = leftCount + rightCount;
+    }
 
-    return triCount[nodeIdx];
+    m_TriBaseIdx[nodeIdx] = triBaseIdx;
+
+    return m_TriCount[nodeIdx];
 }
 
 void BVH8Builder::Init()
 {
-    ComputeNodeTriCount(0);
+    ComputeNodeTriCount(0, 0);
     float rootCost = ComputeNodeCost(0, 0);
 	std::cout << rootCost << std::endl;
 }
 
 void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, int* indices, int i, int& indicesCount)
 {
-	const NodeEval& eval = evals[nodeIdxBvh2][i];
+	const NodeEval& eval = m_Evals[nodeIdxBvh2][i];
 
     // If in the first call the node is a leaf, return
 	if (eval.decision == Decision::LEAF)
@@ -136,14 +143,14 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, int* indices, int i, 
 	}
 
 	// Decision is either INTERNAL or DISTRIBUTE
-	const BVHNode& node = bvh2->nodes[nodeIdxBvh2];
+	const BVHNode& node = m_Bvh2->nodes[nodeIdxBvh2];
 
 	const int leftCount = eval.leftCount;
 	const int rightCount = eval.rightCount;
 
 	// Retreive the decision for the left and right childs
-	const NodeEval& leftEval = evals[node.leftNode][leftCount];
-	const NodeEval& rightEval = evals[node.leftNode + 1][rightCount];
+	const NodeEval& leftEval = m_Evals[node.leftNode][leftCount];
+	const NodeEval& rightEval = m_Evals[node.leftNode + 1][rightCount];
 
 	// Recurse in child nodes if we need to distribute
 	if (leftEval.decision == Decision::DISTRIBUTE)
@@ -159,7 +166,7 @@ void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, int* indices, int i, 
 
 void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
 {
-    const BVHNode& parentNode = bvh2->nodes[nodeIdxBvh2];
+    const BVHNode& parentNode = m_Bvh2->nodes[nodeIdxBvh2];
     const float3 parentCentroid = (parentNode.aabbMax + parentNode.aabbMin) * 0.5f;
 
     // Fill the table cost(c, s)
@@ -180,7 +187,7 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
             const float dsz = (s & 0b001) ? -1.0f : 1.0f;
             const float3 ds = make_float3(dsx, dsy, dsz);
 
-            const BVHNode& childNode = bvh2->nodes[childrenIndices[c]];
+            const BVHNode& childNode = m_Bvh2->nodes[childrenIndices[c]];
             const float3 centroid = (childNode.aabbMin + childNode.aabbMax) * 0.5f;
             cost[c][s] = dot(centroid - parentCentroid, ds);
         }
@@ -243,7 +250,7 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
 
 void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx)
 {
-    const BVHNode& bvh2Node = bvh2->nodes[nodeIdxBvh2];
+    const BVHNode& bvh2Node = m_Bvh2->nodes[nodeIdxBvh2];
 
     BVH8Node bvh8Node;
 
@@ -258,7 +265,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     bvh8Node.e[1] = static_cast<byte>(ey);
     bvh8Node.e[2] = static_cast<byte>(ez);
 
-    bvh8Node.childBaseIdx = usedNodes;
+    bvh8Node.childBaseIdx = m_UsedNodes;
     bvh8Node.triangleBaseIdx = triBaseIdx;
 
     bvh8Node.p = bvh2Node.aabbMin;
@@ -275,9 +282,9 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;
 
-	const float scaleX = 1 / pow(2, bvh8Node.e[0]);
-	const float scaleY = 1 / pow(2, bvh8Node.e[1]);
-	const float scaleZ = 1 / pow(2, bvh8Node.e[2]);
+	const float scaleX = 1 / powf(2, ex);
+	const float scaleY = 1 / powf(2, ey);
+	const float scaleZ = 1 / powf(2, ez);
 
     for (int i = 0; i < 8; i++)
     {
@@ -289,19 +296,20 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
         }
         else
         {
+            const BVHNode& childNode = m_Bvh2->nodes[childrenIndices[i]];
 			// Since the children are either internal or leaf nodes, we take their evaluation for i = 1
-			const NodeEval& eval = evals[childrenIndices[i]][0];
+			const NodeEval& eval = m_Evals[childrenIndices[i]][0];
             assert(eval.decision != Decision::UNDEFINED);
 
             // Encode the child's bounding box origin
-            bvh8Node.qlox[i] = static_cast<byte>((bvh2Node.aabbMin.x - bvh8Node.p.x) / scaleX);
-            bvh8Node.qloy[i] = static_cast<byte>((bvh2Node.aabbMin.y - bvh8Node.p.y) / scaleY);
-            bvh8Node.qloz[i] = static_cast<byte>((bvh2Node.aabbMin.z - bvh8Node.p.z) / scaleZ);
+            bvh8Node.qlox[i] = static_cast<byte>(floorf((childNode.aabbMin.x - bvh8Node.p.x) * scaleX));
+            bvh8Node.qloy[i] = static_cast<byte>(floorf((childNode.aabbMin.y - bvh8Node.p.y) * scaleY));
+            bvh8Node.qloz[i] = static_cast<byte>(floorf((childNode.aabbMin.z - bvh8Node.p.z) * scaleZ));
 
             // Encode the child's bounding box end point
-            bvh8Node.qhix[i] = static_cast<byte>((bvh2Node.aabbMax.x - bvh8Node.p.x) / scaleX);
-            bvh8Node.qhiy[i] = static_cast<byte>((bvh2Node.aabbMax.y - bvh8Node.p.y) / scaleY);
-            bvh8Node.qhiz[i] = static_cast<byte>((bvh2Node.aabbMax.z - bvh8Node.p.z) / scaleZ);
+            bvh8Node.qhix[i] = static_cast<byte>(ceilf((childNode.aabbMax.x - bvh8Node.p.x) * scaleX));
+            bvh8Node.qhiy[i] = static_cast<byte>(ceilf((childNode.aabbMax.y - bvh8Node.p.y) * scaleY));
+            bvh8Node.qhiz[i] = static_cast<byte>(ceilf((childNode.aabbMax.z - bvh8Node.p.z) * scaleZ));
 
             if (eval.decision == Decision::INTERNAL)
             {
@@ -314,7 +322,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
             }
             else if (eval.decision == Decision::LEAF)
             {
-                const int nTriangles = triCount[childrenIndices[i]];
+                const int nTriangles = m_TriCount[childrenIndices[i]];
                 assert(nTriangles <= P_MAX);
 
                 // High 3 bits store the number of triangles in unary encoding
@@ -333,24 +341,23 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
                 bvh8Node.imask |= 1 << i;
             }
         }
-        usedNodes++;
+        m_UsedNodes++;
     }
-	bvh8->nodes[nodeIdxBvh8] = bvh8Node;
+	m_Bvh8->nodes[nodeIdxBvh8] = bvh8Node;
 
-    nTrianglesTotal = 0;
-
+    int childCount = 0;
     // Recursively collapse internal children nodes
     for (int i = 0; i < 8; i++)
     {
         if (childrenIndices[i] == -1)
             continue;
 
-        NodeEval& eval = evals[childrenIndices[i]][0];
+        const NodeEval& eval = m_Evals[childrenIndices[i]][0];
 
         if (eval.decision == Decision::INTERNAL)
-			CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + i, triBaseIdx + nTrianglesTotal);
+			CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + childCount, m_TriBaseIdx[childrenIndices[i]]);
 
-		nTrianglesTotal += triCount[childrenIndices[i]];
+        childCount++;
     }
 }
 

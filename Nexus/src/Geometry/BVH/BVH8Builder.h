@@ -31,7 +31,7 @@ public:
 	};
 
 	std::shared_ptr<BVH8> Build();
-	int ComputeNodeTriCount(int nodeIdx);
+	int ComputeNodeTriCount(int nodeIdx, int triBaseIdx);
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
 
@@ -55,17 +55,20 @@ private:
 	void OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices);
 
 private:
-	BVH* bvh2 = nullptr;
-	std::shared_ptr<BVH8> bvh8 = nullptr;
+	BVH* m_Bvh2 = nullptr;
+	std::shared_ptr<BVH8> m_Bvh8 = nullptr;
 
 	// Optimal SAH cost C(n, i) with decisions
-	std::vector<std::vector<NodeEval>> evals;
+	std::vector<std::vector<NodeEval>> m_Evals;
 
 	// Number of triangles in the subtree of the node i
-	std::vector<int> triCount;
+	std::vector<int> m_TriCount;
+
+	// Base triangle index of the subtree of the node i
+	std::vector<int> m_TriBaseIdx;
 
 	// Number of nodes already in the BVH
-	uint32_t usedNodes = 0;
+	uint32_t m_UsedNodes = 0;
 
 	// Current base triangle index
 	//uint32_t triBaseIdx = 0;
