@@ -68,6 +68,7 @@ public:
 		{
 			if (node->IsLeaf())
 			{
+				//int a = __uint_as_float(stackPtr);
 				for (uint32_t i = 0; i < node->triCount; i++)
 					triangles[triangleIdx[node->leftNode + i]].Hit(ray, instanceIdx, triangleIdx[node->leftNode + i]);
 

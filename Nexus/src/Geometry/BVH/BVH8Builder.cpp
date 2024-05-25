@@ -254,7 +254,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
 
     BVH8Node bvh8Node;
 
-    const float denom = 1 / (powf(2, N_Q) - 1);
+    const float denom = 1.0f / (powf(2, N_Q) - 1);
     
     // e along each axis
     const float ex = ceilf(log2f((bvh2Node.aabbMax.x - bvh2Node.aabbMin.x) * denom));
@@ -282,9 +282,9 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;
 
-	const float scaleX = 1 / powf(2, ex);
-	const float scaleY = 1 / powf(2, ey);
-	const float scaleZ = 1 / powf(2, ez);
+	const float scaleX = 1.0f / powf(2, ex);
+	const float scaleY = 1.0f / powf(2, ey);
+	const float scaleZ = 1.0f / powf(2, ez);
 
     for (int i = 0; i < 8; i++)
     {
@@ -331,7 +331,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
                     bvh8Node.meta[i] |= 1 << (j + 5);
                 }
                 nTrianglesTotal += nTriangles;
-                assert(nTrianglesTotal <= 23);
+                assert(nTrianglesTotal <= 24);
 
                 // Low 5 bits store the index of first triangle relative to the triangle base index
                 bvh8Node.meta[i] |= nTrianglesTotal;
