@@ -7,7 +7,7 @@ TLAS::TLAS(BVHInstance* bvhList, int N)
 
 	nodes = new TLASNode[2 * N];
 	nodesIdx = new uint32_t[N];
-	nodesUsed = 2;
+	nodesUsed = 1;
 }
 
 //TLAS::~TLAS()

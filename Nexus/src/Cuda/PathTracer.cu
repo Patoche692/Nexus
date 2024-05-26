@@ -73,7 +73,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 15; j++)
+	for (int j = 0; j < 4; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -219,7 +219,8 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 	float3 offset = cameraData.right * rd.x + cameraData.up * rd.y;
 
 	Ray ray(
-		//make_float3(2, 0, 0), make_float3(-1, 0.001, 0.001)
+		//cameraData.position,
+		//normalize(cameraData.lowerLeftCorner - cameraData.position)
 		cameraData.position + offset,
 		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);

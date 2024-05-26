@@ -1,5 +1,7 @@
 #pragma once
 #include <cuda_runtime_api.h>
+#include <cudart_platform.h>
+#include <device_launch_parameters.h>
 #include "Utils/cuda_math.h"
 
 /**
@@ -9,16 +11,16 @@
 class Random
 {
 public:
-	static inline __host__ __device__ unsigned int InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber);
-	static inline __host__ __device__ float Rand(unsigned int& rngState);
-	static inline __host__ __device__ float3 RandomUnitVector(unsigned int& rngState);
-	static inline __host__ __device__ float3 RandomInUnitSphere(unsigned int& rngState);
-	static inline __host__ __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
-	static inline __host__ __device__ float3 RandomCosineHemisphere(unsigned int& rngState);
-	static inline __host__ __device__ float2 RandomInUnitDisk(unsigned int& rngState);
+	static inline __device__ unsigned int InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber);
+	static inline __device__ float Rand(unsigned int& rngState);
+	static inline __device__ float3 RandomUnitVector(unsigned int& rngState);
+	static inline __device__ float3 RandomInUnitSphere(unsigned int& rngState);
+	static inline __device__ float3 RandomOnHemisphere(unsigned int& rngState, float3& normal);
+	static inline __device__ float3 RandomCosineHemisphere(unsigned int& rngState);
+	static inline __device__ float2 RandomInUnitDisk(unsigned int& rngState);
 };
 
-inline __host__ __device__ unsigned int jenkinsHash(unsigned int x)
+inline __device__ unsigned int jenkinsHash(unsigned int x)
 {
 	x += x << 10;
 	x ^= x >> 6;
@@ -30,7 +32,7 @@ inline __host__ __device__ unsigned int jenkinsHash(unsigned int x)
 
 // PCG version
 
-inline __host__ __device__ uint4 pcg4d(uint4 v)
+inline __device__ uint4 pcg4d(uint4 v)
 {
 	v = v * 1664525u + 1013904223u;
 
@@ -52,7 +54,7 @@ inline __host__ __device__ uint4 pcg4d(uint4 v)
 	return v;
 }
 
-inline __host__ __device__ unsigned int xorShift(unsigned int& rngState)
+inline __device__ unsigned int xorShift(unsigned int& rngState)
 {
 	rngState ^= rngState << 13;
 	rngState ^= rngState >> 17;
@@ -60,14 +62,12 @@ inline __host__ __device__ unsigned int xorShift(unsigned int& rngState)
 	return rngState;
 }
 
-inline __host__ __device__ float uintToFloat(unsigned int x)
+inline __device__ float uintToFloat(unsigned int x)
 {
-	unsigned int a = 0x3f800000 | (x >> 9);
-	float* b = (float*)&a;
-	return *b - 1.0f;
+	return __uint_as_float(0x3f800000 | (x >> 9)) - 1.0f;
 }
 
-inline __host__ __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber)
+inline __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resolution, unsigned int frameNumber)
 {
 	unsigned int rngState = dot(pixel, make_uint2(1, resolution.x)) ^ jenkinsHash(frameNumber);
 	if (rngState == 0)
@@ -75,12 +75,12 @@ inline __host__ __device__ unsigned int Random::InitRNG(uint2 pixel, uint2 resol
 	return jenkinsHash(rngState);
 }
 
-inline __host__ __device__ float Random::Rand(unsigned int& rngState)
+inline __device__ float Random::Rand(unsigned int& rngState)
 {
 	return uintToFloat(xorShift(rngState));
 }
 
-inline __host__ __device__ float3 Random::RandomInUnitSphere(unsigned int& rngState)
+inline __device__ float3 Random::RandomInUnitSphere(unsigned int& rngState)
 {
 	float3 p;
 	do {
@@ -89,13 +89,13 @@ inline __host__ __device__ float3 Random::RandomInUnitSphere(unsigned int& rngSt
 	return p;
 }
 
-inline __host__ __device__ float3 Random::RandomUnitVector(unsigned int& rngState)
+inline __device__ float3 Random::RandomUnitVector(unsigned int& rngState)
 {
 	return normalize(RandomInUnitSphere(rngState));
 }
 
 
-inline __host__ __device__ float3 Random::RandomOnHemisphere(unsigned int& rngState, float3& normal)
+inline __device__ float3 Random::RandomOnHemisphere(unsigned int& rngState, float3& normal)
 {
 	float3 r = RandomUnitVector(rngState);
 	if (dot(r, normal) > 0)
@@ -104,7 +104,7 @@ inline __host__ __device__ float3 Random::RandomOnHemisphere(unsigned int& rngSt
 		return -r;
 }
 
-inline __host__ __device__ float3 Random::RandomCosineHemisphere(unsigned int& rngState)
+inline __device__ float3 Random::RandomCosineHemisphere(unsigned int& rngState)
 {
 	float r1 = Rand(rngState);
 	float r2 = Rand(rngState);
@@ -118,7 +118,7 @@ inline __host__ __device__ float3 Random::RandomCosineHemisphere(unsigned int& r
 	return make_float3(x, y, z);
 }
 
-inline __host__ __device__ float2 Random::RandomInUnitDisk(unsigned int& rngState)
+inline __device__ float2 Random::RandomInUnitDisk(unsigned int& rngState)
 {
 	float2 p;
 	do {

@@ -102,10 +102,11 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 
 	const uint32_t invOctant4 = invOctant * 0x01010101;
 
+	#pragma unroll
 	for (int i = 0; i < 2; i++)
 	{
 		const uint32_t meta4 = __float_as_uint(i == 0 ? bvh8node.childidx_tridx_meta.z : bvh8node.childidx_tridx_meta.w);
-		const uint32_t isInner4 = (meta4 & (meta4 << 1)) & 0x01010101;
+		const uint32_t isInner4 = (meta4 & (meta4 << 1)) & 0x10101010;
 		const uint32_t innerMask4 = SignExtendS8x4(isInner4 << 3);
 		const uint32_t bitIndex4 = (meta4 ^ (invOctant4 & innerMask4)) & 0x1f1f1f1f;
 		const uint32_t childBits4 = (meta4 >> 5) & 0x07070707;
@@ -128,6 +129,7 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 		const uint32_t zMin = ray.direction.z < 0.0f ? qhiz : qloz;
 		const uint32_t zMax = ray.direction.z < 0.0f ? qloz : qhiz;
 
+		#pragma unroll
 		for (int j = 0; j < 4; j++)
 		{
 			// Extract j-th byte
@@ -143,8 +145,6 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 
 			const bool intersected = tmin <= tmax;
 			if (intersected) {
-				if (threadIdx.x == 0 && threadIdx.y == 0 && blockIdx.x == 0 && blockIdx.y == 0)
-					float b = 0;
 				const uint32_t child_bits = ExtractByte(childBits4, j);
 				const uint32_t bit_index  = ExtractByte(bitIndex4,  j);
 
@@ -169,8 +169,6 @@ inline __device__ uint32_t Octant(const float3& a)
 
 inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t instanceIdx)
 {
-	if (threadIdx.x == 0 && threadIdx.y == 0 && blockIdx.x == 0 && blockIdx.y == 0)
-		float b = 0;
 	uint2 stack[32];
 	int stackPtr = 0;
 
@@ -206,6 +204,8 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			// We need to account for the number of internal nodes in the parent node. The relative
 			// index is thus the number of neighboring internal nodes stored in the lower child slots
 			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
+
+			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
 
 			const BVH8Node& node = bvh8.nodes[nodeEntry.x + relativeNodeIdx];
 
