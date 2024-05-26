@@ -3,7 +3,7 @@
 BVH8::BVH8(BVH* bvh2)
 {
 	triangles = bvh2->triangles;
-	triangleIdx = bvh2->triangleIdx;
+	triangleIdx = new uint32_t[bvh2->triCount];
 	triCount = bvh2->triCount;
 	// TODO: How many nodes should be allocated?
 	nodes = new BVH8Node[triCount * 8];
@@ -13,4 +13,5 @@ BVH8::BVH8(BVH* bvh2)
 BVH8::~BVH8()
 {
 	delete[] nodes;
+	delete[] triangleIdx;
 }

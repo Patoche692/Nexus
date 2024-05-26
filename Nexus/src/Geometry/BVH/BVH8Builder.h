@@ -35,7 +35,7 @@ public:
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
 
-	void CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx);
+	void CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8);
 
 private:
 
@@ -50,6 +50,8 @@ private:
 
 	// Returns the indices of the node's children
 	void GetChildrenIndices(uint32_t nodeIdxBvh2, int *indices, int i, int& indicesCount);
+
+	int CountTriangles(uint32_t nodeIdxBvh2);
 
 	// Order the children in a given node
 	void OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices);
@@ -69,6 +71,7 @@ private:
 
 	// Number of nodes already in the BVH
 	uint32_t m_UsedNodes = 0;
+	uint32_t m_UsedIndices = 0;
 
 	// Current base triangle index
 	//uint32_t triBaseIdx = 0;

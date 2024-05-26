@@ -10,7 +10,8 @@ BVH8Builder::BVH8Builder(BVH *bvh) : m_Bvh2(bvh), m_Bvh8(std::make_shared<BVH8>(
 std::shared_ptr<BVH8> BVH8Builder::Build()
 {
     m_UsedNodes = 1;
-    CollapseNode(0, 0, 0);
+    CollapseNode(0, 0);
+    m_Bvh8->nodesUsed = m_UsedNodes;
     std::cout << "Used nodes: " << m_UsedNodes << std::endl;
     return m_Bvh8;
 }
@@ -248,13 +249,29 @@ void BVH8Builder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
 
 }
 
-void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int triBaseIdx)
+int BVH8Builder::CountTriangles(uint32_t nodeIdxBvh2) {
+	const BVHNode& bvh2Node = m_Bvh2->nodes[nodeIdxBvh2];
+
+	if (bvh2Node.IsLeaf()) {
+
+		for (unsigned i = 0; i < bvh2Node.triCount; i++) {
+			m_Bvh8->triangleIdx[m_UsedIndices++] = m_Bvh2->triangleIdx[bvh2Node.firstTriIdx + i];
+		}
+
+		return bvh2Node.triCount;
+	}
+
+	return CountTriangles(bvh2Node.leftNode) + CountTriangles(bvh2Node.leftNode + 1);
+}
+
+
+void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8)
 {
     const BVHNode& bvh2Node = m_Bvh2->nodes[nodeIdxBvh2];
 
     BVH8Node bvh8Node;
 
-    const float denom = 1.0f / (powf(2, N_Q) - 1);
+    const float denom = 1.0f / (float)((1 << N_Q) - 1);
     
     // e along each axis
     const float ex = ceilf(log2f((bvh2Node.aabbMax.x - bvh2Node.aabbMin.x) * denom));
@@ -270,9 +287,10 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     bvh8Node.e[2] = *(uint32_t*)&eze >> 23;
 
     bvh8Node.childBaseIdx = m_UsedNodes;
-    bvh8Node.triangleBaseIdx = triBaseIdx;
+    bvh8Node.triangleBaseIdx = m_UsedIndices;
 
     bvh8Node.p = bvh2Node.aabbMin;
+    bvh8Node.imask = 0;
 
     int childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int indicesCount = 0;
@@ -281,7 +299,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
 
     // Order the children according to the octant traversal order
-    //OrderChildren(nodeIdxBvh2, childrenIndices);
+    OrderChildren(nodeIdxBvh2, childrenIndices);
 
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;
@@ -317,6 +335,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
 
             if (eval.decision == Decision::INTERNAL)
             {
+				m_UsedNodes++;
                 // High 3 bits to 001
                 bvh8Node.meta[i] = 0b00100000;
                 // Low 5 bits to 24 + child index
@@ -326,7 +345,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
             }
             else if (eval.decision == Decision::LEAF)
             {
-                const int nTriangles = m_TriCount[childrenIndices[i]];
+                const int nTriangles = CountTriangles(childrenIndices[i]);
                 assert(nTriangles <= P_MAX);
 
                 bvh8Node.meta[i] = 0;
@@ -343,7 +362,6 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
                 assert(nTrianglesTotal <= 24);
             }
         }
-        m_UsedNodes++;
     }
 	m_Bvh8->nodes[nodeIdxBvh8] = bvh8Node;
 
@@ -357,9 +375,11 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
         const NodeEval& eval = m_Evals[childrenIndices[i]][0];
 
         if (eval.decision == Decision::INTERNAL)
-			CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + childCount, m_TriBaseIdx[childrenIndices[i]]);
+        {
+            CollapseNode(childrenIndices[i], bvh8Node.childBaseIdx + childCount);
+            childCount++;
+        }
 
-        childCount++;
     }
 }
 

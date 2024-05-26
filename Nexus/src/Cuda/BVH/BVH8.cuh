@@ -42,6 +42,14 @@ struct StackEntry
 	};
 };
 
+struct D_BVH8
+{
+	Triangle* triangles = nullptr;
+	uint32_t* triangleIdx = nullptr;
+	uint32_t nodesUsed, triCount;
+	BVH8Node* nodes = nullptr;
+};
+
 struct D_BVH8Node
 {
 	float4 p_e_imask;
@@ -122,8 +130,6 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 
 		for (int j = 0; j < 4; j++)
 		{
-			if (j == 3)
-				int b = 0;
 			// Extract j-th byte
 			float3 tmin3 = make_float3(float(ExtractByte(xMin, j)), float(ExtractByte(yMin, j)), float(ExtractByte(zMin, j)));
 			float3 tmax3 = make_float3(float(ExtractByte(xMax, j)), float(ExtractByte(yMax, j)), float(ExtractByte(zMax, j)));
@@ -148,10 +154,10 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 	}
 	const uint32_t imask = ExtractByte(__float_as_uint(bvh8node.p_e_imask.w), 3);
 
-	internalEntry.x = bvh8node.childidx_tridx_meta.x;
+	internalEntry.x = __float_as_uint(bvh8node.childidx_tridx_meta.x);
 	internalEntry.y = (hitMask & 0xff000000) | imask;
 
-	triangleEntry.x = bvh8node.childidx_tridx_meta.y;
+	triangleEntry.x = __float_as_uint(bvh8node.childidx_tridx_meta.y);
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
@@ -176,13 +182,9 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 
 	// We set the hits bit of the root node to 1
 	nodeEntry.y |= 0x80000000;
-	int count = 0;
 
 	while (true)
 	{
-		if (count > 50)
-			int b = 0;
-		count++;
 		// If the hits field is different from 0, it is an internal node entry
 		if (nodeEntry.y & 0xff000000)
 		{
@@ -202,7 +204,7 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			const int nodeSlot = (nodeOffset - 24) ^ invOctant;
 
 			// We need to account for the number of internal nodes in the parent node. The relative
-			// index is thus the number of neighboring nodes stored in the lower child slots
+			// index is thus the number of neighboring internal nodes stored in the lower child slots
 			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
 
 			const BVH8Node& node = bvh8.nodes[nodeEntry.x + relativeNodeIdx];

@@ -24,7 +24,7 @@ BVH::~BVH()
 
 void BVH::Build()
 {
-	nodesUsed = 2;
+	nodesUsed = 1;
 
 	for (uint32_t i = 0; i < triCount; i++)
 		triangleIdx[i] = i;
