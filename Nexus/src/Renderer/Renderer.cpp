@@ -139,14 +139,14 @@ void Renderer::RenderUI(Scene& scene)
 		int2 hoveredPixel = make_int2(mousePos.x - viewportPos.x, mousePos.y - viewportPos.y);
 		hoveredPixel.y = m_ViewportHeight - hoveredPixel.y;
 
-		if (hoveredPixel.x >= 0 && hoveredPixel.x < m_ViewportWidth && hoveredPixel.y >= 0 && hoveredPixel.y < m_ViewportHeight)
-		{
-			std::shared_ptr<Camera> camera = scene.GetCamera();
-			Ray ray = camera->RayThroughPixel(hoveredPixel);
-			std::shared_ptr<TLAS> tlas = scene.GetTLAS();
-			tlas->Intersect(ray);
-			m_HierarchyPannel.SetSelectionContext(ray.hit.instanceIdx);
-		}
+		//if (hoveredPixel.x >= 0 && hoveredPixel.x < m_ViewportWidth && hoveredPixel.y >= 0 && hoveredPixel.y < m_ViewportHeight)
+		//{
+		//	std::shared_ptr<Camera> camera = scene.GetCamera();
+		//	Ray ray = camera->RayThroughPixel(hoveredPixel);
+		//	std::shared_ptr<TLAS> tlas = scene.GetTLAS();
+		//	tlas->Intersect(ray);
+		//	m_HierarchyPannel.SetSelectionContext(ray.hit.instanceIdx);
+		//}
 	}
 
 

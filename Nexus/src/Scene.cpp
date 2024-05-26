@@ -36,7 +36,7 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
 
 	// Get the raw ptr for BVHInstance because CUDA doesnt support shared_ptr
-	m_BVHInstances.push_back(BVHInstance(mesh.bvh.get()));
+	m_BVHInstances.push_back(BVHInstance(mesh.bvh8.get()));
 
 	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);

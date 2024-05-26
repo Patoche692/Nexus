@@ -219,8 +219,9 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 	float3 offset = cameraData.right * rd.x + cameraData.up * rd.y;
 
 	Ray ray(
-		cameraData.position + offset,
-		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
+		make_float3(0, 0.5, 0), make_float3(0, 1, 0)
+		//cameraData.position + offset,
+		//normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
 	);
 
 	float3 c = color(ray, rngState);

@@ -5,8 +5,14 @@ void BVHInstance::SetTransform(Mat4& t)
 {
 	transform = t;
 	invTransform = t.Inverted();
-	float3 bMin = bvh->nodes[0].aabbMin;
-	float3 bMax = bvh->nodes[0].aabbMax;
+	float3 bMin = bvh->nodes[0].p;
+	float3 bMax = bMin + make_float3(
+		exp2f(bvh->nodes[0].e[0] - 127),
+		exp2f(bvh->nodes[0].e[1] - 127),
+		exp2f(bvh->nodes[0].e[2] - 127)
+	) * exp2f(8) - 1;
+	
+
 	bounds = AABB();
 	for (int i = 0; i < 8; i++)
 	{

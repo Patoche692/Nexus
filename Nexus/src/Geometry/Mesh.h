@@ -15,12 +15,12 @@ struct Mesh
 	{
 		bvh = std::make_shared<BVH>(triangles);
 		BVH8Builder builder(bvh.get());
-		std::cout << n << std::endl;
 		builder.Init();
-		std::shared_ptr<BVH8> bvh8 = builder.Build();
+		bvh8 = builder.Build();
 	}
 
 	std::shared_ptr<BVH> bvh;
+	std::shared_ptr<BVH8> bvh8;
 	// Transform component of the mesh at loading
 	float3 position = make_float3(0.0f);
 	float3 rotation = make_float3(0.0f);

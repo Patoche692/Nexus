@@ -261,9 +261,13 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
     const float ey = ceilf(log2f((bvh2Node.aabbMax.y - bvh2Node.aabbMin.y) * denom));
     const float ez = ceilf(log2f((bvh2Node.aabbMax.z - bvh2Node.aabbMin.z) * denom));
 
-    bvh8Node.e[0] = static_cast<byte>(ex);
-    bvh8Node.e[1] = static_cast<byte>(ey);
-    bvh8Node.e[2] = static_cast<byte>(ez);
+    float exe = exp2f(ex);
+    float eye = exp2f(ey);
+    float eze = exp2f(ez);
+
+    bvh8Node.e[0] = *(uint32_t*)&exe >> 23;
+    bvh8Node.e[1] = *(uint32_t*)&eye >> 23;
+    bvh8Node.e[2] = *(uint32_t*)&eze >> 23;
 
     bvh8Node.childBaseIdx = m_UsedNodes;
     bvh8Node.triangleBaseIdx = triBaseIdx;

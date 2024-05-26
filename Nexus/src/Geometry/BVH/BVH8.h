@@ -45,6 +45,7 @@ struct BVH8Node
 
 struct BVH8
 {
+	BVH8() = default;
 	BVH8(BVH* bvh2);
 	~BVH8();
 

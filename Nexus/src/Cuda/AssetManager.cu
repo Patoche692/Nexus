@@ -10,7 +10,7 @@
 __constant__ __device__ Material* materials;
 __constant__ __device__ cudaTextureObject_t* diffuseMaps;
 __constant__ __device__ cudaTextureObject_t* emissiveMaps;
-__constant__ __device__ BVH* bvhs;
+__constant__ __device__ BVH8* bvhs;
 __constant__ __device__ TLAS tlas;
 
 
@@ -161,6 +161,35 @@ BVH* newDeviceBVH(BVH& bvh)
 	return bvhPtr;
 }
 
+BVH8* newDeviceBVH8(BVH8& bvh)
+{
+	Triangle* triangles = CudaMemory::Allocate<Triangle>(bvh.triCount);
+	BVH8Node* nodes = CudaMemory::Allocate<BVH8Node>(bvh.triCount * 2);
+	uint32_t* triangleIdx = CudaMemory::Allocate<uint32_t>(bvh.triCount);
+
+	CudaMemory::MemCpy(triangles, bvh.triangles, bvh.triCount, cudaMemcpyHostToDevice);
+	CudaMemory::MemCpy(nodes, bvh.nodes, bvh.triCount * 2, cudaMemcpyHostToDevice);
+	CudaMemory::MemCpy(triangleIdx, bvh.triangleIdx, bvh.triCount, cudaMemcpyHostToDevice);
+
+	BVH8 newBvh;
+	newBvh.triangles = triangles;
+	newBvh.nodes = nodes;
+	newBvh.triangleIdx = triangleIdx;
+	newBvh.triCount = bvh.triCount;
+
+	newBvh.nodesUsed = bvh.nodesUsed;
+
+	BVH8* bvhPtr = CudaMemory::Allocate<BVH8>(1);
+	CudaMemory::MemCpy(bvhPtr, &newBvh, 1, cudaMemcpyHostToDevice);
+
+	// TODO: Move all structures to the GPU. For now, avoid calling delete on a device ptr
+	newBvh.triangles = nullptr;
+	newBvh.nodes = nullptr;
+	newBvh.triangleIdx = nullptr;
+
+	return bvhPtr;
+}
+
 void newDeviceTLAS(TLAS& tl)
 {
 	TLASNode* tlasNodes = CudaMemory::Allocate<TLASNode>(tl.blasCount * 2);
@@ -171,12 +200,12 @@ void newDeviceTLAS(TLAS& tl)
 	CudaMemory::MemCpy(nodesIdx, tl.nodesIdx, tl.blasCount, cudaMemcpyHostToDevice);
 
 	// Map from cpu memory to device memory
-	std::map<BVH*, BVH*> bvhMap;
+	std::map<BVH8*, BVH8*> bvhMap;
 	for (int i = 0; i < tl.blasCount; i++)
 	{
 		if (!bvhMap.count(tl.blas[i].bvh))
 		{
-			bvhMap[tl.blas[i].bvh] = newDeviceBVH(*tl.blas[i].bvh);
+			bvhMap[tl.blas[i].bvh] = newDeviceBVH8(*tl.blas[i].bvh);
 		}
 		BVHInstance instance = tl.blas[i];
 		instance.bvh = bvhMap[tl.blas[i].bvh];
@@ -207,7 +236,7 @@ void updateDeviceTLAS(TLAS& tl)
 
 	for (int i = 0; i < tl.blasCount; i++)
 	{
-		BVH* bvhBackup = instancesCpy[i].bvh;
+		BVH8* bvhBackup = instancesCpy[i].bvh;
 		instancesCpy[i].bvh = tl.blas[i].bvh;
 		instancesCpy[i].SetTransform(tl.blas[i].transform);
 		instancesCpy[i].materialId = tl.blas[i].materialId;
@@ -224,7 +253,7 @@ __global__ void freeDeviceTLASKernel()
 {
 	for (int i = 0; i < tlas.blasCount; i++)
 	{
-		BVH* bvh = tlas.blas[i].bvh;
+		BVH8* bvh = tlas.blas[i].bvh;
 		free(bvh->nodes);
 		free(bvh->triangles);
 		free(bvh->triangleIdx);
