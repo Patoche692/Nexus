@@ -281,7 +281,7 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
 	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
 
     // Order the children according to the octant traversal order
-    OrderChildren(nodeIdxBvh2, childrenIndices);
+    //OrderChildren(nodeIdxBvh2, childrenIndices);
 
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;
@@ -329,20 +329,18 @@ void BVH8Builder::CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8, int t
                 const int nTriangles = m_TriCount[childrenIndices[i]];
                 assert(nTriangles <= P_MAX);
 
+                bvh8Node.meta[i] = 0;
+
                 // High 3 bits store the number of triangles in unary encoding
                 for (int j = 0; j < nTriangles; j++)
                 {
                     bvh8Node.meta[i] |= 1 << (j + 5);
                 }
-                nTrianglesTotal += nTriangles;
-                assert(nTrianglesTotal <= 24);
-
                 // Low 5 bits store the index of first triangle relative to the triangle base index
                 bvh8Node.meta[i] |= nTrianglesTotal;
-                // Low 5 bits to 24 + child index
-                bvh8Node.meta[i] |= 24 + i;
-                // Set the child node as an internal node in the imask field
-                bvh8Node.imask |= 1 << i;
+
+                nTrianglesTotal += nTriangles;
+                assert(nTrianglesTotal <= 24);
             }
         }
         m_UsedNodes++;

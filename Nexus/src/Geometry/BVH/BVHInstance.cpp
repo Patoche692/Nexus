@@ -10,7 +10,7 @@ void BVHInstance::SetTransform(Mat4& t)
 		exp2f(bvh->nodes[0].e[0] - 127),
 		exp2f(bvh->nodes[0].e[1] - 127),
 		exp2f(bvh->nodes[0].e[2] - 127)
-	) * exp2f(8) - 1;
+	) * (exp2f(8) - 1);
 	
 
 	bounds = AABB();
