@@ -11,7 +11,7 @@ inline __device__ void IntersectBVHInstance(const BVHInstance& instance, Ray& ra
 	ray.direction = instance.invTransform.TransformVector(ray.direction);
 	ray.invDirection = 1 / ray.direction;
 
-	IntersectBVH2(*instance.bvh, ray, instanceIdx);
+	IntersectBVH8(*instance.bvh, ray, instanceIdx);
 
 	backupRay.hit = ray.hit;
 	ray = backupRay;
