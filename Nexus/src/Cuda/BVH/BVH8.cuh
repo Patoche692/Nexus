@@ -5,6 +5,7 @@
 #include <device_launch_parameters.h>
 #include "Geometry/BVH/BVH8.h"
 #include "Cuda/PathTracer.cuh"
+#include "Cuda/Utils.cuh"
 
 // If the ratio of active threads in a warp is less than POSTPONE_RATIO_THRESHOLD, postpone triangle intersection
 #define POSTPONE_RATIO_THRESHOLD 0.2
@@ -61,27 +62,36 @@ struct D_BVH8Node
 	float4 qhiy_qhiz;
 };
 
-__device__ __inline__ uint32_t SignExtendS8x4(uint32_t i) { uint32_t v; asm("prmt.b32 %0, %1, 0x0, 0x0000BA98;" : "=r"(v) : "r"(i)); return v; }
-
-__device__ float vMaxMax(float a, float b, float c) {
-	int result;
-
-	asm("vmax.s32.s32.s32.max %0, %1, %2, %3;" : "=r"(result) : "r"(__float_as_int(a)), "r"(__float_as_int(b)), "r"(__float_as_int(c)));
-
-	return __int_as_float(result);
+inline __device__ uint32_t Octant(const float3& a)
+{
+	return ((a.x < 0 ? 1 : 0) << 2) | ((a.y < 0 ? 1 : 0) << 1) | ((a.z < 0 ? 1 : 0));
 }
 
-__device__ float vMinMin(float a, float b, float c) {
-	int result;
-
-	asm("vmin.s32.s32.s32.min %0, %1, %2, %3;" : "=r"(result) : "r"(__float_as_int(a)), "r"(__float_as_int(b)), "r"(__float_as_int(c)));
-
-	return __int_as_float(result);
+// Pop from shared or local stack
+inline __device__ uint2 StackPop(
+	const uint2 sharedStack[],
+	const uint2 localStack[], int& stackPtr
+) {
+	stackPtr--;
+	if (stackPtr < SHARED_STACK_SIZE)
+		return sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr];
+	else
+		return localStack[stackPtr - SHARED_STACK_SIZE];
 }
 
-inline __device__ unsigned ExtractByte(unsigned x, unsigned i) {
-	return (x >> (i * 8)) & 0xff;
+// Push to shared or local stack
+inline __device__ void StackPush(
+	uint2 sharedStack[],
+	uint2 localStack[], int& stackPtr, const uint2& stackEntry
+) {
+	if (stackPtr < SHARED_STACK_SIZE)
+		sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr] = stackEntry;
+	else
+		localStack[stackPtr - SHARED_STACK_SIZE] = stackEntry;
+
+	stackPtr++;
 }
+
 
 inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, const uint32_t invOctant, uint2& internalEntry, uint2& triangleEntry)
 {
@@ -163,35 +173,6 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, Ray& ray, c
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
-inline __device__ uint32_t Octant(const float3& a)
-{
-	return ((a.x < 0 ? 1 : 0) << 2) | ((a.y < 0 ? 1 : 0) << 1) | ((a.z < 0 ? 1 : 0));
-}
-
-inline __device__ uint2 StackPop(
-	const uint2 sharedStack[],
-	const uint2 localStack[], int& stackPtr
-) {
-	stackPtr--;
-	if (stackPtr < SHARED_STACK_SIZE)
-		return sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr];
-	else
-		return localStack[stackPtr - SHARED_STACK_SIZE];
-}
-
-inline __device__ void StackPush(
-	uint2 sharedStack[],
-	uint2 localStack[], int& stackPtr, const uint2& stackEntry
-) {
-	if (stackPtr < SHARED_STACK_SIZE)
-		sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr] = stackEntry;
-	else
-		localStack[stackPtr - SHARED_STACK_SIZE] = stackEntry;
-
-	stackPtr++;
-}
-
-
 inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t instanceIdx)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
@@ -221,7 +202,6 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			// If some nodes are remaining in the hits field
 			if (nodeEntry.y & 0xff000000)
 			{
-				//stack[stackPtr++] = nodeEntry;
 				StackPush(sharedStack, stack, stackPtr, nodeEntry);
 			};
 
@@ -256,10 +236,16 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			//}
 
 			const int triangleOffset = 31 - __clz(triangleEntry.y);
+
+			// Set the hits bit of the selected triangle to 0
 			triangleEntry.y &= ~(1 << (triangleOffset));
+
+			// Fetch the triangle index
 			const uint32_t triangleIdx = bvh8.triangleIdx[triangleEntry.x + triangleOffset];
+
 			assert(triangleIdx < bvh8.triCount);
 
+			// Ray triangle intersection
 			bvh8.triangles[triangleIdx].Hit(ray, instanceIdx, triangleIdx);
 		}
 
@@ -269,9 +255,7 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			if (stackPtr == 0)
 				break;
 
-			//nodeEntry = stack[--stackPtr];
 			nodeEntry = StackPop(sharedStack, stack, stackPtr);
 		}
 	}
-
 }
