@@ -115,8 +115,6 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		if (hitResult.material.emissiveMapId != -1) {
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
 			hitResult.material.emissive = make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
-			//if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0)
-			//	printf("emissive map: %f, %f, %f\n", hitResult.material.emissive.x, hitResult.material.emissive.y, hitResult.material.emissive.z);
 		}
 
 		// Normal flipping
@@ -243,9 +241,8 @@ void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumb
 	uint32_t* devicePtr = 0;
 	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer->GetCudaResource()));
 
-	uint32_t tx = 16, ty = 16;
-	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
-	dim3 threads(tx, ty);
+	dim3 blocks(pixelBuffer->GetWidth() / BLOCK_SIZE + 1, pixelBuffer->GetHeight() / BLOCK_SIZE + 1);
+	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
 
 	traceRay<<<blocks, threads>>>(devicePtr, frameNumber, accumulationBuffer);
 

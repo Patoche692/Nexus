@@ -4,11 +4,13 @@
 #include <cudart_platform.h>
 #include <device_launch_parameters.h>
 #include "Geometry/BVH/BVH8.h"
-
-#define WARP_SIZE 32	// Same size for all NVIDIA GPUs
+#include "Cuda/PathTracer.cuh"
 
 // If the ratio of active threads in a warp is less than POSTPONE_RATIO_THRESHOLD, postpone triangle intersection
 #define POSTPONE_RATIO_THRESHOLD 0.2
+
+#define TRAVERSAL_STACK_SIZE 34
+#define SHARED_STACK_SIZE 8
 
 // Compressed stack entry (we don't use it in the traversal algorithm)
 struct StackEntry
@@ -166,10 +168,34 @@ inline __device__ uint32_t Octant(const float3& a)
 	return ((a.x < 0 ? 1 : 0) << 2) | ((a.y < 0 ? 1 : 0) << 1) | ((a.z < 0 ? 1 : 0));
 }
 
+inline __device__ uint2 StackPop(
+	const uint2 sharedStack[],
+	const uint2 localStack[], int& stackPtr
+) {
+	stackPtr--;
+	if (stackPtr < SHARED_STACK_SIZE)
+		return sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr];
+	else
+		return localStack[stackPtr - SHARED_STACK_SIZE];
+}
+
+inline __device__ void StackPush(
+	uint2 sharedStack[],
+	uint2 localStack[], int& stackPtr, const uint2& stackEntry
+) {
+	if (stackPtr < SHARED_STACK_SIZE)
+		sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr] = stackEntry;
+	else
+		localStack[stackPtr - SHARED_STACK_SIZE] = stackEntry;
+
+	stackPtr++;
+}
+
 
 inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t instanceIdx)
 {
-	uint2 stack[32];
+	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
+	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
 	int stackPtr = 0;
 
 	uint32_t idx;
@@ -195,7 +221,8 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			// If some nodes are remaining in the hits field
 			if (nodeEntry.y & 0xff000000)
 			{
-				stack[stackPtr++] = nodeEntry;
+				//stack[stackPtr++] = nodeEntry;
+				StackPush(sharedStack, stack, stackPtr, nodeEntry);
 			};
 
 			// Slot in (0 .. 7) referring to the octant order in which the node should be traversed
@@ -242,7 +269,8 @@ inline __device__ void IntersectBVH8(const BVH8& bvh8, Ray& ray, const uint32_t 
 			if (stackPtr == 0)
 				break;
 
-			nodeEntry = stack[--stackPtr];
+			//nodeEntry = stack[--stackPtr];
+			nodeEntry = StackPop(sharedStack, stack, stackPtr);
 		}
 	}
 

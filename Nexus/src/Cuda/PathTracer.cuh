@@ -7,6 +7,12 @@
 #include "Scene.h"
 #include "AssetManager.cuh"
 
+// Number of threads in a block
+#define BLOCK_SIZE 8
+
+#define WARP_SIZE 32	// Same size for all NVIDIA GPUs
+
+
 struct CameraData
 {
 	float3 position;

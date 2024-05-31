@@ -5,7 +5,7 @@
 
 inline __device__ void IntersectTLAS(const TLAS& tlas, Ray& ray)
 {
-	TLASNode* node = &tlas.nodes[0], * stack[32];
+	TLASNode* node = &tlas.nodes[0], * stack[16];
 	uint32_t stackPtr = 0;
 
 	while (1)
