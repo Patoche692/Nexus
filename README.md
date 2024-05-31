@@ -16,10 +16,11 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 ![stormtrooper](https://github.com/Patoche692/PathTracer/assets/54531293/865d00db-9711-469a-be3f-c5fe647e4d72)
 ![mustang](https://github.com/Patoche692/PathTracer/assets/54531293/ffa3f777-da30-4935-92d9-2c21f2d0bc0b)
 ![water2](https://github.com/Patoche692/Nexus/assets/54531293/7d4a0d12-b630-4024-915d-b26194f49ca7)
+![bedroom](https://github.com/Patoche692/Nexus/assets/54531293/391682ab-78f7-4bcb-831f-8a7f84719ca4)
 ![spider](https://github.com/Patoche692/Nexus/assets/54531293/8b7cdec1-ff7e-42b2-a093-f76261d4e108)
 ![bathroom5](https://github.com/Patoche692/PathTracer/assets/54531293/d3a828f9-3cb1-4bf7-abce-e193a9968538)
 ![piano3](https://github.com/Patoche692/PathTracer/assets/54531293/905c2bce-2aac-4b43-818e-ff928d16aab4)
-![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)
+<!--![piano_zoom](https://github.com/Patoche692/PathTracer/assets/54531293/138c3838-6097-49fd-a905-b48878f885d9)-->
 ![lamp](https://github.com/Patoche692/PathTracer/assets/54531293/d8344999-7289-43be-bf91-b9e99ff67e7d)
 <!--![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)-->
 <!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
@@ -93,6 +94,7 @@ Nexus requires the following:
 - [Blender demo scenes](https://www.blender.org/download/demo-files/)
 - [Stormtrooper](https://www.blendswap.com/blend/13953) by [ScottGraham](https://www.blendswap.com/profile/120125)
 - [Ford mustang](https://sketchfab.com/3d-models/ford-mustang-1965-5f4e3965f79540a9888b5d05acea5943) by [Pooya_dh](https://sketchfab.com/Pooya_dh)
+- [Bedroom](https://www.blendswap.com/blend/3391) by [SlykDrako](https://www.blendswap.com/profile/324)
 - [Bathroom](https://www.blendswap.com/blend/12584) by [nacimus](https://www.blendswap.com/profile/72536)
 - [Piano](https://blendswap.com/blend/29080) by [Roy](https://blendswap.com/profile/1508348)
 - [Iphone 15 Pro Max](https://sketchfab.com/3d-models/free-iphone15-pro-max-ultra-high-quality-1fb1717d5e204302bfe9969ea77293a4) by [Navarion](https://sketchfab.com/Navarion)
