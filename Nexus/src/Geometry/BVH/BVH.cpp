@@ -61,7 +61,7 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	BVHNode& node = nodes[nodeIdx];
 
 	int axis = -1;
-	float splitPos;
+	double splitPos;
 	float splitCost = FindBestSplitPlane(node, axis, splitPos);
 	float nodeCost = node.Cost();
 
@@ -138,7 +138,7 @@ void BVH::UpdateNodeBounds(uint32_t nodeIdx)
 	}
 }
 
-float BVH::FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos)
+float BVH::FindBestSplitPlane(const BVHNode& node, int& axis, double& splitPos)
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)
@@ -154,7 +154,7 @@ float BVH::FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos)
 			continue;
 
 		struct Bin { AABB bounds; int triCount = 0; } bins[BINS];
-		float scale = BINS / (boundsMax - boundsMin);
+		double scale = BINS / (boundsMax - boundsMin);
 
 		for (uint32_t i = 0; i < node.triCount; i++)
 		{

@@ -36,6 +36,12 @@ struct BVHNode
 	}
 };
 
+typedef struct Bin 
+{
+	AABB bounds;
+	int triCount = 0;
+} Bin;
+
 class BVH
 {
 public:
@@ -49,7 +55,7 @@ private:
 	void SplitNodeInHalf(BVHNode& node);
 	void Subdivide(uint32_t nodeIdx);
 	void UpdateNodeBounds(uint32_t nodeIdx);
-	float FindBestSplitPlane(const BVHNode& node, int& axis, float& splitPos);
+	float FindBestSplitPlane(const BVHNode& node, int& axis, double& splitPos);
 
 public:
 	Triangle* triangles = nullptr;

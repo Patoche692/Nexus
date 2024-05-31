@@ -13,6 +13,8 @@ struct Mesh
 		float3 p = make_float3(0.0f), float3 r = make_float3(0.0f), float3 s = make_float3(1.0f))
 		: name(n), materialId(mId), position(p), rotation(r), scale(s)
 	{
+		std::cout << "Mesh: " << n << std::endl;
+		std::cout << "Triangle count: " << triangles.size() << std::endl;
 		bvh = std::make_shared<BVH>(triangles);
 		BVH8Builder builder(bvh.get());
 		builder.Init();
