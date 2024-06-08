@@ -1,47 +1,22 @@
 #pragma once
 
-#include "Geometry/BVH/TLAS.h"
 #include "BVHInstance.cuh"
+#include "Cuda/Geometry/Ray.cuh"
 
-inline __device__ void IntersectTLAS(const TLAS& tlas, Ray& ray)
+struct D_TLASNode
 {
-	TLASNode* node = &tlas.nodes[0], * stack[16];
-	uint32_t stackPtr = 0;
+	float3 aabbMin;
+	float3 aabbMax;
+	uint32_t leftRight;
+	uint32_t blasIdx;
+	inline __device__ bool IsLeaf() { return leftRight == 0; }
+};
 
-	while (1)
-	{
-		if (node->IsLeaf())
-		{
-			IntersectBVHInstance(tlas.blas[node->blasIdx], ray, node->blasIdx);
+struct D_TLAS
+{
+	D_TLASNode* nodes;
+	D_BVHInstance* blas;
+	uint32_t nodesUsed, blasCount;
+	uint32_t* nodesIdx;
+};
 
-			if (stackPtr == 0)
-				break;
-			else
-				node = stack[--stackPtr];
-			continue;
-		}
-		TLASNode* child1 = &tlas.nodes[node->leftRight & 0xffff];
-		TLASNode* child2 = &tlas.nodes[node->leftRight >> 16];
-		float dist1 = AABB::intersectionAABB(ray, child1->aabbMin, child1->aabbMax);
-		float dist2 = AABB::intersectionAABB(ray, child2->aabbMin, child2->aabbMax);
-
-		if (dist1 > dist2)
-		{
-			Utils::Swap(dist1, dist2);
-			Utils::Swap(child1, child2);
-		}
-		if (dist1 == 1e30f)
-		{
-			if (stackPtr == 0)
-				break;
-			else
-				node = stack[--stackPtr];
-		}
-		else
-		{
-			node = child1;
-			if (dist2 != 1e30f)
-				stack[stackPtr++] = child2;
-		}
-	}
-}

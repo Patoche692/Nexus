@@ -8,12 +8,12 @@
 // See https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf
 
 
-typedef unsigned char byte;
+using byte = unsigned char;
 
-#define C_PRIM 0.3f // Cost of a ray-primitive intersection
-#define C_NODE 1.0f // Cost of a ray-node intersection
-#define P_MAX  3	// Maximum allowed leaf size
-#define N_Q 8		// Number of bits used to store the childs' AABB coordinates
+#define C_PRIM 0.3f  // Cost of a ray-primitive intersection
+#define C_NODE 1.0f  // Cost of a ray-node intersection
+#define P_MAX  3	 // Maximum allowed leaf size
+#define N_Q 8		 // Number of bits used to store the childs' AABB coordinates
 
 
 struct BVH8Node

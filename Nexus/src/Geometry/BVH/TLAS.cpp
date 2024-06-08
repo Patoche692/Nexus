@@ -1,5 +1,7 @@
 #include "TLAS.h"
 
+#include <cuda_runtime_api.h>
+
 TLAS::TLAS(BVHInstance* bvhList, int N)
 {
 	blas = bvhList;
@@ -52,6 +54,12 @@ void TLAS::Build()
 	}
 	nodes[0] = nodes[nodesIdx[A]];
 
+}
+
+TLAS* TLAS::ToDevice()
+{
+
+	return nullptr;
 }
 
 int TLAS::FindBestMatch(int N, int A)

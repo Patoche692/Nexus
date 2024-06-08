@@ -9,7 +9,7 @@
 #include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
 #include "BSDF/ConductorBSDF.cuh"
-#include "BVH/TLAS.cuh"
+#include "BVH/TLASTraversal.cuh"
 
 
 __constant__ __device__ CameraData cameraData;
@@ -73,7 +73,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 15; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;

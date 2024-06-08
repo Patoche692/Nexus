@@ -99,7 +99,7 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 		newMaterial.dielectric.transmittance = transmissionFactor;
 
 		float ior = 1.45f;
-		aiGetMaterialFloat(material, AI_MATKEY_REFRACTI, &ior);
+		material->Get(AI_MATKEY_REFRACTI, ior);
 		newMaterial.dielectric.ior = ior;
 
 		float shininess = 0.0f;
