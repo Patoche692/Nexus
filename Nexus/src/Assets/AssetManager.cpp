@@ -2,21 +2,15 @@
 #include "OBJLoader.h"
 #include "IMGLoader.h"
 
-AssetManager::AssetManager()
-{
-	m_MaterialSymbolAddress = getMaterialSymbolAddress();
-	m_MeshSymbolAddress = getMeshSymbolAddress();
-}
-
-AssetManager::~AssetManager()
-{
-}
-
 void AssetManager::Reset()
 {
 	m_Materials.clear();
+	m_DeviceMaterials.clear();
 	m_InvalidMaterials.clear();
 	m_DiffuseMaps.clear();
+	m_DeviceDiffuseMaps.clear();
+	m_EmissiveMaps.clear();
+	m_DeviceEmissiveMaps.clear();
 	m_Meshes.clear();
 }
 
@@ -37,8 +31,8 @@ void AssetManager::AddMaterial()
 int AssetManager::AddMaterial(const Material& material)
 {
 	m_Materials.push_back(material);
+	m_DeviceMaterials.push_back(material.ToDevice());
 	Material& m = m_Materials[m_Materials.size() - 1];
-	newDeviceMaterial(m, m_Materials.size());
 	return m_Materials.size() - 1;
 }
 
@@ -57,15 +51,15 @@ int AssetManager::AddTexture(Texture& texture)
 	if (texture.type == Texture::Type::DIFFUSE)
 	{
 		m_DiffuseMaps.push_back(texture);
+		m_DeviceDiffuseMaps.push_back(texture.ToDevice());
 		Texture& m = m_DiffuseMaps[m_DiffuseMaps.size() - 1];
-		newDeviceTexture(m, m_DiffuseMaps.size());
 		return m_DiffuseMaps.size() - 1;
 	}
 	else if (texture.type == Texture::Type::EMISSIVE)
 	{
 		m_EmissiveMaps.push_back(texture);
+		m_DeviceEmissiveMaps.push_back(texture.ToDevice());
 		Texture& m = m_EmissiveMaps[m_EmissiveMaps.size() - 1];
-		newDeviceTexture(m, m_EmissiveMaps.size());
 		return m_EmissiveMaps.size() - 1;
 	}
 }
@@ -82,7 +76,7 @@ bool AssetManager::SendDataToDevice()
 	for (uint32_t id : m_InvalidMaterials)
 	{
 		invalid = true;
-		cpyMaterialToDevice(m_Materials[id], id);
+		m_DeviceMaterials[id] = m_Materials[id].ToDevice();
 	}
 	m_InvalidMaterials.clear();
 	return invalid;

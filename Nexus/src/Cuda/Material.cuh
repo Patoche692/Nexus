@@ -4,7 +4,7 @@
 
 struct D_Material
 {
-	enum struct Type : char {
+	enum struct D_Type : char {
 		DIFFUSE,
 		DIELECTRIC,
 		CONDUCTOR

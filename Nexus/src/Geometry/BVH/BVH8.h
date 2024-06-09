@@ -1,8 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <thrust/device_vector.h>
 #include "Utils/cuda_math.h"
 #include "BVH.h"
+#include "Cuda/BVH/BVH8.cuh"
+#include "Cuda/Geometry/Triangle.cuh"
 
 
 // Compressed wide BVH based on the paper "Efficient
@@ -51,7 +54,17 @@ struct BVH8
 	BVH8(const std::vector<Triangle>& tri);
 	void Init();
 
+	// If the BVH8 has been built by the builder, we need to update the device vectors
+	void UpdateDeviceData();
+
+	D_BVH8 ToDevice();
+
 	std::vector<Triangle> triangles;
 	std::vector<uint32_t> triangleIdx;
 	std::vector<BVH8Node> nodes;
+
+	// Device members
+	thrust::device_vector<D_Triangle> deviceTriangles;
+	thrust::device_vector<uint32_t> deviceTriangleIdx;
+	thrust::device_vector<D_BVH8Node> deviceNodes;
 };

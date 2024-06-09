@@ -16,7 +16,5 @@ struct D_TLAS
 {
 	D_TLASNode* nodes;
 	D_BVHInstance* blas;
-	uint32_t nodesUsed, blasCount;
-	uint32_t* nodesIdx;
 };
 

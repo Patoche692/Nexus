@@ -14,14 +14,8 @@ struct Texture
 
 	Texture() = default;
 	Texture(uint32_t w, uint32_t h, uint32_t c, float3* d);
-	inline __host__ __device__ float3 GetPixel(float x, float y) const
-	{
-		int iu = (int)(x * width) % width;
-		int iv = (int)(y * height) % height;
-		int index = iv * width + iu;
 
-		return pixels[index];
-	}
+	cudaTextureObject_t ToDevice();
 
 	uint32_t width = 0;
 	uint32_t height = 0;

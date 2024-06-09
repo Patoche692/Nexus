@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Cuda/Material.cuh"
 #include "Utils/cuda_math.h"
 #include "Ray.h"
 
@@ -35,6 +36,13 @@ struct Material {
 	int diffuseMapId = -1;
 	int emissiveMapId = -1;
 	Type type;
+
+	D_Material ToDevice() const
+	{
+		D_Material deviceMaterial;
+		memcpy(&deviceMaterial, this, sizeof(D_Material));
+		return deviceMaterial;
+	}
 
 	static std::string GetMaterialTypesString()
 	{

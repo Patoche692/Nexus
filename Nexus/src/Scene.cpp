@@ -28,15 +28,13 @@ void Scene::BuildTLAS()
 {
 	m_Tlas = std::make_shared<TLAS>(m_BVHInstances.data(), m_BVHInstances.size());
 	m_Tlas->Build();
-	newDeviceTLAS(*m_Tlas);
 }
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
 
-	// Get the raw ptr for BVHInstance because CUDA doesnt support shared_ptr
-	m_BVHInstances.push_back(BVHInstance(mesh.bvh8.get()));
+	m_BVHInstances.push_back(BVHInstance(&mesh.bvh8));
 
 	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
@@ -58,7 +56,7 @@ void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::strin
 void Scene::AddHDRMap(const std::string& filePath, const std::string& fileName)
 {
 	m_HdrMap = IMGLoader::LoadIMG(filePath + fileName);
-	SendHDRMapToDevice(m_HdrMap);
+	m_DeviceHdrMap = m_HdrMap.ToDevice();
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
@@ -93,4 +91,52 @@ bool Scene::SendDataToDevice()
 		invalid = true;
 
 	return invalid;
+}
+
+
+
+D_Scene Scene::ToDevice()
+{
+	D_Scene deviceScene;
+
+	thrust::device_vector<cudaTextureObject_t>& deviceDiffuseMaps = m_AssetManager.GetDeviceDiffuseMaps();
+	thrust::device_vector<cudaTextureObject_t>& deviceEmissiveMaps = m_AssetManager.GetDeviceEmissiveMaps();
+	thrust::device_vector<D_Material>& deviceMaterials = m_AssetManager.GetDeviceMaterials();
+
+	deviceScene.diffuseMaps = thrust::raw_pointer_cast(deviceDiffuseMaps.data());
+	deviceScene.emissiveMaps = thrust::raw_pointer_cast(deviceEmissiveMaps.data());
+	deviceScene.materials = thrust::raw_pointer_cast(deviceMaterials.data());
+
+	deviceScene.hasHdrMap = m_HdrMap.pixels != nullptr;
+	deviceScene.hdrMap = m_DeviceHdrMap;
+
+	bool invalid = false;
+
+	if (m_InvalidMeshInstances.size() != 0)
+	{
+		for (int i : m_InvalidMeshInstances)
+		{
+			MeshInstance& meshInstance = m_MeshInstances[i];
+			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+			if (meshInstance.materialId != -1)
+				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
+			
+		}
+		m_Tlas->Build();
+
+		m_InvalidMeshInstances.clear();
+		invalid = true;
+	}
+
+	deviceScene.tlas = m_Tlas;
+
+
+	if (m_Camera->SendDataToDevice())
+		invalid = true;
+
+	if (m_AssetManager.SendDataToDevice())
+		invalid = true;
+
+
+	return deviceScene;
 }

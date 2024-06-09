@@ -228,20 +228,21 @@ __global__ void TraceRay(const D_Scene scene, const D_Camera camera, uint32_t* o
 	outBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
 }
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)
+void RenderViewport(const PixelBuffer& pixelBuffer, const D_Scene& scene,
+	const D_Camera& camera, uint32_t frameNumber, float3* accumulationBuffer)
 {
-	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
+	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer.GetCudaResource()));
 	size_t size = 0;
 	uint32_t* devicePtr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer->GetCudaResource()));
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer.GetCudaResource()));
 
-	dim3 blocks(pixelBuffer->GetWidth() / BLOCK_SIZE + 1, pixelBuffer->GetHeight() / BLOCK_SIZE + 1);
+	dim3 blocks(pixelBuffer.GetWidth() / BLOCK_SIZE + 1, pixelBuffer.GetHeight() / BLOCK_SIZE + 1);
 	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
 
-	TraceRay<<<blocks, threads>>>(devicePtr, frameNumber, accumulationBuffer);
+	TraceRay<<<blocks, threads>>>(scene, camera, devicePtr, frameNumber, accumulationBuffer);
 
 	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
 }
 
 void InitDeviceSceneData()

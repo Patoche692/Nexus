@@ -32,3 +32,21 @@ void BVHInstance::AssignMaterial(int mId)
 {
 	materialId = mId;
 }
+
+D_BVHInstance BVHInstance::ToDevice()
+{
+	D_BVHInstance deviceInstance;
+	deviceInstance.bounds = { bounds.bMin, bounds.bMax };
+
+	D_BVH8 deviceBvh = bvh->ToDevice();
+
+	D_BVH8* deviceBvhPtr;
+	checkCudaErrors(cudaMalloc((void**)deviceBvhPtr, sizeof(D_BVH8)));
+	checkCudaErrors(cudaMemcpy(deviceBvhPtr, &deviceBvh, sizeof(D_BVH8), cudaMemcpyHostToDevice));
+
+	deviceInstance.bvh = deviceBvhPtr;
+	deviceInstance.transform = transform;
+	deviceInstance.invTransform = invTransform;
+	deviceInstance.materialId = materialId;
+	return deviceInstance;
+}

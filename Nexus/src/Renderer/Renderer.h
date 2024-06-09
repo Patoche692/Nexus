@@ -25,13 +25,13 @@ public:
 	void UnpackToTexture();
 	void UpdateTimer(float deltaTime);
 
-	std::shared_ptr<PixelBuffer> GetPixelBuffer() { return m_PixelBuffer; };
-	std::shared_ptr<OGLTexture> GetTexture() { return m_Texture; };
+	PixelBuffer GetPixelBuffer() { return m_PixelBuffer; };
+	OGLTexture GetTexture() { return m_Texture; };
 
 private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
-	std::shared_ptr<PixelBuffer> m_PixelBuffer;
-	std::shared_ptr<OGLTexture> m_Texture;
+	PixelBuffer m_PixelBuffer;
+	OGLTexture m_Texture;
 	uint32_t m_FrameNumber = 0;
 	float3* m_AccumulationBuffer;
 	Scene* m_Scene;

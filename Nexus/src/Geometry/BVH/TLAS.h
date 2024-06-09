@@ -1,8 +1,10 @@
 #pragma once
 
+#include <thrust/device_vector.h>
 #include "Utils/cuda_math.h"
 #include "BVHInstance.h"
 #include "Utils/Utils.h"
+#include "Cuda/BVH/TLAS.cuh"
 
 struct TLASNode
 {
@@ -17,18 +19,22 @@ class TLAS
 {
 public:
 	TLAS() = default;
-	TLAS(BVHInstance* bvhList, int N);
+	TLAS(const std::vector<BVHInstance>& bvhList);
 	void Build();
-	TLAS* ToDevice();
+
+	void UpdateDeviceData();
+	D_TLAS ToDevice();
 
 private:
 	int FindBestMatch(int N, int A);
 
 public:
 
-	TLASNode* nodes;
-	BVHInstance* blas;
-	uint32_t nodesUsed, blasCount;
-	uint32_t* nodesIdx;
+	std::vector<TLASNode> nodes;
+	std::vector<BVHInstance> blas;
+	std::vector<uint32_t> instancesIdx;
 
+	// Device members
+	thrust::device_vector<D_TLASNode> deviceNodes;
+	thrust::device_vector<D_BVHInstance> deviceBlas;
 };

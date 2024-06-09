@@ -12,7 +12,8 @@
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene)
-	:m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene), m_MetricsPanel(scene)
+	: m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene),
+	m_MetricsPanel(scene), m_PixelBuffer(width, height), m_Texture(width, height)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -23,9 +24,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* s
     ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
-
-	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
-	m_Texture = std::make_shared<OGLTexture>(width, height);
 
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 }
@@ -42,7 +40,7 @@ void Renderer::Reset()
 {
 	m_FrameNumber = 0;
 	m_MetricsPanel.Reset();
-	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
+	m_PixelBuffer = PixelBuffer(m_ViewportWidth, m_ViewportHeight);
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
 }
 

@@ -6,7 +6,7 @@
 
 struct D_Scene
 {
-	bool hasHdrMap;
+	bool hasHdrMap = false;
 	cudaTextureObject_t hdrMap;
 
 	cudaTextureObject_t* diffuseMaps;

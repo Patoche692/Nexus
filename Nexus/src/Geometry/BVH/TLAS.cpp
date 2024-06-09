@@ -2,35 +2,28 @@
 
 #include <cuda_runtime_api.h>
 
-TLAS::TLAS(BVHInstance* bvhList, int N)
+TLAS::TLAS(const std::vector<BVHInstance>& bvhList)
 {
 	blas = bvhList;
-	blasCount = N;
-
-	nodes = new TLASNode[2 * N];
-	nodesIdx = new uint32_t[N];
-	nodesUsed = 1;
+	deviceBlas = thrust::device_vector<D_BVHInstance>(bvhList.size());
 }
-
-//TLAS::~TLAS()
-//{
-//	delete[] nodes;
-//	delete[] nodesIdx;
-//}
 
 void TLAS::Build()
 {
-	nodesUsed = 1;
-	for (uint32_t i = 0; i < blasCount; i++)
+	nodes.emplace_back();
+	for (uint32_t i = 0; i < blas.size(); i++)
 	{
-		nodesIdx[i] = nodesUsed;
-		nodes[nodesUsed].aabbMin = blas[i].bounds.bMin;
-		nodes[nodesUsed].aabbMax = blas[i].bounds.bMax;
-		nodes[nodesUsed].blasIdx = i;
-		nodes[nodesUsed++].leftRight = 0;
+		instancesIdx.push_back(i + 1);
+
+		TLASNode node;
+		node.aabbMin = blas[i].bounds.bMin;
+		node.aabbMax = blas[i].bounds.bMax;
+		node.blasIdx = i;
+		node.leftRight = 0;
+		nodes.push_back(node);
 	}
 
-	int nodeIndices = blasCount;
+	int nodeIndices = blas.size();
 	int A = 0, B = FindBestMatch(nodeIndices, A);
 
 	while (nodeIndices > 1)
@@ -38,28 +31,40 @@ void TLAS::Build()
 		int C = FindBestMatch(nodeIndices, B);
 		if (A == C)
 		{
-			int nodeIdxA = nodesIdx[A], nodeIdxB = nodesIdx[B];
+			int nodeIdxA = instancesIdx[A], nodeIdxB = instancesIdx[B];
 			TLASNode& nodeA = nodes[nodeIdxA];
 			TLASNode& nodeB = nodes[nodeIdxB];
-			TLASNode& newNode = nodes[nodesUsed];
+			TLASNode newNode;
 			newNode.leftRight = nodeIdxA + (nodeIdxB << 16);
 			newNode.aabbMin = fminf(nodeA.aabbMin, nodeB.aabbMin);
 			newNode.aabbMax = fmaxf(nodeA.aabbMax, nodeB.aabbMax);
-			nodesIdx[A] = nodesUsed++;
-			nodesIdx[B] = nodesIdx[nodeIndices - 1];
+			nodes.push_back(newNode);
+			instancesIdx[A] = nodes.size();
+			instancesIdx[B] = instancesIdx[nodeIndices - 1];
 			B = FindBestMatch(--nodeIndices, A);
 		}
 		else
 			A = B, B = C;
 	}
-	nodes[0] = nodes[nodesIdx[A]];
-
+	nodes[0] = nodes[instancesIdx[A]];
 }
 
-TLAS* TLAS::ToDevice()
+void TLAS::UpdateDeviceData()
 {
+	for (int i = 0; i < blas.size(); i++)
+	{
+		deviceBlas[i] = blas[i].ToDevice();
+	}
 
-	return nullptr;
+	deviceNodes = nodes;
+}
+
+D_TLAS TLAS::ToDevice()
+{
+	D_TLAS deviceTlas;
+	deviceTlas.blas = thrust::raw_pointer_cast(deviceBlas.data());
+	deviceTlas.nodes = thrust::raw_pointer_cast(deviceNodes.data());
+	return deviceTlas;
 }
 
 int TLAS::FindBestMatch(int N, int A)
@@ -70,8 +75,8 @@ int TLAS::FindBestMatch(int N, int A)
 	{
 		if (B != A)
 		{
-			float3 bMax = fmaxf(nodes[nodesIdx[A]].aabbMax, nodes[nodesIdx[B]].aabbMax);
-			float3 bMin = fminf(nodes[nodesIdx[A]].aabbMin, nodes[nodesIdx[B]].aabbMin);
+			float3 bMax = fmaxf(nodes[instancesIdx[A]].aabbMax, nodes[instancesIdx[B]].aabbMax);
+			float3 bMin = fminf(nodes[instancesIdx[A]].aabbMin, nodes[instancesIdx[B]].aabbMin);
 			float3 e = bMax - bMin;
 			float surfaceArea = e.x * e.y + e.y * e.z + e.x * e.z;
 			if (surfaceArea < smallest)

@@ -6,6 +6,7 @@
 #include "BVH8.h"
 #include "Math/Mat4.h"
 #include "Geometry/AABB.h"
+#include "Cuda/BVH/BVHInstance.cuh"
 
 class BVHInstance
 {
@@ -20,6 +21,8 @@ public:
 	void SetTransform(float3 pos, float3 r, float3 s);
 
 	void AssignMaterial(int mIdx);
+
+	D_BVHInstance ToDevice();
 
 public:
 	BVH8* bvh = nullptr;
