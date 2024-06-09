@@ -8,7 +8,11 @@
 class BVH8Builder
 {
 public:
-	BVH8Builder(BVH* bvh);
+
+	BVH8Builder(const std::vector<Triangle>& triangles);
+
+	// Init from another BVH2 that must already be built
+	BVH8Builder(const BVH2& bvh);
 
 	enum struct Decision
 	{
@@ -30,35 +34,34 @@ public:
 		int leftCount, rightCount;
 	};
 
-	std::shared_ptr<BVH8> Build();
+	BVH8 Build();
 	int ComputeNodeTriCount(int nodeIdx, int triBaseIdx);
 	float ComputeNodeCost(uint32_t nodeIdx, int i);
 	void Init();
 
-	void CollapseNode(uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8);
+	void CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8);
 
 private:
 
 	// Cleaf(n)
-	inline float CLeaf(const BVHNode& node, int triCount);
+	inline float CLeaf(const BVH2Node& node, int triCount);
 
 	// Cinternal(n)
-	float CInternal(const BVHNode& node, int& leftCount, int& rightCount);
+	float CInternal(const BVH2Node& node, int& leftCount, int& rightCount);
 
 	// Cdistribute(n, j)
-	float CDistribute(const BVHNode& node, int j, int& leftCount, int& rightCount);
+	float CDistribute(const BVH2Node& node, int j, int& leftCount, int& rightCount);
 
 	// Returns the indices of the node's children
 	void GetChildrenIndices(uint32_t nodeIdxBvh2, int *indices, int i, int& indicesCount);
 
-	int CountTriangles(uint32_t nodeIdxBvh2);
+	int CountTriangles(BVH8& bvh8, uint32_t nodeIdxBvh2);
 
 	// Order the children in a given node
 	void OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices);
 
 private:
-	BVH* m_Bvh2 = nullptr;
-	std::shared_ptr<BVH8> m_Bvh8 = nullptr;
+	BVH2 m_Bvh2;
 
 	// Optimal SAH cost C(n, i) with decisions
 	std::vector<std::vector<NodeEval>> m_Evals;
@@ -72,7 +75,4 @@ private:
 	// Number of nodes already in the BVH
 	uint32_t m_UsedNodes = 0;
 	uint32_t m_UsedIndices = 0;
-
-	// Current base triangle index
-	//uint32_t triBaseIdx = 0;
 };

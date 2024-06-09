@@ -27,17 +27,4 @@ public:
 	Mat4 transform;
 	AABB bounds;
 	int materialId;
-
-	//inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
-	//{
-	//	Ray backupRay = ray;
-	//	ray.origin = invTransform.TransformPoint(ray.origin);
-	//	ray.direction = invTransform.TransformVector(ray.direction);
-	//	ray.invDirection = 1 / ray.direction;
-
-	//	bvh->Intersect(ray, instanceIdx);
-
-	//	backupRay.hit = ray.hit;
-	//	ray = backupRay;
-	//}
 };

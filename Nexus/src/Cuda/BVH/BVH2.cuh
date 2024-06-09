@@ -1,51 +1,37 @@
 #pragma once
 
-#include "Geometry/BVH/BVH.h"
-#include "Geometry/Ray.h"
+#include <cuda_runtime_api.h>
+#include "Cuda/Geometry/Ray.cuh"
+#include "Cuda/Geometry/Triangle.cuh"
+#include "Cuda/Geometry/AABB.cuh"
 
-inline __device__ void IntersectBVH2(const BVH& bvh, Ray& ray, const uint32_t instanceIdx)
+struct D_BVH2Node
 {
-	BVHNode* node = &bvh.nodes[0], * stack[32];
-	uint32_t stackPtr = 0;
+	// Bounds
+	float3 aabbMin, aabbMax;
 
-	while (1)
+	// Either the index of the left child node, or the first index in the triangles list
+	union {
+		uint32_t leftNode;
+		uint32_t firstTriIdx;
+	};
+
+	// Number of triangles in the node (0 if not leaf)
+	uint32_t triCount;
+
+	inline __device__ bool IsLeaf() const { return triCount > 0; }
+	inline __device__ float Cost() const
 	{
-		if (node->IsLeaf())
-		{
-			for (uint32_t i = 0; i < node->triCount; i++)
-				bvh.triangles[bvh.triangleIdx[node->leftNode + i]].Hit(ray, instanceIdx, bvh.triangleIdx[node->leftNode + i]);
-
-			if (stackPtr == 0)
-				break;
-			else
-				node = stack[--stackPtr];
-			continue;
-		}
-
-		BVHNode* child1 = &bvh.nodes[node->leftNode];
-		BVHNode* child2 = &bvh.nodes[node->leftNode + 1];
-		float dist1 = AABB::intersectionAABB(ray, child1->aabbMin, child1->aabbMax);
-		float dist2 = AABB::intersectionAABB(ray, child2->aabbMin, child2->aabbMax);
-
-		if (dist1 > dist2)
-		{
-			Utils::Swap(dist1, dist2);
-			Utils::Swap(child1, child2);
-		}
-
-		if (dist1 == 1e30f)
-		{
-			if (stackPtr == 0)
-				break;
-			else
-				node = stack[--stackPtr];
-		}
-		else
-		{
-			node = child1;
-			if (dist2 != 1e30f)
-				stack[stackPtr++] = child2;
-		}
-
+		float3 diag = aabbMax - aabbMin;
+		return (diag.x * diag.y + diag.y * diag.z + diag.x * diag.z) * triCount;
 	}
-}
+};
+
+struct D_BVH2
+{
+	D_Triangle* triangles = nullptr;
+	uint32_t* triangleIdx = nullptr;
+	uint32_t nodesUsed, triCount;
+	D_BVH2Node* nodes = nullptr;
+};
+

@@ -1,51 +1,44 @@
 #include <vector>
+#include <numeric>
 #include "BVH.h"
 #include "Geometry/AABB.h"
 #include "Utils/Utils.h"
 
-BVH::BVH(std::vector<Triangle>& tri)
+BVH2::BVH2(const std::vector<Triangle>& tri)
 {
-	triCount = tri.size();
-	triangles = new Triangle[triCount];
-	nodes = new BVHNode[2 * triCount];
-	triangleIdx = new uint32_t[triCount];
-
-	memcpy(triangles, tri.data(), triCount * sizeof(Triangle));
-
-	Build();
+	triangles = tri;
+	triangleIdx = std::vector<uint32_t>(tri.size());
 }
 
-BVH::~BVH()
+void BVH2::Build()
 {
-	delete[] triangles;
-	delete[] nodes;
-	delete[] triangleIdx;
-}
+	// Fill triangle indices with consecutive integers starting from 0
+	std::iota(triangleIdx.begin(), triangleIdx.end(), 0);
 
-void BVH::Build()
-{
-	nodesUsed = 1;
-
-	for (uint32_t i = 0; i < triCount; i++)
-		triangleIdx[i] = i;
-
-	BVHNode& root = nodes[0];
+	BVH2Node root;
 	root.leftNode = 0;
-	root.triCount = triCount;
+	root.triCount = triangles.size();
+	nodes.push_back(root);
 
 	UpdateNodeBounds(0);
 	Subdivide(0);
 }
 
-void BVH::SplitNodeInHalf(BVHNode& node)
+void BVH2::SplitNodeInHalf(BVH2Node& node)
 {
-	int leftChildIdx = nodesUsed++;
-	int rightChildIdx = nodesUsed++;
+	int leftChildIdx = nodes.size();
+	int rightChildIdx = nodes.size();
 
-	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
-	nodes[leftChildIdx].triCount = node.triCount / 2;
-	nodes[rightChildIdx].firstTriIdx = node.firstTriIdx + node.triCount / 2;
-	nodes[rightChildIdx].triCount = node.triCount - node.triCount / 2;
+	BVH2Node leftChild;
+	leftChild.firstTriIdx = node.firstTriIdx;
+	leftChild.triCount = node.triCount / 2;
+	nodes.push_back(leftChild);
+
+	BVH2Node rightChild;
+	rightChild.firstTriIdx = node.firstTriIdx + node.triCount / 2;
+	rightChild.triCount = node.triCount - node.triCount / 2;
+	nodes.push_back(rightChild);
+
 	node.leftNode = leftChildIdx;
 	node.triCount = 0;
 
@@ -56,9 +49,9 @@ void BVH::SplitNodeInHalf(BVHNode& node)
 	Subdivide(rightChildIdx);
 }
 
-void BVH::Subdivide(uint32_t nodeIdx)
+void BVH2::Subdivide(uint32_t nodeIdx)
 {
-	BVHNode& node = nodes[nodeIdx];
+	BVH2Node& node = nodes[nodeIdx];
 
 	int axis = -1;
 	double splitPos;
@@ -103,13 +96,19 @@ void BVH::Subdivide(uint32_t nodeIdx)
 		return;
 	}
 
-	int leftChildIdx = nodesUsed++;
-	int rightChildIdx = nodesUsed++;
+	int leftChildIdx = nodes.size();
+	int rightChildIdx = nodes.size();
 
-	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
-	nodes[leftChildIdx].triCount = leftCount;
-	nodes[rightChildIdx].firstTriIdx = i;
-	nodes[rightChildIdx].triCount = node.triCount - leftCount;
+	BVH2Node leftChild;
+	leftChild.firstTriIdx = node.firstTriIdx;
+	leftChild.triCount = leftCount;
+	nodes.push_back(leftChild);
+
+	BVH2Node rightChild;
+	rightChild.firstTriIdx = i;
+	rightChild.triCount = node.triCount - leftCount;
+	nodes.push_back(rightChild);
+
 	node.leftNode = leftChildIdx;
 	node.triCount = 0;
 
@@ -120,9 +119,9 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	Subdivide(rightChildIdx);
 }
 
-void BVH::UpdateNodeBounds(uint32_t nodeIdx)
+void BVH2::UpdateNodeBounds(uint32_t nodeIdx)
 {
-	BVHNode& node = nodes[nodeIdx];
+	BVH2Node& node = nodes[nodeIdx];
 	node.aabbMin = make_float3(1e30f);
 	node.aabbMax = make_float3(-1e30f);
 	for (uint32_t first = node.firstTriIdx, i = 0; i < node.triCount; i++)
@@ -138,7 +137,7 @@ void BVH::UpdateNodeBounds(uint32_t nodeIdx)
 	}
 }
 
-float BVH::FindBestSplitPlane(const BVHNode& node, int& axis, double& splitPos)
+float BVH2::FindBestSplitPlane(const BVH2Node& node, int& axis, double& splitPos)
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)

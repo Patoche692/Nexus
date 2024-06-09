@@ -70,7 +70,7 @@ struct D_Triangle
 	}
 
 	// Normal (not normalized)
-	inline __host__ __device__ float3 Normal()
+	inline __host__ __device__ float3 Normal() const
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;

@@ -2,6 +2,7 @@
 
 #include "TLAS.cuh"
 #include "BVHInstanceTraversal.cuh"
+#include "Cuda/Geometry/AABB.cuh"
 
 inline __device__ void IntersectTLAS(const D_TLAS& tlas, D_Ray& ray)
 {
@@ -20,10 +21,10 @@ inline __device__ void IntersectTLAS(const D_TLAS& tlas, D_Ray& ray)
 				node = stack[--stackPtr];
 			continue;
 		}
-		TLASNode* child1 = &tlas.nodes[node->leftRight & 0xffff];
-		TLASNode* child2 = &tlas.nodes[node->leftRight >> 16];
-		float dist1 = AABB::intersectionAABB(ray, child1->aabbMin, child1->aabbMax);
-		float dist2 = AABB::intersectionAABB(ray, child2->aabbMin, child2->aabbMax);
+		D_TLASNode* child1 = &tlas.nodes[node->leftRight & 0xffff];
+		D_TLASNode* child2 = &tlas.nodes[node->leftRight >> 16];
+		float dist1 = D_AABB::IntersectionAABB(ray, child1->aabbMin, child1->aabbMax);
+		float dist2 = D_AABB::IntersectionAABB(ray, child2->aabbMin, child2->aabbMax);
 
 		if (dist1 > dist2)
 		{

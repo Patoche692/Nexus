@@ -132,17 +132,17 @@ void cpyMaterialToDevice(Material& m, uint32_t id)
 	CudaMemory::SetToIndex(materialsSymbolAddress, id, m);
 }
 
-BVH* newDeviceBVH(BVH& bvh)
+BVH2* newDeviceBVH(BVH2& bvh)
 {
 	Triangle* triangles = CudaMemory::Allocate<Triangle>(bvh.triCount);
-	BVHNode* nodes = CudaMemory::Allocate<BVHNode>(bvh.triCount * 2);
+	BVH2Node* nodes = CudaMemory::Allocate<BVH2Node>(bvh.triCount * 2);
 	uint32_t* triangleIdx = CudaMemory::Allocate<uint32_t>(bvh.triCount);
 
 	CudaMemory::MemCpy(triangles, bvh.triangles, bvh.triCount, cudaMemcpyHostToDevice);
 	CudaMemory::MemCpy(nodes, bvh.nodes, bvh.triCount * 2, cudaMemcpyHostToDevice);
 	CudaMemory::MemCpy(triangleIdx, bvh.triangleIdx, bvh.triCount, cudaMemcpyHostToDevice);
 
-	BVH newBvh;
+	BVH2 newBvh;
 	newBvh.triangles = triangles;
 	newBvh.nodes = nodes;
 	newBvh.triangleIdx = triangleIdx;
@@ -150,7 +150,7 @@ BVH* newDeviceBVH(BVH& bvh)
 
 	newBvh.nodesUsed = bvh.nodesUsed;
 
-	BVH* bvhPtr = CudaMemory::Allocate<BVH>(1);
+	BVH2* bvhPtr = CudaMemory::Allocate<BVH2>(1);
 	CudaMemory::MemCpy(bvhPtr, &newBvh, 1, cudaMemcpyHostToDevice);
 
 	// TODO: Move all structures to the GPU. For now, avoid calling delete on a device ptr

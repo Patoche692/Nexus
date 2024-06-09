@@ -15,14 +15,14 @@ struct Mesh
 	{
 		std::cout << "Mesh: " << n << std::endl;
 		std::cout << "Triangle count: " << triangles.size() << std::endl;
-		bvh = std::make_shared<BVH>(triangles);
-		BVH8Builder builder(bvh.get());
+
+		BVH8Builder builder(triangles);
 		builder.Init();
 		bvh8 = builder.Build();
 	}
 
-	std::shared_ptr<BVH> bvh;
-	std::shared_ptr<BVH8> bvh8;
+	BVH8 bvh8;
+
 	// Transform component of the mesh at loading
 	float3 position = make_float3(0.0f);
 	float3 rotation = make_float3(0.0f);

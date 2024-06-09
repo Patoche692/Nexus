@@ -1,4 +1,6 @@
 #pragma once
+
+#include <vector>
 #include "Utils/cuda_math.h"
 #include "BVH.h"
 
@@ -46,12 +48,10 @@ struct BVH8Node
 struct BVH8
 {
 	BVH8() = default;
-	BVH8(BVH* bvh2);
-	~BVH8();
+	BVH8(const std::vector<Triangle>& tri);
+	void Init();
 
-	Triangle* triangles = nullptr;
-	uint32_t* triangleIdx = nullptr;
-	uint32_t nodesUsed, triCount;
-
-	BVH8Node* nodes = nullptr;
+	std::vector<Triangle> triangles;
+	std::vector<uint32_t> triangleIdx;
+	std::vector<BVH8Node> nodes;
 };

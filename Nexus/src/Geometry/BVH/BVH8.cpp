@@ -1,17 +1,15 @@
 #include "BVH8.h"
+#include <numeric>
 
-BVH8::BVH8(BVH* bvh2)
+BVH8::BVH8(const std::vector<Triangle>& tri)
 {
-	triangles = bvh2->triangles;
-	triangleIdx = new uint32_t[bvh2->triCount];
-	triCount = bvh2->triCount;
-	// TODO: How many nodes should be allocated?
-	nodes = new BVH8Node[triCount * 8];
-	nodesUsed = 1;
+	triangles = tri;
+	triangleIdx = std::vector<uint32_t>(triangles.size());
 }
 
-BVH8::~BVH8()
+void BVH8::Init()
 {
-	delete[] nodes;
-	delete[] triangleIdx;
+	// Fill the indices with integers starting from 0
+	std::iota(triangleIdx.begin(), triangleIdx.end(), 0);
 }
+

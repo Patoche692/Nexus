@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/Utils.h"
+#include "Cuda/Material.cuh"
 
 struct D_Intersection
 {
@@ -31,4 +32,13 @@ struct D_Ray
 	D_Intersection hit;
 
 	inline  __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
+};
+
+struct D_HitResult
+{
+	float3 p;
+	D_Ray rIn;
+	float3 albedo;
+	float3 normal;
+	D_Material material;
 };
