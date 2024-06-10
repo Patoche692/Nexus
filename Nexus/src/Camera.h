@@ -4,6 +4,7 @@
 #include <vector>
 #include <cuda_runtime_api.h>
 #include "Geometry/Ray.h"
+#include "Cuda/Camera.cuh"
 
 class Camera 
 {
@@ -31,6 +32,7 @@ public:
 	void Invalidate() { m_Invalid = true; }
 
 	bool SendDataToDevice();
+	D_Camera ToDevice();
 
 private:
 	float2 m_LastMousePosition{ 0.0f, 0.0 };

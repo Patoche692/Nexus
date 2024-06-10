@@ -149,3 +149,31 @@ bool Camera::SendDataToDevice()
 	return false;
 }
 
+D_Camera Camera::ToDevice()
+{
+	D_Camera deviceCamera;
+
+	float3 forwardDirection = m_ForwardDirection;
+	float3 upDirection = cross(m_RightDirection, forwardDirection);
+	float aspectRatio = m_ViewportWidth / (float)m_ViewportHeight;
+	float halfHeight = m_FocusDist * tanf(m_VerticalFOV / 2.0f * M_PI / 180.0f);
+	float halfWidth = aspectRatio * halfHeight;
+
+	float3 viewportX = 2 * halfWidth * m_RightDirection;
+	float3 viewportY = 2 * halfHeight * upDirection;
+	float3 lowerLeftCorner = m_Position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * m_FocusDist;
+
+	float lensRadius = m_FocusDist * tanf(m_DefocusAngle / 2.0f * M_PI / 180.0f);
+
+	deviceCamera.position = m_Position;
+	deviceCamera.right = m_RightDirection;
+	deviceCamera.up = upDirection;
+	deviceCamera.lensRadius = lensRadius;
+	deviceCamera.lowerLeftCorner = lowerLeftCorner;
+	deviceCamera.viewportX = viewportX;
+	deviceCamera.viewportY = viewportY;
+	deviceCamera.resolution = make_uint2(m_ViewportWidth, m_ViewportHeight);
+
+	return deviceCamera;
+}
+

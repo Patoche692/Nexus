@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Utils/Utils.h"
 #include "Cuda/Material.cuh"
 
 struct D_Intersection
@@ -16,8 +15,8 @@ struct D_Intersection
 
 struct D_Ray
 {
-	D_Ray() = default;
-	D_Ray(float3 o, float3 d)
+	__device__ D_Ray() = default;
+	__device__ D_Ray(float3 o, float3 d)
 		:origin(o), direction(d), invDirection(1/direction) {};
 
 	// Ray origin

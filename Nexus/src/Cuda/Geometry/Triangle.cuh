@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Utils/Utils.h"
 #include "Ray.cuh"
 
 struct D_Triangle

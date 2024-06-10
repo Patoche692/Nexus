@@ -7,7 +7,6 @@
 Scene::Scene(uint32_t width, uint32_t height)
 	:m_Camera(std::make_shared<Camera>(make_float3(0.0f, 4.0f, 14.0f), make_float3(0.0f, 0.0f, -1.0f), 45.0f, width, height, 5.0f, 0.0f))
 {
-	InitDeviceSceneData();
 }
 
 void Scene::Reset()
@@ -28,6 +27,7 @@ void Scene::BuildTLAS()
 {
 	m_Tlas = std::make_shared<TLAS>(m_BVHInstances.data(), m_BVHInstances.size());
 	m_Tlas->Build();
+	m_Tlas->UpdateDeviceData();
 }
 
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
@@ -109,6 +109,7 @@ D_Scene Scene::ToDevice()
 
 	deviceScene.hasHdrMap = m_HdrMap.pixels != nullptr;
 	deviceScene.hdrMap = m_DeviceHdrMap;
+	deviceScene.camera = m_Camera->ToDevice();
 
 	bool invalid = false;
 
@@ -123,12 +124,13 @@ D_Scene Scene::ToDevice()
 			
 		}
 		m_Tlas->Build();
+		m_Tlas->UpdateDeviceData();
 
 		m_InvalidMeshInstances.clear();
 		invalid = true;
 	}
 
-	deviceScene.tlas = m_Tlas;
+	deviceScene.tlas = m_Tlas->ToDevice();
 
 
 	if (m_Camera->SendDataToDevice())

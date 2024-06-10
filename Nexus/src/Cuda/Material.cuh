@@ -33,5 +33,5 @@ struct D_Material
 
 	int diffuseMapId = -1;
 	int emissiveMapId = -1;
-	Type type;
+	D_Type type;
 };

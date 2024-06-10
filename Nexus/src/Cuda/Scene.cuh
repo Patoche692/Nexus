@@ -3,6 +3,7 @@
 #include <cuda_runtime_api.h>
 #include "Cuda/BVH/TLAS.cuh"
 #include "Material.cuh"
+#include "Camera.cuh"
 
 struct D_Scene
 {
@@ -14,4 +15,5 @@ struct D_Scene
 
 	D_TLAS tlas;
 	D_Material* materials;
+	D_Camera camera;
 };

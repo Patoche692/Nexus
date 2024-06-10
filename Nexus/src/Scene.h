@@ -24,7 +24,7 @@ public:
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }
-	bool IsInvalid() { return m_InvalidMeshInstances.size() > 0; }
+	bool IsInvalid() { return m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid(); }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);

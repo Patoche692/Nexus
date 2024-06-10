@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <stdint.h>
-#include <Utils/Utils.h>
 #include "Cuda/Geometry/Triangle.cuh"
 
 using byte = unsigned char;
@@ -42,14 +41,7 @@ struct D_StackEntry
 		D_Triangle triangle;
 	};
 };
-
-struct D_BVH8
-{
-	D_Triangle* triangles = nullptr;
-	uint32_t* triangleIdx = nullptr;
-	uint32_t nodesUsed, triCount;
-	D_BVH8Node* nodes = nullptr;
-};
+;
 
 // Compressed BVH8 node
 struct D_BVH8Node
@@ -70,3 +62,10 @@ struct D_BVH8Node
 	float4 qhiy_qhiz;
 };
 
+struct D_BVH8
+{
+	D_Triangle* triangles = nullptr;
+	uint32_t* triangleIdx = nullptr;
+	uint32_t nodesUsed, triCount;
+	D_BVH8Node* nodes = nullptr;
+};

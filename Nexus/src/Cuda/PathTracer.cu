@@ -105,7 +105,6 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		{
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
 			hitResult.material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[hitResult.material.diffuseMapId], uv.x, uv.y));
-
 		}
 		if (hitResult.material.emissiveMapId != -1) {
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
@@ -117,7 +116,7 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		//	hitResult.normal = -hitResult.normal;
 
 		// Invert normals for non transmissive material if the primitive is backfacing the ray
-		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
+		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::D_Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
 		{
 			hitResult.normal = -hitResult.normal;
 			gNormal = -gNormal;
@@ -143,13 +142,13 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		bool scattered = false;
 		switch (hitResult.material.type)
 		{
-		case D_Material::Type::DIFFUSE:
+		case D_Material::D_Type::DIFFUSE:
 			scattered = BSDF::Sample<LambertianBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
-		case D_Material::Type::DIELECTRIC:
+		case D_Material::D_Type::DIELECTRIC:
 			scattered = BSDF::Sample<DielectricBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
-		case D_Material::Type::CONDUCTOR:
+		case D_Material::D_Type::CONDUCTOR:
 			scattered = BSDF::Sample<ConductorBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
 		default:
@@ -190,13 +189,14 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 	return emission;
 }
 
-__global__ void TraceRay(const D_Scene scene, const D_Camera camera, uint32_t* outBuffer, uint32_t frameNumber, float3* accumulationBuffer)
+__global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
 	uint2 pixel = make_uint2(i, j);
 
+	D_Camera camera = scene.camera;
 	uint2 resolution = camera.resolution;
 
 	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
@@ -228,8 +228,8 @@ __global__ void TraceRay(const D_Scene scene, const D_Camera camera, uint32_t* o
 	outBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
 }
 
-void RenderViewport(const PixelBuffer& pixelBuffer, const D_Scene& scene,
-	const D_Camera& camera, uint32_t frameNumber, float3* accumulationBuffer)
+void RenderViewport(PixelBuffer pixelBuffer, const D_Scene& scene,
+	uint32_t frameNumber, float3* accumulationBuffer)
 {
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer.GetCudaResource()));
 	size_t size = 0;
@@ -239,77 +239,77 @@ void RenderViewport(const PixelBuffer& pixelBuffer, const D_Scene& scene,
 	dim3 blocks(pixelBuffer.GetWidth() / BLOCK_SIZE + 1, pixelBuffer.GetHeight() / BLOCK_SIZE + 1);
 	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
 
-	TraceRay<<<blocks, threads>>>(scene, camera, devicePtr, frameNumber, accumulationBuffer);
+	TraceRay<<<blocks, threads>>>(scene, devicePtr, frameNumber, accumulationBuffer);
 
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
 }
 
-void InitDeviceSceneData()
-{
-	SceneData scene;
-	scene.hasHdrMap = false;
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-}
+//void InitDeviceSceneData()
+//{
+//	SceneData scene;
+//	scene.hasHdrMap = false;
+//	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
+//}
 
-void SendHDRMapToDevice(const Texture& map)
-{
-	// Channel descriptor for 4 Channels (RGBA)
-	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
-	cudaArray_t cuArray;
-	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, map.width, map.height));
+//void SendHDRMapToDevice(const Texture& map)
+//{
+//	// Channel descriptor for 4 Channels (RGBA)
+//	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+//	cudaArray_t cuArray;
+//	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, map.width, map.height));
+//
+//	const size_t spitch = map.width * 4 * sizeof(float);
+//	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, map.pixels, spitch, map.width * 4 * sizeof(float), map.height, cudaMemcpyHostToDevice));
+//
+//	cudaResourceDesc resDesc;
+//	memset(&resDesc, 0, sizeof(resDesc));
+//	resDesc.resType = cudaResourceTypeArray;
+//	resDesc.res.array.array = cuArray;
+//
+//	cudaTextureDesc texDesc;
+//	memset(&texDesc, 0, sizeof(texDesc));
+//	texDesc.addressMode[0] = cudaAddressModeWrap;
+//	texDesc.addressMode[1] = cudaAddressModeWrap;
+//	texDesc.filterMode = cudaFilterModeLinear;
+//	texDesc.readMode = cudaReadModeElementType;
+//	texDesc.normalizedCoords = 1;
+//
+//	cudaTextureObject_t texObject = 0;
+//	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
+//
+//	SceneData scene;
+//	scene.hasHdrMap = true;
+//	scene.hdrMap = texObject;
+//	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
+//}
 
-	const size_t spitch = map.width * 4 * sizeof(float);
-	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, map.pixels, spitch, map.width * 4 * sizeof(float), map.height, cudaMemcpyHostToDevice));
-
-	cudaResourceDesc resDesc;
-	memset(&resDesc, 0, sizeof(resDesc));
-	resDesc.resType = cudaResourceTypeArray;
-	resDesc.res.array.array = cuArray;
-
-	cudaTextureDesc texDesc;
-	memset(&texDesc, 0, sizeof(texDesc));
-	texDesc.addressMode[0] = cudaAddressModeWrap;
-	texDesc.addressMode[1] = cudaAddressModeWrap;
-	texDesc.filterMode = cudaFilterModeLinear;
-	texDesc.readMode = cudaReadModeElementType;
-	texDesc.normalizedCoords = 1;
-
-	cudaTextureObject_t texObject = 0;
-	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
-
-	SceneData scene;
-	scene.hasHdrMap = true;
-	scene.hdrMap = texObject;
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-}
-
-void SendCameraDataToDevice(Camera* camera)
-{
-	float3 position = camera->GetPosition();
-	float3 forwardDirection = camera->GetForwardDirection();
-	float3 rightDirection = camera->GetRightDirection();
-	float3 upDirection = cross(rightDirection, forwardDirection);
-
-	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
-	float halfHeight = camera->GetFocusDist() * tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
-	float halfWidth = aspectRatio * halfHeight;
-
-	float3 viewportX = 2 * halfWidth * rightDirection;
-	float3 viewportY = 2 * halfHeight * upDirection;
-	float3 lowerLeftCorner = position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera->GetFocusDist();
-
-	float lensRadius = camera->GetFocusDist() * tanf(camera->GetDefocusAngle() / 2.0f * M_PI / 180.0f);
-
-	CameraData data = {
-		position,
-		rightDirection,
-		upDirection,
-		lensRadius,
-		lowerLeftCorner,
-		viewportX,
-		viewportY,
-		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
-	};
-	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
-}
+//void SendCameraDataToDevice(Camera* camera)
+//{
+//	float3 position = camera->GetPosition();
+//	float3 forwardDirection = camera->GetForwardDirection();
+//	float3 rightDirection = camera->GetRightDirection();
+//	float3 upDirection = cross(rightDirection, forwardDirection);
+//
+//	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
+//	float halfHeight = camera->GetFocusDist() * tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
+//	float halfWidth = aspectRatio * halfHeight;
+//
+//	float3 viewportX = 2 * halfWidth * rightDirection;
+//	float3 viewportY = 2 * halfHeight * upDirection;
+//	float3 lowerLeftCorner = position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera->GetFocusDist();
+//
+//	float lensRadius = camera->GetFocusDist() * tanf(camera->GetDefocusAngle() / 2.0f * M_PI / 180.0f);
+//
+//	CameraData data = {
+//		position,
+//		rightDirection,
+//		upDirection,
+//		lensRadius,
+//		lowerLeftCorner,
+//		viewportX,
+//		viewportY,
+//		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
+//	};
+//	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
+//}

@@ -55,7 +55,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(scene);
 
-	if (scene.SendDataToDevice())
+	if (scene.IsInvalid())
 		m_FrameNumber = 0;
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer

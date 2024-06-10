@@ -61,6 +61,7 @@ inline float rsqrtf(float x)
     return 1.0f / sqrtf(x);
 }
 
+#ifndef __VECTOR_FUNCTIONS_HPP__
 inline float2 make_float2(float a, float b)
 {
     return { a, b };
@@ -105,7 +106,7 @@ inline uint4 make_uint4(uint a, uint b, uint c, uint d)
 {
     return { a, b, c, d };
 }
-
+#endif
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
