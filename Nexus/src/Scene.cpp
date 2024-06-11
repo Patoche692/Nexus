@@ -25,7 +25,7 @@ void Scene::AddMaterial(Material& material)
 
 void Scene::BuildTLAS()
 {
-	m_Tlas = std::make_shared<TLAS>(m_BVHInstances.data(), m_BVHInstances.size());
+	m_Tlas = std::make_shared<TLAS>(m_BVHInstances);
 	m_Tlas->Build();
 	m_Tlas->UpdateDeviceData();
 }

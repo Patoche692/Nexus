@@ -13,6 +13,7 @@ struct TLASNode
 	uint32_t leftRight;
 	uint32_t blasIdx;
 	inline bool IsLeaf() { return leftRight == 0; }
+	D_TLASNode ToDevice() { return D_TLASNode{ aabbMin, aabbMax, leftRight, blasIdx }; }
 };
 
 class TLAS

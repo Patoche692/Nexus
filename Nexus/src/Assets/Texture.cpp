@@ -7,7 +7,7 @@ Texture::Texture(uint32_t w, uint32_t h, uint32_t c, float3* d) : width(w), heig
 {
 }
 
-cudaTextureObject_t Texture::ToDevice()
+cudaTextureObject_t Texture::ToDevice() const
 {
 	// Channel descriptor for 4 Channels (RGBA)
 	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);

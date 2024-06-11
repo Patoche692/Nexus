@@ -31,7 +31,7 @@ struct SceneData
 	cudaTextureObject_t hdrMap;
 };
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
+void RenderViewport(PixelBuffer pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
 void InitDeviceSceneData();
 void SendHDRMapToDevice(const Texture& map);
 void SendCameraDataToDevice(Camera *camera);

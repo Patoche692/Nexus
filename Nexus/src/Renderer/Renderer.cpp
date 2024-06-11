@@ -154,7 +154,7 @@ void Renderer::RenderUI(Scene& scene)
 	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
 	OnResize(viewportWidth, viewportHeight);
 
-	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::Image((void *)(intptr_t)m_Texture.GetHandle(), ImVec2(m_Texture.GetWidth(), m_Texture.GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
 	ImGui::PopStyleVar();
@@ -166,10 +166,10 @@ void Renderer::RenderUI(Scene& scene)
 
 void Renderer::UnpackToTexture()
 {
-	m_Texture->Bind();
-	m_PixelBuffer->Bind();
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture->GetWidth(), m_Texture->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	m_PixelBuffer->Unbind();
+	m_Texture.Bind();
+	m_PixelBuffer.Bind();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture.GetWidth(), m_Texture.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	m_PixelBuffer.Unbind();
 }
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
@@ -178,8 +178,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	{
 		m_FrameNumber = 0;
 		m_MetricsPanel.Reset();
-		m_Texture->OnResize(width, height);
-		m_PixelBuffer->OnResize(width, height);
+		m_Texture.OnResize(width, height);
+		m_PixelBuffer.OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
@@ -190,11 +190,11 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::SaveScreenshot()
 {
-	int width = m_Texture->GetWidth();
-	int height = m_Texture->GetHeight();
+	int width = m_Texture.GetWidth();
+	int height = m_Texture.GetHeight();
 	std::vector<unsigned char> pixels(width * height * 4);
 
-	glBindTexture(GL_TEXTURE_2D, m_Texture->GetHandle());
+	glBindTexture(GL_TEXTURE_2D, m_Texture.GetHandle());
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 

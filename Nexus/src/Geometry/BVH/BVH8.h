@@ -46,6 +46,8 @@ struct BVH8Node
 
 	// Quantized end point of the childs' AABBs
 	byte qhix[8], qhiy[8], qhiz[8];
+
+	D_BVH8Node ToDevice() { return *(D_BVH8Node*)this; }
 };
 
 struct BVH8

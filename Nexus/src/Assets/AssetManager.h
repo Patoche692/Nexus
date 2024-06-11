@@ -33,7 +33,7 @@ public:
 	thrust::device_vector<cudaTextureObject_t>& GetDeviceDiffuseMaps() { return m_DeviceDiffuseMaps; }
 	thrust::device_vector<cudaTextureObject_t>& GetDeviceEmissiveMaps() { return m_DeviceEmissiveMaps; }
 
-	int AddTexture(Texture& texture);
+	int AddTexture(const Texture& texture);
 	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
 
 	bool SendDataToDevice();

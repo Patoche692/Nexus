@@ -5,7 +5,7 @@
 TLAS::TLAS(const std::vector<BVHInstance>& bvhList)
 {
 	blas = bvhList;
-	deviceBlas = thrust::device_vector<D_BVHInstance>(bvhList.size());
+	deviceBlas = thrust::device_vector<D_BVHInstance>(blas.size());
 }
 
 void TLAS::Build()
@@ -49,24 +49,6 @@ void TLAS::Build()
 	nodes[0] = nodes[instancesIdx[A]];
 }
 
-void TLAS::UpdateDeviceData()
-{
-	for (int i = 0; i < blas.size(); i++)
-	{
-		deviceBlas[i] = blas[i].ToDevice();
-	}
-
-	deviceNodes = nodes;
-}
-
-D_TLAS TLAS::ToDevice()
-{
-	D_TLAS deviceTlas;
-	deviceTlas.blas = thrust::raw_pointer_cast(deviceBlas.data());
-	deviceTlas.nodes = thrust::raw_pointer_cast(deviceNodes.data());
-	return deviceTlas;
-}
-
 int TLAS::FindBestMatch(int N, int A)
 {
 	float smallest = 1e30f;
@@ -88,4 +70,24 @@ int TLAS::FindBestMatch(int N, int A)
 
 	}
 	return bestB;
+}
+
+void TLAS::UpdateDeviceData()
+{
+	for (int i = 0; i < blas.size(); i++)
+	{
+		deviceBlas[i] = blas[i].ToDevice();
+	}
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		deviceNodes[i] = nodes[i].ToDevice();
+	}
+}
+
+D_TLAS TLAS::ToDevice()
+{
+	D_TLAS deviceTlas;
+	deviceTlas.blas = thrust::raw_pointer_cast(deviceBlas.data());
+	deviceTlas.nodes = thrust::raw_pointer_cast(deviceNodes.data());
+	return deviceTlas;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/cuda_math.h"
 #include "Material.h"
+#include "Cuda/Geometry/Triangle.cuh"
 
 
 struct Triangle
@@ -30,4 +31,13 @@ struct Triangle
 	): pos0(p0), pos1(p1), pos2(p2), normal0(n0), normal1(n1),
 		normal2(n2), texCoord0(t0), texCoord1(t1), texCoord2(t2),
 		centroid((pos0 + pos1 + pos2) / 3.0f) { }
+
+	D_Triangle ToDevice()
+	{
+		return D_Triangle{
+			pos0, pos1, pos2,
+			normal0, normal1, normal2,
+			texCoord0, texCoord1, texCoord2
+		};
+	}
 };

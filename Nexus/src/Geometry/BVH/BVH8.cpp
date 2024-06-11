@@ -4,20 +4,16 @@
 BVH8::BVH8(const std::vector<Triangle>& tri)
 {
 	triangles = tri;
-	deviceTriangles = tri;
-	triangleIdx = std::vector<uint32_t>(triangles.size());
+	for (int i = 0; i < triangles.size(); i++)
+	{
+		deviceTriangles[i] = triangles[i].ToDevice();
+	}
 }
 
 void BVH8::Init()
 {
 	// Fill the indices with integers starting from 0
 	std::iota(triangleIdx.begin(), triangleIdx.end(), 0);
-}
-
-void BVH8::UpdateDeviceData()
-{
-	deviceNodes = nodes;
-	deviceTriangleIdx = triangleIdx;
 }
 
 D_BVH8 BVH8::ToDevice()
@@ -31,3 +27,11 @@ D_BVH8 BVH8::ToDevice()
 	return deviceBvh;
 }
 
+void BVH8::UpdateDeviceData()
+{
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		deviceNodes[i] = nodes[i].ToDevice();
+	}
+	deviceTriangleIdx = triangleIdx;
+}
