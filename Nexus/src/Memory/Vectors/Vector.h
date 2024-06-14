@@ -85,12 +85,12 @@ private:
 		size_t size = std::min(newCapacity, m_Size);
 
 		if (std::is_trivially_copyable_v<T>)
-			memcpy(newBlock, m_Data, newCapacity * sizeof(T));
+			memcpy(newBlock, m_Data, size * sizeof(T));
 
 		else
 		{
 			for (size_t i = 0; i < size; i++)
-				newBlock[i] = std::move(m_Data[i]);
+				new(&newBlock[i]) T(std::move(m_Data[i]));
 		}
 
 		for (size_t i = 0; i < size; i++)
