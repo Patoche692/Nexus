@@ -3,6 +3,7 @@
 #include <vector>
 #include "Geometry/BVH/BVH.h"
 #include "Math/Mat4.h"
+#include "Geometry/Octree/OctreeBuilder.h"
 
 
 struct Mesh
@@ -13,6 +14,8 @@ struct Mesh
 		: name(n), materialId(mId), position(p), rotation(r), scale(s)
 	{
 		bvh = std::make_shared<BVH>(triangles);
+		OctreeBuilder builder(triangles);
+		Octree octree = builder.Build();
 	}
 
 	std::shared_ptr<BVH> bvh;
