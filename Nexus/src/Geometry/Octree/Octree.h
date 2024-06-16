@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Utils/cuda_math.h"
+#include "Utils/Utils.h"
 #include "Geometry/Triangle.h"
 
 // My own implementation of a hybrid tree, mixing octree and bvh
@@ -12,12 +13,12 @@ struct OctreeNode
 {
 	float3 position = make_float3(0);
 	float size = 0.0f;
-	unsigned char splitSize = 2;
 	float inverseSize = 0.0f;
 	uint32_t childBaseIdx = 0;
 	uint32_t triBaseIdx = 0;
 	uint32_t parentIdx = 0;
 	uint32_t triCount = 0;
+	unsigned char splitSize = 2;
 
 	inline float Cost() const {
 		return Area() * triCount;

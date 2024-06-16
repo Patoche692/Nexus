@@ -62,7 +62,6 @@ void OctreeBuilder::Subdivide(const uint32_t nodeIdx, const uint32_t splitSize)
 
 		// We take the size of the root node for better accuracy
 		child.size = halfSize;
-		//child.size = node.size / node.splitSize;
 		child.inverseSize = 1.0f / child.size;
 		child.parentIdx = nodeIdx;
 
@@ -71,7 +70,11 @@ void OctreeBuilder::Subdivide(const uint32_t nodeIdx, const uint32_t splitSize)
 	node = m_Nodes[nodeIdx];
 
 	uint32_t assignedTriCount = 0;
-	for (size_t i = node.triBaseIdx; i < node.triBaseIdx + node.triCount; i++)
+
+	// Total number of triangles in the node including the duplicated ones
+	uint32_t triCountDup = node.triCount;
+
+	for (size_t i = node.triBaseIdx; i < node.triBaseIdx + triCountDup; i++)
 	{
 		std::set<uint32_t> assignedChildIdx;
 		const Triangle& triangle = m_Triangles[m_TriangleIdx[i]];
@@ -83,6 +86,8 @@ void OctreeBuilder::Subdivide(const uint32_t nodeIdx, const uint32_t splitSize)
 			uint32_t childIdx = node.childBaseIdx + relativeChildIdx;
 			OctreeNode& child = m_Nodes[childIdx];
 
+			// TODO: implement two passes: one for computing decisions, and one for actually switching the indices
+
 			// If no node contains triangle yet
 			if (assignedChildIdx.size() == 0)
 			{
@@ -90,7 +95,8 @@ void OctreeBuilder::Subdivide(const uint32_t nodeIdx, const uint32_t splitSize)
 
 				for (int k = childIdx + 1; k < node.childBaseIdx + childCount; k++)
 				{
-					Utils::Swap(m_TriangleIdx[i], m_TriangleIdx[m_Nodes[k - 1].triBaseIdx + m_Nodes[k - 1].triCount - 1]);
+					if (m_Nodes[k - 1].triCount > 0)
+						Utils::Swap(m_TriangleIdx[i], m_TriangleIdx[m_Nodes[k - 1].triBaseIdx + m_Nodes[k - 1].triCount - 1]);
 					m_Nodes[k].triBaseIdx++;
 				}
 				assignedTriCount++;
@@ -99,16 +105,21 @@ void OctreeBuilder::Subdivide(const uint32_t nodeIdx, const uint32_t splitSize)
 			else if (assignedChildIdx.find(childIdx) == assignedChildIdx.end())
 			{
 				child.triCount++;
+				triCountDup++;
 				m_TriangleIdx.push_back(m_TriangleIdx[i]);
 
 				// Maximum of 7 loops since node.firstChildIdx represents the last 8 nodes
 				for (int k = childIdx + 1; k < m_Nodes.size(); k++)
 				{
-					Utils::Swap(m_TriangleIdx[m_TriangleIdx.size() - 1], m_TriangleIdx[m_Nodes[k - 1].triBaseIdx + m_Nodes[k - 1].triCount - 1]);
+					if (m_Nodes[k - 1].triCount > 0)
+						Utils::Swap(m_TriangleIdx[m_TriangleIdx.size() - 1], m_TriangleIdx[m_Nodes[k - 1].triBaseIdx + m_Nodes[k - 1].triCount - 1]);
 					m_Nodes[k].triBaseIdx++;
 				}
+				OctreeNode& last = m_Nodes[m_Nodes.size() - 1];
+				Utils::Swap(m_TriangleIdx[m_TriangleIdx.size() - 1], m_TriangleIdx[last.triBaseIdx + last.triCount - 1]);
 
 				assignedTriCount++;
+				i++;
 			}
 			assignedChildIdx.insert(childIdx);
 		}
