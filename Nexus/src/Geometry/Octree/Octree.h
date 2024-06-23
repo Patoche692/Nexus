@@ -9,11 +9,74 @@
 
 #define EPSILON 1.0e-6f
 
+inline __device__ unsigned ExtractByte(unsigned x, unsigned i) {
+	return (x >> (i * 8)) & 0xff;
+}
+
+using byte = unsigned char;
+
+inline __device__ uint32_t Octant(const float3& a)
+{
+	return ((a.x < 0 ? 1 : 0) << 2) | ((a.y < 0 ? 1 : 0) << 1) | ((a.z < 0 ? 1 : 0));
+}
+
+struct BVH8Node
+{
+	float3 position;
+	byte e[3];
+	byte imask;
+	uint32_t childBaseIdx;
+};
+
+struct AWBVHNode
+{
+
+	union {
+		struct Internal
+		{
+			float3 position;
+			float3 bMax;
+			uint32_t childBaseIdx;
+			byte childMask;
+			uint16_t splitCount_splitPos;
+		} internal;
+
+		struct Leaf
+		{
+			uint32_t triBaseIdx;
+			uint32_t triCount;
+		} leaf;
+	};
+
+	inline __host__ __device__ bool IsLeaf() { return internal.childMask == 0; }
+
+	inline __host__ __device__ byte GetChildIdx(const float3& pos)
+	{
+		const float xPlane = internal.position.x + (internal.bMax.x - internal.position.x) * exp2f(-3) * ((internal.splitCount_splitPos >> 6) & 0xfff7 + 1);
+		const float yPlane = internal.position.y + (internal.bMax.y - internal.position.y) * exp2f(-3) * ((internal.splitCount_splitPos >> 3) & 0xfff7 + 1);
+		const float zPlane = internal.position.z + (internal.bMax.z - internal.position.z) * exp2f(-3) * (internal.splitCount_splitPos & 0xfff7 + 1);
+		return ((pos.x > xPlane) & (internal.splitCount_splitPos >> 11)) << 2 |
+			   ((pos.y > yPlane) & (internal.splitCount_splitPos >> 10)) << 1 |
+			   ((pos.z > zPlane) & (internal.splitCount_splitPos >> 9));
+	}
+
+	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
+	{
+		OctreeNode
+	}
+
+	inline __host__ __device__ uint32_t GetNextNode(const Ray& ray, char currentChildIdx)
+	{
+		byte octant = Octant(ray.direction);
+		const float xPlane = currentChildIdx & 0x1 ? 
+	}
+};
+
 struct OctreeNode
 {
-	float3 position = make_float3(0);
-	float size = 0.0f;
-	float inverseSize = 0.0f;
+	float3 position = make_float3(0.0f);
+	float3 size = make_float3(0.0f);
+
 	uint32_t childBaseIdx = 0;
 	uint32_t triBaseIdx = 0;
 	uint32_t parentIdx = 0;
