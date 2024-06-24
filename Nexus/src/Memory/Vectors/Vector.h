@@ -15,6 +15,11 @@ public:
 		Realloc(2);
 	}
 
+	Vector(size_t size)
+	{
+		Realloc(size);
+	}
+
 	~Vector()
 	{
 		::operator delete(m_Data, m_Capacity * sizeof(T));
@@ -64,6 +69,8 @@ public:
 	}
 
 	size_t Size() const { return m_Size; }
+
+	T* Data() const { return m_Data; }
 
 	const T& operator[] (size_t index) const 
 	{
