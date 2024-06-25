@@ -1,6 +1,7 @@
 #pragma once
 
-#include "iostream"
+#include <iostream>
+#include "Memory/Host/Allocators/Allocator.h"
 
 /*
  * Vector class based on The Cherno's video. See https://www.youtube.com/watch?v=ryRf4Jh_YC0
@@ -15,14 +16,16 @@ public:
 		Realloc(2);
 	}
 
-	Vector(size_t size)
+	Vector(size_t size, Allocator* allocator)
+		:m_Allocator(allocator) 
 	{
 		Realloc(size);
 	}
 
 	~Vector()
 	{
-		::operator delete(m_Data, m_Capacity * sizeof(T));
+		Clear();
+		m_Allocator->Free(m_Data);
 	}
 
 	void PushBack(const T& value)
@@ -87,7 +90,7 @@ public:
 private:
 	Realloc(size_t newCapacity)
 	{
-		T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
+		T* newBlock = (T*)m_Allocator->Alloc(newCapacity * sizeof(T));
 
 		size_t size = std::min(newCapacity, m_Size);
 
@@ -103,13 +106,14 @@ private:
 		for (size_t i = 0; i < size; i++)
 			m_Data[i].~T();
 
-		::operator delete(m_Data, m_Capacity * sizeof(T));
+		m_Allocator->Free(m_Data);
 		m_Data = newBlock;
 		m_Capacity = newCapacity;
 	}
 
 private:
 	T* m_Data = nullptr;
+	Allocator* m_Allocator = nullptr;
 
 	size_t m_Size = 0;
 	size_t m_Capacity = 0;
