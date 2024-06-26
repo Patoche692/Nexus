@@ -25,7 +25,7 @@ public:
 	~Vector()
 	{
 		Clear();
-		m_Allocator->Free(m_Data);
+		Allocator<T>::Free(m_Allocator, m_Data);
 	}
 
 	void PushBack(const T& value)
@@ -90,7 +90,7 @@ public:
 private:
 	Realloc(size_t newCapacity)
 	{
-		T* newBlock = (T*)m_Allocator->Alloc(newCapacity * sizeof(T));
+		T* newBlock = Allocator<T>::Alloc(m_Allocator, count);
 
 		size_t size = std::min(newCapacity, m_Size);
 
@@ -106,14 +106,14 @@ private:
 		for (size_t i = 0; i < size; i++)
 			m_Data[i].~T();
 
-		m_Allocator->Free(m_Data);
+		Allocator<T>::Free(m_Allocator, m_Data);
 		m_Data = newBlock;
 		m_Capacity = newCapacity;
 	}
 
 private:
 	T* m_Data = nullptr;
-	Allocator* m_Allocator = nullptr;
+	Allocator<T>* m_Allocator = nullptr;
 
 	size_t m_Size = 0;
 	size_t m_Capacity = 0;

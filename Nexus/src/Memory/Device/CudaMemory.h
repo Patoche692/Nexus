@@ -21,7 +21,8 @@ public:
 		checkCudaErrors(cudaMemcpy(dst, src, sizeof(T) * count, kind));
 	}
 
-	static void Free(void* ptr)
+	template<typename T>
+	static void Free(T* ptr)
 	{
 		checkCudaErrors(cudaFree(ptr));
 	}

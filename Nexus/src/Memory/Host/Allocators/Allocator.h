@@ -1,17 +1,34 @@
 #pragma once
 #include <iostream>
 
+template<typename T>
 class Allocator
 {
 public:
 	Allocator() = default;
 
-protected:
-	virtual void* Alloc(size_t size)
+	static T* Alloc(Allocator* allocator, size_t count)
 	{
-		return ::operator new(size);
+		if (allocator)
+			return allocator->Alloc(count);
+		else
+			return ::operator new(count * sizeof(T));
 	}
-	virtual void Free(void* ptr)
+
+	static void Free(Allocator* allocator, T* ptr)
+	{
+		if (allocator)
+			allocator->Free(ptr);
+		else
+			::operator delete(ptr);
+	}
+
+protected:
+	virtual T* Alloc(size_t count)
+	{
+		return ::operator new(count * sizeof(T));
+	}
+	virtual void Free(T* ptr)
 	{
 		::operator delete(ptr);
 	}

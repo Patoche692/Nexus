@@ -1,23 +1,38 @@
 #pragma once
-#include "Memory/Host/Allocators/Allocator.h"
 #include <cuda_runtime_api.h>
-#include "Utils/Utils.h"
+#include "Memory/Device/CudaMemory.h"
 
-class DeviceAllocator: Allocator
+template<typename T>
+class DeviceAllocator
 {
 public:
 	DeviceAllocator() = default;
 
-protected:
-	virtual void* Alloc(size_t size) override
+	static T* Alloc(DeviceAllocator* allocator, size_t count)
 	{
-		void* devicePtr;
-		checkCudaErrors(cudaMalloc(&devicePtr, size));
-		return devicePtr;
+		if (allocator)
+			return CudaMemory::Allocate<T>(count);
+		else
+			return allocator->Alloc(count);
 	}
 
-	virtual void Free(void* ptr) override
+	static void Free(DeviceAllocator* allocator, T* ptr)
 	{
-		checkCudaErrors(cudaFree(ptr));
+		if (allocator)
+			CudaMemory::Free<T>(ptr);
+		else
+			allocator->Free(ptr);
+	}
+
+
+protected:
+	virtual T* Alloc(size_t count)
+	{
+		return CudaMemory::Allocate<T>(count);
+	}
+
+	virtual void Free(T* ptr)
+	{
+		CudaMemory::Free(ptr);
 	}
 };
