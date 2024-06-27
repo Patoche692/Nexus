@@ -11,7 +11,7 @@
  * 
  * If the specified type implements a static T* ToDevice() method
  */
-template<typename T>
+template<typename THost, typename TDevice>
 class DeviceVector
 {
 public:
@@ -20,7 +20,7 @@ public:
 		Realloc(2);
 	}
 
-	DeviceVector(size_t size, DeviceAllocator* allocator = nullptr)
+	DeviceVector(size_t size, DeviceAllocator<TDevice>* allocator = nullptr)
 		:m_Allocator(allocator)
 	{
 		Realloc(size);
@@ -29,20 +29,20 @@ public:
 	~DeviceVector()
 	{
 		Clear();
-		DeviceAllocator<T>::Free(m_Allocator, m_Data);
+		DeviceAllocator<TDevice>::Free(m_Allocator, m_Data);
 	}
 
-	void PushBack(const T& value)
+	void PushBack(const THost& value)
 	{
 		if (m_Size >= m_Capacity)
 			Realloc(m_Capacity + m_Capacity / 2);
 
-		if (is_trivially_copyable_to_device<T>::value)
-			CudaMemory::Copy<T>(m_Data + m_Size, &value, 1, cudaMemcpyHostToDevice);
+		if (is_trivially_copyable_to_device<THost>::value)
+			CudaMemory::Copy<TDevice>(m_Data + m_Size, (TDevice*)&value, 1, cudaMemcpyHostToDevice);
 		else
 		{
-			T deviceInstance = T::ToDevice(value);
-			CudaMemory::Copy<T>(m_Data + m_Size, &deviceInstance, 1, cudaMemcpyHostToDevice);
+			TDevice deviceInstance = THost::ToDevice(value);
+			CudaMemory::Copy<TDevice>(m_Data + m_Size, &deviceInstance, 1, cudaMemcpyHostToDevice);
 		}
 		m_Size++;
 	}
@@ -51,16 +51,16 @@ public:
 	{
 		assert(m_Size > 0);
 		m_Size--;
-		if (!is_trivially_copyable_to_device<T>::value)
-			T::FreeFromDevice(m_Data + m_Size);
+		if (!is_trivially_destructible_from_device<THost>::value)
+			THost::FreeFromDevice(m_Data + m_Size);
 	}
 
 	void Clear()
 	{
-		if (!is_trivially_copyable_to_device<T>::value)
+		if (!is_trivially_destructible_from_device<THost>::value)
 		{
 			for (size_t i = 0; i < m_Size; i++)
-				T::FreeFromDevice(m_Data + i);
+				THost::FreeFromDevice(m_Data + i);
 		}
 
 		m_Size = 0;
@@ -68,38 +68,44 @@ public:
 
 	size_t Size() const { return m_Size; }
 
-	T* Data() const { return m_Data; }
+	TDevice* Data() const { return m_Data; }
 
-	DeviceInstance<T> operator[] (size_t index)
+	DeviceInstance<THost, TDevice> operator[] (size_t index)
 	{
 		assert(index > 0 && index < m_Size);
-		return DeviceInstance<T>(m_Data + index);
+		return DeviceInstance<THost, TDevice>(m_Data + index);
 	}
 
 private:
 	Realloc(size_t newCapacity)
 	{
-		T* newBlock = DeviceAllocator<T>::Alloc(m_Allocator, newCapacity);
+		TDevice* newBlock = DeviceAllocator<TDevice>::Alloc(m_Allocator, newCapacity);
 
 		size_t size = std::min(newCapacity, m_Size);
 
-		CudaMemory::Copy<T>(newBlock, m_Data, size, cudaMemcpyDeviceToDevice);
+		CudaMemory::Copy<TDevice>(newBlock, m_Data, size, cudaMemcpyDeviceToDevice);
 
-		if (!is_trivially_copyable_to_device<T>::value)
+		if (!is_trivially_destructible_from_device<THost>::value)
 		{
 			for (size_t i = 0; i < size; i++)
-				T::FreeFromDevice(m_Data + i);
+				THost::FreeFromDevice(m_Data + i);
 		}
 
-		DeviceAllocator<T>::Free(m_Allocator, m_Data);
+		DeviceAllocator<TDevice>::Free(m_Allocator, m_Data);
 		m_Data = newBlock;
 		m_Capacity = newCapacity;
 	}
 
 private:
-	T* m_Data = nullptr;
-	DeviceAllocator<T>* m_Allocator = nullptr;
+	TDevice* m_Data = nullptr;
+	DeviceAllocator<TDevice>* m_Allocator = nullptr;
 
 	size_t m_Size = 0;
 	size_t m_Capacity = 0;
 };
+
+void f()
+{
+	DeviceVector<int, int> deviceVector(6);
+	deviceVector[2] = 1;
+}
