@@ -17,7 +17,13 @@ public:
 	}
 
 	Vector(size_t size, Allocator* allocator)
-		:m_Allocator(allocator) 
+		:m_Allocator(allocator), m_Size(size)
+	{
+		Realloc(size);
+	}
+
+	Vector(const Vector<T>& other)
+		:m_Allocator(allocator), m_Size(size)
 	{
 		Realloc(size);
 	}

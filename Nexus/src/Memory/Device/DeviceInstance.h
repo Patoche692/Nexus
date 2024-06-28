@@ -4,11 +4,11 @@
 
 
 /*
- * Checks for an existing implementation of a ToDevice() static method using SFINAE.
+ * Checks for an existing implementation of a ToDevice() method using SFINAE.
  * See https://stackoverflow.com/questions/257288/how-can-you-check-whether-a-templated-class-has-a-member-function
  */
 template<typename T>
-class is_trivially_copyable_to_device
+class ImplementsToDevice
 {
 	typedef char one;
 	struct two { char x[2]; };
@@ -17,30 +17,38 @@ class is_trivially_copyable_to_device
 	template<typename C> static two test(...);
 
 public:
-	enum { value = sizeof(test<T>(0)) != sizeof(char) };
+	enum { value = sizeof(test<T>(0)) == sizeof(char) };
 };
 
 template<typename T>
-class is_trivially_destructible_from_device
+class ImplementsDestructFromDevice
 {
 	typedef char one;
 	struct two { char x[2]; };
 
-	template<typename C> static one test(decltype(&C::FreeFromDevice));
+	template<typename C> static one test(decltype(&C::DestructFromDevice));
 	template<typename C> static two test(...);
 
 public:
-	enum { value = sizeof(test<T>(0)) != sizeof(char) };
+	enum { value = sizeof(test<T>(0)) == sizeof(char) };
 };
+
+template<typename T>
+constexpr bool is_trivially_copyable_to_device = !ImplementsToDevice<T>::value;
+
+template<typename T>
+constexpr bool is_trivially_destructible_from_device = !ImplementsDestructFromDevice<T>::value;
+
 
 /*
  * Wrapper class holding a device pointer to the device instance.
  * THost is the host class, TDevice is the device class, both can be identical.
- * If THost implements a static TDevice* ToDevice() method, this method 
+ * 
+ * If THost implements a static TDevice ToDevice() method, this method 
  * will be used to create a device instance and copy it to the device
  * when using the assignment operator.
- * Likewise, if THost implements a static void FreeFromDevice() method,
- * it will be used before deallocating the device instance
+ * Likewise, if THost implements a static void DestructFromDevice() method,
+ * it will be used for destructing the device instance.
  */
 template<typename THost, typename TDevice = THost>
 class DeviceInstance
@@ -60,7 +68,7 @@ public:
 
 	DeviceInstance(const DeviceInstance<THost, TDevice>& other)
 	{
-		assert(is_trivially_copyable_to_device<THost>::value);
+		assert(is_trivially_copyable_to_device<THost>);
 		m_OwnsPtr = true;
 		m_DevicePtr = CudaMemory::Allocate<THost>(1);
 		CudaMemory::Copy<TDevice>(other.m_DevicePtr, m_DevicePtr, 1, cudaMemcpyDeviceToDevice);
@@ -95,15 +103,16 @@ public:
 	}
 
 private:
+
 	void SetDeviceInstance(const THost& hostInstance)
 	{
-		if (!is_trivially_destructible_from_device<THost>::value)
-			THost::FreeFromDevice(Get());
+		if constexpr (!is_trivially_destructible_from_device<THost>)
+			THost::DestructFromDevice(Get());
 
-		if (!is_trivially_copyable_to_device<THost>::value)
+		if constexpr (!is_trivially_copyable_to_device<THost>)
 		{
 			TDevice deviceInstance = THost::ToDevice(hostInstance);
-			CudaMemory::Copy<TDevice>(m_DevicePtr, &deviceInstance, cudaMemcpyHostToDevice);
+			CudaMemory::Copy<TDevice>(m_DevicePtr, &deviceInstance, 1, cudaMemcpyHostToDevice);
 		}
 		else
 			CudaMemory::Copy<TDevice>(m_DevicePtr, (TDevice*)&hostInstance, 1, cudaMemcpyHostToDevice);
@@ -113,3 +122,5 @@ private:
 	TDevice* m_DevicePtr = nullptr;
 	bool m_OwnsPtr = false;
 };
+
+

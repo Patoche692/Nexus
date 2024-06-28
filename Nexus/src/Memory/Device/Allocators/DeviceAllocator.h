@@ -10,7 +10,7 @@ public:
 
 	static T* Alloc(DeviceAllocator* allocator, size_t count)
 	{
-		if (allocator)
+		if (!allocator)
 			return CudaMemory::Allocate<T>(count);
 		else
 			return allocator->Alloc(count);
@@ -18,7 +18,7 @@ public:
 
 	static void Free(DeviceAllocator* allocator, T* ptr)
 	{
-		if (allocator)
+		if (!allocator)
 			CudaMemory::Free<T>(ptr);
 		else
 			allocator->Free(ptr);
