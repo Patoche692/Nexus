@@ -62,7 +62,7 @@ public:
 	DeviceInstance(const THost& hostInstance)
 		: m_OwnsPtr(true)
 	{
-		m_DevicePtr = CudaMemory::Allocate<THost>(1);
+		m_DevicePtr = CudaMemory::Allocate<TDevice>(1);
 		SetDeviceInstance(hostInstance);
 	}
 
@@ -70,14 +70,13 @@ public:
 	{
 		assert(is_trivially_copyable_to_device<THost>);
 		m_OwnsPtr = true;
-		m_DevicePtr = CudaMemory::Allocate<THost>(1);
+		m_DevicePtr = CudaMemory::Allocate<TDevice>(1);
 		CudaMemory::Copy<TDevice>(other.m_DevicePtr, m_DevicePtr, 1, cudaMemcpyDeviceToDevice);
 	}
 
 	DeviceInstance(DeviceInstance<THost, TDevice>&& other)
+		: m_OwnsPtr(other.m_OwnsPtr), m_DevicePtr(other.m_DevicePtr)
 	{
-		m_OwnsPtr = other.m_OwnsPtr;
-		m_DevicePtr = other.m_DevicePtr;
 		other.m_DevicePtr = nullptr;
 	}
 
@@ -92,6 +91,7 @@ public:
 
 	void operator=(const THost& hostInstance)
 	{
+		DestructDeviceInstance();
 		SetDeviceInstance(hostInstance);
 	}
 
@@ -102,13 +102,12 @@ public:
 		return target;
 	}
 
+	TDevice* Data() { return m_DevicePtr; }
+
 private:
 
 	void SetDeviceInstance(const THost& hostInstance)
 	{
-		if constexpr (!is_trivially_destructible_from_device<THost>)
-			THost::DestructFromDevice(Get());
-
 		if constexpr (!is_trivially_copyable_to_device<THost>)
 		{
 			TDevice deviceInstance = THost::ToDevice(hostInstance);
@@ -116,6 +115,12 @@ private:
 		}
 		else
 			CudaMemory::Copy<TDevice>(m_DevicePtr, (TDevice*)&hostInstance, 1, cudaMemcpyHostToDevice);
+	}
+
+	void DestructDeviceInstance()
+	{
+		if constexpr (!is_trivially_destructible_from_device<THost>)
+			THost::DestructFromDevice(Get());
 	}
 
 private:

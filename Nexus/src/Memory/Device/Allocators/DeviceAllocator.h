@@ -19,7 +19,7 @@ public:
 	static void Free(DeviceAllocator* allocator, T* ptr)
 	{
 		if (!allocator)
-			CudaMemory::Free<T>(ptr);
+			CudaMemory::Free(ptr);
 		else
 			allocator->Free(ptr);
 	}
