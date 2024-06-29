@@ -13,7 +13,7 @@ inline __device__ void IntersectTLAS(const D_TLAS& tlas, D_Ray& ray)
 	{
 		if (node->IsLeaf())
 		{
-			IntersectBVHInstance(tlas.blas[node->blasIdx], ray, node->blasIdx);
+			IntersectBVHInstance(tlas.blas[node->blasIdx], tlas.bvhs, ray, node->blasIdx);
 
 			if (stackPtr == 0)
 				break;

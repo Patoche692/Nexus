@@ -1,11 +1,11 @@
-#include "AssetManager.cuh"
-#include <vector>
-#include <map>
-#include "CudaMemory.cuh"
-#include "../Utils/Utils.h"
-#include "Random.cuh"
-#include "Geometry/Ray.h"
-#include "Geometry/Triangle.h"
+//#include "AssetManager.cuh"
+//#include <vector>
+//#include <map>
+//#include "CudaMemory.cuh"
+//#include "../Utils/Utils.h"
+//#include "Random.cuh"
+//#include "Geometry/Ray.h"
+//#include "Geometry/Triangle.h"
 
 //__constant__ __device__ Material* materials;
 //__constant__ __device__ cudaTextureObject_t* diffuseMaps;

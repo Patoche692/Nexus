@@ -88,7 +88,7 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		hitResult.rIn = currentRay;
 
 		const D_BVHInstance& instance = scene.tlas.blas[currentRay.hit.instanceIdx];
-		const D_Triangle& triangle = instance.bvh->triangles[currentRay.hit.triIdx];
+		const D_Triangle& triangle = scene.tlas.bvhs[instance.bvhIdx].triangles[currentRay.hit.triIdx];
 		float u = currentRay.hit.u, v = currentRay.hit.v;
 
 		// Interpolating and rotating the normal

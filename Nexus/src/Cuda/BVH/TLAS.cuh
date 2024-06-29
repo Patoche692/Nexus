@@ -16,5 +16,6 @@ struct D_TLAS
 {
 	D_TLASNode* nodes;
 	D_BVHInstance* blas;
+	D_BVH8* bvhs;
 };
 
