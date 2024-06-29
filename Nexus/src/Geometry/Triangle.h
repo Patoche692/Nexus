@@ -32,12 +32,12 @@ struct Triangle
 		normal2(n2), texCoord0(t0), texCoord1(t1), texCoord2(t2),
 		centroid((pos0 + pos1 + pos2) / 3.0f) { }
 
-	D_Triangle ToDevice()
+	static D_Triangle ToDevice(const Triangle& triangle)
 	{
 		return D_Triangle{
-			pos0, pos1, pos2,
-			normal0, normal1, normal2,
-			texCoord0, texCoord1, texCoord2
+			triangle.pos0, triangle.pos1, triangle.pos2,
+			triangle.normal0, triangle.normal1, triangle.normal2,
+			triangle.texCoord0, triangle.texCoord1, triangle.texCoord2
 		};
 	}
 };

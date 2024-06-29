@@ -1,6 +1,6 @@
 #pragma once
 
-#include <thrust/device_vector.h>
+#include "Memory/Device/DeviceVector.h"
 #include "Utils/cuda_math.h"
 #include "BVHInstance.h"
 #include "Utils/Utils.h"
@@ -13,29 +13,30 @@ struct TLASNode
 	uint32_t leftRight;
 	uint32_t blasIdx;
 	inline bool IsLeaf() { return leftRight == 0; }
-	D_TLASNode ToDevice() { return D_TLASNode{ aabbMin, aabbMax, leftRight, blasIdx }; }
 };
 
 class TLAS
 {
 public:
 	TLAS() = default;
-	TLAS(const std::vector<BVHInstance>& bvhList);
+	TLAS(const std::vector<BVHInstance>& bvhList, const std::vector<BVH8>& bvhs);
 	void Build();
 
 	void UpdateDeviceData();
-	D_TLAS ToDevice();
+	static D_TLAS ToDevice(const TLAS& tlas);
 
 private:
 	int FindBestMatch(int N, int A);
 
-public:
+private:
 
-	std::vector<TLASNode> nodes;
-	std::vector<BVHInstance> blas;
-	std::vector<uint32_t> instancesIdx;
+	std::vector<TLASNode> m_Nodes;
+	std::vector<BVHInstance> m_Blas;
+	std::vector<uint32_t> m_InstancesIdx;
+	std::vector<BVH8> m_Bvhs;
 
 	// Device members
-	thrust::device_vector<D_TLASNode> deviceNodes;
-	thrust::device_vector<D_BVHInstance> deviceBlas;
+	DeviceVector<TLASNode, D_TLASNode> m_DeviceNodes;
+	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBlas;
+	DeviceVector<BVH8, D_BVH8> m_DeviceBvhs;
 };

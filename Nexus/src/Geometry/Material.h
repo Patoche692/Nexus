@@ -37,10 +37,10 @@ struct Material {
 	int emissiveMapId = -1;
 	Type type;
 
-	D_Material ToDevice() const
+	static D_Material ToDevice(const Material& material)
 	{
 		D_Material deviceMaterial;
-		memcpy(&deviceMaterial, this, sizeof(D_Material));
+		memcpy(&deviceMaterial, &material, sizeof(D_Material));
 		return deviceMaterial;
 	}
 

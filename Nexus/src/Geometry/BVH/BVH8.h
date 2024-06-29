@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <thrust/device_vector.h>
+#include "Memory/Device/DeviceVector.h"
 #include "Utils/cuda_math.h"
 #include "BVH.h"
 #include "Cuda/BVH/BVH8.cuh"
@@ -46,8 +46,6 @@ struct BVH8Node
 
 	// Quantized end point of the childs' AABBs
 	byte qhix[8], qhiy[8], qhiz[8];
-
-	D_BVH8Node ToDevice() { return *(D_BVH8Node*)this; }
 };
 
 struct BVH8
@@ -59,14 +57,14 @@ struct BVH8
 	// If the BVH8 has been built by the builder, we need to update the device vectors
 	void UpdateDeviceData();
 
-	D_BVH8 ToDevice();
+	static D_BVH8 ToDevice(const BVH8& bvh);
 
 	std::vector<Triangle> triangles;
 	std::vector<uint32_t> triangleIdx;
 	std::vector<BVH8Node> nodes;
 
 	// Device members
-	thrust::device_vector<D_Triangle> deviceTriangles;
-	thrust::device_vector<uint32_t> deviceTriangleIdx;
-	thrust::device_vector<D_BVH8Node> deviceNodes;
+	DeviceVector<Triangle, D_Triangle> deviceTriangles;
+	DeviceVector<uint32_t> deviceTriangleIdx;
+	DeviceVector<BVH8Node, D_BVH8Node> deviceNodes;
 };
