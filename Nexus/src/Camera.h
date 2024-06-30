@@ -31,8 +31,7 @@ public:
 	bool IsInvalid() { return m_Invalid; }
 	void Invalidate() { m_Invalid = true; }
 
-	bool SendDataToDevice();
-	D_Camera ToDevice();
+	static D_Camera ToDevice(const Camera& camera);
 
 private:
 	float2 m_LastMousePosition{ 0.0f, 0.0 };

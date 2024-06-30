@@ -63,7 +63,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	{
 		m_FrameNumber++;
 
-		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
+		RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
@@ -93,7 +93,6 @@ void Renderer::RenderUI(Scene& scene)
 				if (!fullPath.empty())
 				{
 					checkCudaErrors(cudaDeviceSynchronize());
-					checkCudaErrors(cudaDeviceReset());
 					Reset();
 					scene.Reset();
 

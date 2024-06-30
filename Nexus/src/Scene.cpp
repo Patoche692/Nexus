@@ -25,7 +25,7 @@ void Scene::AddMaterial(Material& material)
 
 void Scene::BuildTLAS()
 {
-	m_Tlas = std::make_shared<TLAS>(m_BVHInstances);
+	m_Tlas = std::make_shared<TLAS>(m_BVHInstances, m_AssetManager.GetBVHs());
 	m_Tlas->Build();
 	m_Tlas->UpdateDeviceData();
 }
@@ -34,7 +34,7 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
 
-	m_BVHInstances.push_back(BVHInstance(&mesh.bvh8));
+	m_BVHInstances.push_back(BVHInstance(meshId, &mesh.bvh8));
 
 	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
@@ -56,7 +56,7 @@ void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::strin
 void Scene::AddHDRMap(const std::string& filePath, const std::string& fileName)
 {
 	m_HdrMap = IMGLoader::LoadIMG(filePath + fileName);
-	m_DeviceHdrMap = m_HdrMap.ToDevice();
+	m_DeviceHdrMap = Texture::ToDevice(m_HdrMap);
 }
 
 void Scene::InvalidateMeshInstance(uint32_t instanceId)
@@ -64,81 +64,74 @@ void Scene::InvalidateMeshInstance(uint32_t instanceId)
 	m_InvalidMeshInstances.insert(instanceId);
 }
 
-bool Scene::SendDataToDevice()
-{
-	bool invalid = false;
-
-	if (m_InvalidMeshInstances.size() != 0)
-	{
-		for (int i : m_InvalidMeshInstances)
-		{
-			MeshInstance& meshInstance = m_MeshInstances[i];
-			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
-			if (meshInstance.materialId != -1)
-				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
-			
-		}
-		m_Tlas->Build();
-		updateDeviceTLAS(*m_Tlas);
-		m_InvalidMeshInstances.clear();
-		invalid = true;
-	}
-
-	if (m_Camera->SendDataToDevice())
-		invalid = true;
-
-	if (m_AssetManager.SendDataToDevice())
-		invalid = true;
-
-	return invalid;
-}
+//bool Scene::SendDataToDevice()
+//{
+//	bool invalid = false;
+//
+//	if (m_InvalidMeshInstances.size() != 0)
+//	{
+//		for (int i : m_InvalidMeshInstances)
+//		{
+//			MeshInstance& meshInstance = m_MeshInstances[i];
+//			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+//			if (meshInstance.materialId != -1)
+//				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
+//			
+//		}
+//		m_Tlas->Build();
+//		updateDeviceTLAS(*m_Tlas);
+//		m_InvalidMeshInstances.clear();
+//		invalid = true;
+//	}
+//
+//	if (m_AssetManager.SendDataToDevice())
+//		invalid = true;
+//
+//	return invalid;
+//}
 
 
 
-D_Scene Scene::ToDevice()
+D_Scene Scene::ToDevice(Scene& scene)
 {
 	D_Scene deviceScene;
 
-	thrust::device_vector<cudaTextureObject_t>& deviceDiffuseMaps = m_AssetManager.GetDeviceDiffuseMaps();
-	thrust::device_vector<cudaTextureObject_t>& deviceEmissiveMaps = m_AssetManager.GetDeviceEmissiveMaps();
-	thrust::device_vector<D_Material>& deviceMaterials = m_AssetManager.GetDeviceMaterials();
-
-	deviceScene.diffuseMaps = thrust::raw_pointer_cast(deviceDiffuseMaps.data());
-	deviceScene.emissiveMaps = thrust::raw_pointer_cast(deviceEmissiveMaps.data());
-	deviceScene.materials = thrust::raw_pointer_cast(deviceMaterials.data());
-
-	deviceScene.hasHdrMap = m_HdrMap.pixels != nullptr;
-	deviceScene.hdrMap = m_DeviceHdrMap;
-	deviceScene.camera = m_Camera->ToDevice();
-
 	bool invalid = false;
 
-	if (m_InvalidMeshInstances.size() != 0)
+	if (scene.m_AssetManager.SendDataToDevice())
+		invalid = true;
+
+	DeviceVector<Texture, cudaTextureObject_t>& deviceDiffuseMaps = scene.m_AssetManager.GetDeviceDiffuseMaps();
+	DeviceVector<Texture, cudaTextureObject_t>& deviceEmissiveMaps = scene.m_AssetManager.GetDeviceEmissiveMaps();
+	DeviceVector<Material, D_Material>& deviceMaterials = scene.m_AssetManager.GetDeviceMaterials();
+
+	deviceScene.diffuseMaps = deviceDiffuseMaps.Data();
+	deviceScene.emissiveMaps = deviceEmissiveMaps.Data();
+	deviceScene.materials = deviceMaterials.Data();
+
+	deviceScene.hasHdrMap = scene.m_HdrMap.pixels != nullptr;
+	// TODO: clear m_DeviceHdrMap when reset
+	deviceScene.hdrMap = scene.m_DeviceHdrMap;
+	deviceScene.camera = Camera::ToDevice(*scene.m_Camera);
+
+	if (scene.m_InvalidMeshInstances.size() != 0)
 	{
-		for (int i : m_InvalidMeshInstances)
+		for (int i : scene.m_InvalidMeshInstances)
 		{
-			MeshInstance& meshInstance = m_MeshInstances[i];
-			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+			MeshInstance& meshInstance = scene.m_MeshInstances[i];
+			scene.m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
 			if (meshInstance.materialId != -1)
-				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
+				scene.m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
 			
 		}
-		m_Tlas->Build();
-		m_Tlas->UpdateDeviceData();
+		scene.m_Tlas->Build();
+		scene.m_Tlas->UpdateDeviceData();
 
-		m_InvalidMeshInstances.clear();
+		scene.m_InvalidMeshInstances.clear();
 		invalid = true;
 	}
 
-	deviceScene.tlas = m_Tlas->ToDevice();
-
-
-	if (m_Camera->SendDataToDevice())
-		invalid = true;
-
-	if (m_AssetManager.SendDataToDevice())
-		invalid = true;
-
+	deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
 
 	return deviceScene;
 }

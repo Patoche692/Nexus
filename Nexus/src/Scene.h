@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <thrust/device_vector.h>
+#include "Memory/Device/DeviceVector.h"
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
@@ -33,10 +33,10 @@ public:
 	void AddHDRMap(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
-	bool SendDataToDevice();
+	//bool SendDataToDevice();
 
 	// Create or update the device scene and returns a pointer to the D_Scene object
-	D_Scene ToDevice();
+	static D_Scene ToDevice(Scene& scene);
 
 private:
 	std::shared_ptr<Camera> m_Camera;
@@ -53,6 +53,6 @@ private:
 
 	// Device members
 	cudaTextureObject_t m_DeviceHdrMap;
-	thrust::device_vector<D_Material> m_DeviceMaterials;
-	thrust::device_vector<D_BVHInstance> m_DeviceBVHInstances;
+	DeviceVector<Material, D_Material> m_DeviceMaterials;
+	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBVHInstances;
 };
