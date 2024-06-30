@@ -16,16 +16,18 @@ public:
 		Realloc(2);
 	}
 
-	Vector(size_t size, Allocator* allocator = nullptr)
-		:m_Allocator(allocator), m_Size(size)
+	Vector(size_t size, Allocator<T>* allocator = nullptr)
+		:m_Allocator(allocator)
 	{
 		Realloc(size);
+		m_Size = size;
 	}
 
 	Vector(const Vector<T>& other)
-		:m_Allocator(other.m_Allocator), m_Size(other.Size())
+		:m_Allocator(other.m_Allocator)
 	{
 		Realloc(m_Size);
+		m_Size = other.Size();
 
 		if (std::is_trivially_copyable_v<T>)
 			memcpy(m_Data, other.Data(), m_Size * sizeof(T));
@@ -34,6 +36,12 @@ public:
 			for (size_t i = 0; i < m_Size; i++)
 				m_Data[i] = other[i];
 		}
+	}
+
+	Vector(Vector<T>&& other)
+		: m_Allocator(other.m_Allocator), m_Capacity(other.m_Capacity), m_Size(other.m_Size), m_Data(other.m_Data)
+	{
+		other.m_Data = nullptr;
 	}
 
 	~Vector()
@@ -91,20 +99,20 @@ public:
 
 	const T& operator[] (size_t index) const 
 	{
-		assert(index > 0 && index < m_Size);
+		assert(index >= 0 && index < m_Size);
 		return m_Data[index]; 
 	}
 
 	T& operator[] (size_t index)
 	{
-		assert(index > 0 && index < m_Size);
+		assert(index >= 0 && index < m_Size);
 		return m_Data[index]; 
 	}
 
 private:
 	void Realloc(size_t newCapacity)
 	{
-		T* newBlock = Allocator<T>::Alloc(m_Allocator, count);
+		T* newBlock = Allocator<T>::Alloc(m_Allocator, newCapacity);
 
 		size_t size = std::min(newCapacity, m_Size);
 

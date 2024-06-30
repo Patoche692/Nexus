@@ -11,14 +11,14 @@ public:
 	static T* Allocate(uint32_t count)
 	{
 		T* ptr;
-		checkCudaErrors(cudaMalloc(&ptr, sizeof(T) * count));
+		checkCudaErrors(cudaMalloc((void**)&ptr, sizeof(T) * count));
 		return ptr;
 	}
 
 	template<typename T>
 	static void Copy(T* dst, T* src, uint32_t count, cudaMemcpyKind kind)
 	{
-		checkCudaErrors(cudaMemcpy(dst, src, sizeof(T) * count, kind));
+		checkCudaErrors(cudaMemcpy((void*)dst, (void*)src, sizeof(T) * count, kind));
 	}
 
 	static void Free(void* ptr)

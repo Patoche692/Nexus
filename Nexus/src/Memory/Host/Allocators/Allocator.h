@@ -12,7 +12,7 @@ public:
 		if (allocator)
 			return allocator->Alloc(count);
 		else
-			return ::operator new(count * sizeof(T));
+			return (T*)::operator new(count * sizeof(T));
 	}
 
 	static void Free(Allocator* allocator, T* ptr)
@@ -26,7 +26,7 @@ public:
 protected:
 	virtual T* Alloc(size_t count)
 	{
-		return ::operator new(count * sizeof(T));
+		return (T*)::operator new(count * sizeof(T));
 	}
 	virtual void Free(T* ptr)
 	{
