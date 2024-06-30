@@ -52,10 +52,19 @@ struct BVH8
 {
 	BVH8() = default;
 	BVH8(const std::vector<Triangle>& tri);
+	BVH8(const BVH8& other)
+	{
+		triangles = other.triangles;
+		triangleIdx = other.triangleIdx;
+		nodes = other.nodes;
+		deviceTriangles = other.deviceTriangles;
+		deviceTriangleIdx = other.deviceTriangleIdx;
+		deviceNodes = other.deviceNodes;
+	}
 	void Init();
 
 	// If the BVH8 has been built by the builder, we need to update the device vectors
-	void UpdateDeviceData();
+	void InitDeviceData();
 
 	static D_BVH8 ToDevice(const BVH8& bvh);
 

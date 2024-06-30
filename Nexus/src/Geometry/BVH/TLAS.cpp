@@ -6,13 +6,15 @@ TLAS::TLAS(const std::vector<BVHInstance>& bvhList, const std::vector<BVH8>& bvh
 {
 	m_Blas = bvhList;
 	m_Bvhs = bvhs;
-	m_DeviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(m_Blas.size());
-	m_DeviceBvhs = DeviceVector<BVH8, D_BVH8>(bvhs);
 }
 
 void TLAS::Build()
 {
+	m_Nodes.clear();
+	m_InstancesIdx.clear();
+
 	m_Nodes.emplace_back();
+
 	for (uint32_t i = 0; i < m_Blas.size(); i++)
 	{
 		m_InstancesIdx.push_back(i + 1);
@@ -40,15 +42,16 @@ void TLAS::Build()
 			newNode.leftRight = nodeIdxA + (nodeIdxB << 16);
 			newNode.aabbMin = fminf(nodeA.aabbMin, nodeB.aabbMin);
 			newNode.aabbMax = fmaxf(nodeA.aabbMax, nodeB.aabbMax);
-			m_Nodes.push_back(newNode);
 			m_InstancesIdx[A] = m_Nodes.size();
 			m_InstancesIdx[B] = m_InstancesIdx[nodeIndices - 1];
+			m_Nodes.push_back(newNode);
 			B = FindBestMatch(--nodeIndices, A);
 		}
 		else
 			A = B, B = C;
 	}
 	m_Nodes[0] = m_Nodes[m_InstancesIdx[A]];
+	m_DeviceNodes = DeviceVector<TLASNode, D_TLASNode>(m_Nodes.size());
 }
 
 int TLAS::FindBestMatch(int N, int A)
@@ -76,14 +79,9 @@ int TLAS::FindBestMatch(int N, int A)
 
 void TLAS::UpdateDeviceData()
 {
-	for (int i = 0; i < m_Blas.size(); i++)
-	{
-		m_DeviceBlas[i] = m_Blas[i];
-	}
-	for (int i = 0; i < m_Nodes.size(); i++)
-	{
-		m_DeviceNodes[i] = m_Nodes[i];
-	}
+	m_DeviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(m_Blas);
+	m_DeviceNodes = DeviceVector<TLASNode, D_TLASNode>(m_Nodes);
+	m_DeviceBvhs = DeviceVector<BVH8, D_BVH8>(m_Bvhs);
 }
 
 D_TLAS TLAS::ToDevice(const TLAS& tlas)

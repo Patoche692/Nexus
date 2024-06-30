@@ -33,13 +33,13 @@ void BVHInstance::AssignMaterial(int mId)
 	m_MaterialId = mId;
 }
 
-D_BVHInstance BVHInstance::ToDevice()
+D_BVHInstance BVHInstance::ToDevice(const BVHInstance& bvhInstance)
 {
 	D_BVHInstance deviceInstance;
-	deviceInstance.bounds = { m_Bounds.bMin, m_Bounds.bMax };
-	deviceInstance.bvhIdx = m_BvhIdx;
-	deviceInstance.transform = m_Transform;
-	deviceInstance.invTransform = m_InvTransform;
-	deviceInstance.materialId = m_MaterialId;
+	deviceInstance.bounds = { bvhInstance.m_Bounds.bMin, bvhInstance.m_Bounds.bMax };
+	deviceInstance.bvhIdx = bvhInstance.m_BvhIdx;
+	deviceInstance.transform = bvhInstance.m_Transform;
+	deviceInstance.invTransform = bvhInstance.m_InvTransform;
+	deviceInstance.materialId = bvhInstance.m_MaterialId;
 	return deviceInstance;
 }

@@ -4,7 +4,8 @@
 BVH8::BVH8(const std::vector<Triangle>& tri)
 {
 	triangles = tri;
-	deviceTriangles = DeviceVector<Triangle, D_Triangle>(tri);
+	triangleIdx = std::vector<uint32_t>(tri.size());
+	Init();
 }
 
 void BVH8::Init()
@@ -24,11 +25,9 @@ D_BVH8 BVH8::ToDevice(const BVH8& bvh)
 	return deviceBvh;
 }
 
-void BVH8::UpdateDeviceData()
+void BVH8::InitDeviceData()
 {
-	for (int i = 0; i < nodes.size(); i++)
-	{
-		deviceNodes[i] = nodes[i];
-	}
-	deviceTriangleIdx = triangleIdx;
+	deviceTriangles = DeviceVector<Triangle, D_Triangle>(triangles);
+	deviceNodes = DeviceVector<BVH8Node, D_BVH8Node>(nodes);
+	deviceTriangleIdx = DeviceVector<uint32_t>(triangleIdx);
 }

@@ -27,13 +27,12 @@ void BVH2::Build()
 void BVH2::SplitNodeInHalf(BVH2Node& node)
 {
 	int leftChildIdx = nodes.size();
-	int rightChildIdx = nodes.size();
-
 	BVH2Node leftChild;
 	leftChild.firstTriIdx = node.firstTriIdx;
 	leftChild.triCount = node.triCount / 2;
 	nodes.push_back(leftChild);
 
+	int rightChildIdx = nodes.size();
 	BVH2Node rightChild;
 	rightChild.firstTriIdx = node.firstTriIdx + node.triCount / 2;
 	rightChild.triCount = node.triCount - node.triCount / 2;
@@ -97,20 +96,21 @@ void BVH2::Subdivide(uint32_t nodeIdx)
 	}
 
 	int leftChildIdx = nodes.size();
-	int rightChildIdx = nodes.size();
+	int rightChildIdx = leftChildIdx + 1;
 
 	BVH2Node leftChild;
 	leftChild.firstTriIdx = node.firstTriIdx;
 	leftChild.triCount = leftCount;
-	nodes.push_back(leftChild);
 
 	BVH2Node rightChild;
 	rightChild.firstTriIdx = i;
 	rightChild.triCount = node.triCount - leftCount;
-	nodes.push_back(rightChild);
 
 	node.leftNode = leftChildIdx;
 	node.triCount = 0;
+
+	nodes.push_back(leftChild);
+	nodes.push_back(rightChild);
 
 	UpdateNodeBounds(leftChildIdx);
 	UpdateNodeBounds(rightChildIdx);

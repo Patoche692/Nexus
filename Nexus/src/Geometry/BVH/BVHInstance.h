@@ -26,7 +26,7 @@ public:
 
 	void AssignMaterial(int mIdx);
 
-	D_BVHInstance ToDevice();
+	static D_BVHInstance ToDevice(const BVHInstance& bvhInstance);
 
 private:
 	unsigned int m_BvhIdx = 0;

@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <thrust/device_vector.h>
 #include "Utils/Utils.h"
 #include "Geometry/AABB.h"
 #include "Geometry/Ray.h"
@@ -61,11 +60,6 @@ public:
 	std::vector<Triangle> triangles;
 	std::vector<uint32_t> triangleIdx;
 	std::vector<BVH2Node> nodes;
-
-	// Device members
-	thrust::device_vector<D_Triangle> deviceTriangles;
-	thrust::device_vector<uint32_t> deviceTriangleIdx;
-	thrust::device_vector<D_BVH2Node> deviceNodes;
 };
 
 
