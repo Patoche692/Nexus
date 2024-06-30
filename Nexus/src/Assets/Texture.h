@@ -15,7 +15,8 @@ struct Texture
 	Texture() = default;
 	Texture(uint32_t w, uint32_t h, uint32_t c, float3* d);
 
-	cudaTextureObject_t ToDevice() const;
+	static cudaTextureObject_t ToDevice(const Texture& texture);
+	static void DestructFromDevice(const cudaTextureObject_t& texture);
 
 	uint32_t width = 0;
 	uint32_t height = 0;

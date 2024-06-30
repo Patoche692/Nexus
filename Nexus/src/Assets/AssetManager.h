@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <set>
-#include <thrust/device_vector.h>
+#include "Memory/Device/DeviceVector.h"
 #include "Geometry/Mesh.h"
 #include "Cuda/AssetManager.cuh"
 #include "Geometry/Material.h"
@@ -26,12 +26,12 @@ public:
 	void InvalidateMaterial(uint32_t index);
 	std::string GetMaterialTypesString();
 	std::string GetMaterialsString();
-	std::vector<BVH2*> GetBVH() { return m_Bvh; }
+	std::vector<BVH8> GetBVHs() { return m_Bvhs; }
 	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
-	thrust::device_vector<D_Material>& GetDeviceMaterials() { return m_DeviceMaterials; }
-	thrust::device_vector<cudaTextureObject_t>& GetDeviceDiffuseMaps() { return m_DeviceDiffuseMaps; }
-	thrust::device_vector<cudaTextureObject_t>& GetDeviceEmissiveMaps() { return m_DeviceEmissiveMaps; }
+	DeviceVector<Material, D_Material>& GetDeviceMaterials() { return m_DeviceMaterials; }
+	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceDiffuseMaps() { return m_DeviceDiffuseMaps; }
+	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceEmissiveMaps() { return m_DeviceEmissiveMaps; }
 
 	int AddTexture(const Texture& texture);
 	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
@@ -43,11 +43,11 @@ private:
 	std::set<uint32_t> m_InvalidMaterials;
 	std::vector<Texture> m_DiffuseMaps;
 	std::vector<Texture> m_EmissiveMaps;
-	std::vector<BVH2*> m_Bvh;
+	std::vector<BVH8> m_Bvhs;
 	std::vector<Mesh> m_Meshes;
 
 	// Device members
-	thrust::device_vector<D_Material> m_DeviceMaterials;
-	thrust::device_vector<cudaTextureObject_t> m_DeviceDiffuseMaps;
-	thrust::device_vector<cudaTextureObject_t> m_DeviceEmissiveMaps;
+	DeviceVector<Material, D_Material> m_DeviceMaterials;
+	DeviceVector<Texture, cudaTextureObject_t> m_DeviceDiffuseMaps;
+	DeviceVector<Texture, cudaTextureObject_t> m_DeviceEmissiveMaps;
 };

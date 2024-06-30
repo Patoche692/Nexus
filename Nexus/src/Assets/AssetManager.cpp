@@ -8,9 +8,9 @@ void AssetManager::Reset()
 	m_InvalidMaterials.clear();
 	m_DiffuseMaps.clear();
 	m_EmissiveMaps.clear();
-	m_DeviceDiffuseMaps.clear();
-	m_DeviceEmissiveMaps.clear();
-	m_DeviceMaterials.clear();
+	m_DeviceDiffuseMaps.Clear();
+	m_DeviceEmissiveMaps.Clear();
+	m_DeviceMaterials.Clear();
 	m_Meshes.clear();
 }
 
@@ -18,7 +18,10 @@ void AssetManager::AddMesh(const std::string& path, const std::string filename)
 {
 	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(path, filename, this);
 	for (Mesh& mesh : meshes)
+	{
 		m_Meshes.push_back(mesh);
+		m_Bvhs.push_back(mesh.bvh8);
+	}
 }
 
 void AssetManager::AddMaterial()
@@ -31,7 +34,7 @@ void AssetManager::AddMaterial()
 int AssetManager::AddMaterial(const Material& material)
 {
 	m_Materials.push_back(material);
-	m_DeviceMaterials.push_back(material.ToDevice());
+	m_DeviceMaterials.PushBack(material);
 	Material& m = m_Materials[m_Materials.size() - 1];
 	return m_Materials.size() - 1;
 }
@@ -51,13 +54,13 @@ int AssetManager::AddTexture(const Texture& texture)
 	if (texture.type == Texture::Type::DIFFUSE)
 	{
 		m_DiffuseMaps.push_back(texture);
-		m_DeviceDiffuseMaps.push_back(texture.ToDevice());
+		m_DeviceDiffuseMaps.PushBack(texture);
 		return m_DiffuseMaps.size() - 1;
 	}
 	else if (texture.type == Texture::Type::EMISSIVE)
 	{
 		m_EmissiveMaps.push_back(texture);
-		m_DeviceEmissiveMaps.push_back(texture.ToDevice());
+		m_DeviceEmissiveMaps.PushBack(texture);
 		return m_EmissiveMaps.size() - 1;
 	}
 }
@@ -74,7 +77,7 @@ bool AssetManager::SendDataToDevice()
 	for (uint32_t id : m_InvalidMaterials)
 	{
 		invalid = true;
-		m_DeviceMaterials[id] = m_Materials[id].ToDevice();
+		m_DeviceMaterials[id] = m_Materials[id];
 	}
 	m_InvalidMaterials.clear();
 	return invalid;

@@ -19,6 +19,7 @@ struct Mesh
 		BVH8Builder builder(triangles);
 		builder.Init();
 		bvh8 = builder.Build();
+		bvh8.InitDeviceData();
 	}
 
 	BVH8 bvh8;

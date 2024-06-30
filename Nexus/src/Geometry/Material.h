@@ -37,12 +37,12 @@ struct Material {
 	int emissiveMapId = -1;
 	Type type;
 
-	static D_Material ToDevice(const Material& material)
-	{
-		D_Material deviceMaterial;
-		memcpy(&deviceMaterial, &material, sizeof(D_Material));
-		return deviceMaterial;
-	}
+	//static D_Material ToDevice(const Material& material)
+	//{
+	//	D_Material deviceMaterial;
+	//	memcpy(&deviceMaterial, &material, sizeof(D_Material));
+	//	return deviceMaterial;
+	//}
 
 	static std::string GetMaterialTypesString()
 	{
