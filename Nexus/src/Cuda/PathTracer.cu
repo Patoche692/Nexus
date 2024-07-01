@@ -58,7 +58,7 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
-		backgroundColor = make_float3(0.02f);
+		backgroundColor = make_float3(0.2f);
 	return backgroundColor;
 }
 
@@ -228,7 +228,7 @@ __global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t fram
 	outBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
 }
 
-void RenderViewport(PixelBuffer pixelBuffer, const D_Scene& scene,
+void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
 	uint32_t frameNumber, float3* accumulationBuffer)
 {
 	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer.GetCudaResource()));
@@ -244,72 +244,3 @@ void RenderViewport(PixelBuffer pixelBuffer, const D_Scene& scene,
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
 }
-
-//void InitDeviceSceneData()
-//{
-//	SceneData scene;
-//	scene.hasHdrMap = false;
-//	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-//}
-
-//void SendHDRMapToDevice(const Texture& map)
-//{
-//	// Channel descriptor for 4 Channels (RGBA)
-//	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
-//	cudaArray_t cuArray;
-//	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, map.width, map.height));
-//
-//	const size_t spitch = map.width * 4 * sizeof(float);
-//	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, map.pixels, spitch, map.width * 4 * sizeof(float), map.height, cudaMemcpyHostToDevice));
-//
-//	cudaResourceDesc resDesc;
-//	memset(&resDesc, 0, sizeof(resDesc));
-//	resDesc.resType = cudaResourceTypeArray;
-//	resDesc.res.array.array = cuArray;
-//
-//	cudaTextureDesc texDesc;
-//	memset(&texDesc, 0, sizeof(texDesc));
-//	texDesc.addressMode[0] = cudaAddressModeWrap;
-//	texDesc.addressMode[1] = cudaAddressModeWrap;
-//	texDesc.filterMode = cudaFilterModeLinear;
-//	texDesc.readMode = cudaReadModeElementType;
-//	texDesc.normalizedCoords = 1;
-//
-//	cudaTextureObject_t texObject = 0;
-//	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
-//
-//	SceneData scene;
-//	scene.hasHdrMap = true;
-//	scene.hdrMap = texObject;
-//	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-//}
-
-//void SendCameraDataToDevice(Camera* camera)
-//{
-//	float3 position = camera->GetPosition();
-//	float3 forwardDirection = camera->GetForwardDirection();
-//	float3 rightDirection = camera->GetRightDirection();
-//	float3 upDirection = cross(rightDirection, forwardDirection);
-//
-//	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
-//	float halfHeight = camera->GetFocusDist() * tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
-//	float halfWidth = aspectRatio * halfHeight;
-//
-//	float3 viewportX = 2 * halfWidth * rightDirection;
-//	float3 viewportY = 2 * halfHeight * upDirection;
-//	float3 lowerLeftCorner = position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera->GetFocusDist();
-//
-//	float lensRadius = camera->GetFocusDist() * tanf(camera->GetDefocusAngle() / 2.0f * M_PI / 180.0f);
-//
-//	CameraData data = {
-//		position,
-//		rightDirection,
-//		upDirection,
-//		lensRadius,
-//		lowerLeftCorner,
-//		viewportX,
-//		viewportY,
-//		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
-//	};
-//	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
-//}

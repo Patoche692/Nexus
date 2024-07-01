@@ -29,6 +29,7 @@ public:
 	Ray RayThroughPixel(int2 pixel);
 
 	bool IsInvalid() { return m_Invalid; }
+	void SetInvalid(bool invalid) { m_Invalid = invalid; }
 	void Invalidate() { m_Invalid = true; }
 
 	static D_Camera ToDevice(const Camera& camera);

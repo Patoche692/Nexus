@@ -23,6 +23,7 @@ public:
 	void Build();
 
 	void UpdateDeviceData();
+	void SetBVHInstances(const std::vector<BVHInstance>& bvhInstances) { m_Blas = bvhInstances; }
 	static D_TLAS ToDevice(const TLAS& tlas);
 
 private:

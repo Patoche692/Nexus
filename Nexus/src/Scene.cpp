@@ -64,34 +64,6 @@ void Scene::InvalidateMeshInstance(uint32_t instanceId)
 	m_InvalidMeshInstances.insert(instanceId);
 }
 
-//bool Scene::SendDataToDevice()
-//{
-//	bool invalid = false;
-//
-//	if (m_InvalidMeshInstances.size() != 0)
-//	{
-//		for (int i : m_InvalidMeshInstances)
-//		{
-//			MeshInstance& meshInstance = m_MeshInstances[i];
-//			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
-//			if (meshInstance.materialId != -1)
-//				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
-//			
-//		}
-//		m_Tlas->Build();
-//		updateDeviceTLAS(*m_Tlas);
-//		m_InvalidMeshInstances.clear();
-//		invalid = true;
-//	}
-//
-//	if (m_AssetManager.SendDataToDevice())
-//		invalid = true;
-//
-//	return invalid;
-//}
-
-
-
 D_Scene Scene::ToDevice(Scene& scene)
 {
 	D_Scene deviceScene;
@@ -113,6 +85,7 @@ D_Scene Scene::ToDevice(Scene& scene)
 	// TODO: clear m_DeviceHdrMap when reset
 	deviceScene.hdrMap = scene.m_DeviceHdrMap;
 	deviceScene.camera = Camera::ToDevice(*scene.m_Camera);
+	scene.m_Camera->SetInvalid(false);
 
 	if (scene.m_InvalidMeshInstances.size() != 0)
 	{
@@ -125,6 +98,7 @@ D_Scene Scene::ToDevice(Scene& scene)
 			
 		}
 		scene.m_Tlas->Build();
+		scene.m_Tlas->SetBVHInstances(scene.m_BVHInstances);
 		scene.m_Tlas->UpdateDeviceData();
 
 		scene.m_InvalidMeshInstances.clear();

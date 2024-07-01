@@ -31,4 +31,4 @@ struct SceneData
 	cudaTextureObject_t hdrMap;
 };
 
-void RenderViewport(PixelBuffer pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);
+void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);

@@ -40,8 +40,6 @@ void Renderer::Reset()
 {
 	m_FrameNumber = 0;
 	m_MetricsPanel.Reset();
-	m_PixelBuffer = PixelBuffer(m_ViewportWidth, m_ViewportHeight);
-	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
 }
 
 void Renderer::Render(Scene& scene, float deltaTime)

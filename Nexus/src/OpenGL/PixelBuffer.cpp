@@ -36,6 +36,6 @@ void PixelBuffer::OnResize(uint32_t width, uint32_t height)
 
 PixelBuffer::~PixelBuffer()
 {
-    //checkCudaErrors(cudaGraphicsUnregisterResource(m_CudaResource));
+    checkCudaErrors(cudaGraphicsUnregisterResource(m_CudaResource));
     glDeleteBuffers(1, &m_Handle);
 }
