@@ -58,7 +58,7 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
-		backgroundColor = make_float3(0.2f);
+		backgroundColor = make_float3(0.02f);
 	return backgroundColor;
 }
 

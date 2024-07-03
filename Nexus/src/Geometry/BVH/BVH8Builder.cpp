@@ -15,10 +15,18 @@ BVH8Builder::BVH8Builder(const std::vector<Triangle>& triangles) : m_Bvh2(triang
     m_TriBaseIdx = std::vector<int>(m_Bvh2.nodes.size());
 }
 
+void BVH8Builder::Init()
+{
+    ComputeNodeTriCount(0, 0);
+    float rootCost = ComputeNodeCost(0, 0);
+	std::cout << rootCost << std::endl;
+}
+
 BVH8 BVH8Builder::Build()
 {
     m_UsedNodes = 1;
     BVH8 bvh8(m_Bvh2.triangles);
+    bvh8.nodes.emplace_back();
     CollapseNode(bvh8, 0, 0);
     std::cout << "Used nodes: " << m_UsedNodes << std::endl;
     return bvh8;
@@ -131,13 +139,6 @@ int BVH8Builder::ComputeNodeTriCount(int nodeIdx, int triBaseIdx)
     m_TriBaseIdx[nodeIdx] = triBaseIdx;
 
     return m_TriCount[nodeIdx];
-}
-
-void BVH8Builder::Init()
-{
-    ComputeNodeTriCount(0, 0);
-    float rootCost = ComputeNodeCost(0, 0);
-	std::cout << rootCost << std::endl;
 }
 
 void BVH8Builder::GetChildrenIndices(uint32_t nodeIdxBvh2, int* indices, int i, int& indicesCount)
@@ -280,7 +281,7 @@ void BVH8Builder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
 {
     const BVH2Node& bvh2Node = m_Bvh2.nodes[nodeIdxBvh2];
 
-    BVH8Node bvh8Node;
+    BVH8Node& bvh8Node = bvh8.nodes[nodeIdxBvh8];
 
     const float denom = 1.0f / (float)((1 << N_Q) - 1);
     
@@ -370,11 +371,16 @@ void BVH8Builder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
                 bvh8Node.meta[i] |= nTrianglesTotal;
 
                 nTrianglesTotal += nTriangles;
-                assert(nTrianglesTotal <= 24);
             }
         }
     }
-	bvh8.nodes.push_back(bvh8Node);
+	assert(nTrianglesTotal <= 24);
+
+
+    // Caching child base index before resizing nodes array
+    uint32_t childBaseIdx = bvh8Node.childBaseIdx;
+
+    bvh8.nodes.resize(m_UsedNodes);
 
     int childCount = 0;
     // Recursively collapse internal children nodes
@@ -387,7 +393,7 @@ void BVH8Builder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
 
         if (eval.decision == Decision::INTERNAL)
         {
-            CollapseNode(bvh8, childrenIndices[i], bvh8Node.childBaseIdx + childCount);
+            CollapseNode(bvh8, childrenIndices[i], childBaseIdx + childCount);
             childCount++;
         }
     }
