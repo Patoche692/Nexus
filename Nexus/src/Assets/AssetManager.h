@@ -4,7 +4,6 @@
 #include <set>
 #include "Memory/Device/DeviceVector.h"
 #include "Geometry/Mesh.h"
-#include "Cuda/AssetManager.cuh"
 #include "Geometry/Material.h"
 #include "Geometry/BVH/BVHInstance.h"
 #include "Geometry/BVH/TLAS.h"
