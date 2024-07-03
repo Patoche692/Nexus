@@ -49,3 +49,4 @@ namespace Utils
 
 	void GetPathAndFileName(const std::string fullPath, std::string& path, std::string& name);
 }
+

@@ -9,16 +9,12 @@
 #include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
 #include "BSDF/ConductorBSDF.cuh"
+#include "BVH/TLASTraversal.cuh"
+#include "Scene.cuh"
+#include "Camera.cuh"
 
 
-__constant__ __device__ CameraData cameraData;
-__constant__ __device__ SceneData sceneData;
-extern __constant__ __device__ Material* materials;
-extern __constant__ __device__ cudaTextureObject_t* diffuseMaps;
-extern __constant__ __device__ cudaTextureObject_t* emissiveMaps;
-extern __constant__ __device__ TLAS tlas;
-
-inline __device__ uint32_t toColorUInt(float3 color)
+inline __device__ uint32_t ToColorUInt(float3 color)
 {
 	float4 clamped = clamp(make_float4(color, 1.0f), make_float4(0.0f), make_float4(1.0f));
 	uint8_t red = (uint8_t)(clamped.x * 255.0f);
@@ -30,7 +26,7 @@ inline __device__ uint32_t toColorUInt(float3 color)
 }
 
 // Approximated ACES tonemapping by Krzysztof Narkowicz. See https://graphics-programming.org/resources/tonemapping/index.html
-inline __device__ float3 tonemap(float3 color)
+inline __device__ float3 Tonemap(float3 color)
 {
 	// Tungsten renderer filmic tonemapping to compare my results
 	//float3 x = fmaxf(make_float3(0.0f), color - 0.004f);
@@ -46,10 +42,10 @@ inline __device__ float3 tonemap(float3 color)
 }
 
 // If necessary, sample the HDR map (from spherical to equirectangular projection)
-inline __device__ float3 sampleBackground(float3 direction)
+inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction)
 {
 	float3 backgroundColor;
-	if (sceneData.hasHdrMap)
+	if (scene.hasHdrMap)
 	{
 		// Theta goes from -PI to PI, phi from -PI/2 to PI/2
 		const float theta = atan2(direction.z, direction.x);
@@ -59,40 +55,40 @@ inline __device__ float3 sampleBackground(float3 direction)
 		const float u = (theta + M_PI) * INV_PI * 0.5;
 		const float v = 1.0f - (phi + M_PI * 0.5f) * INV_PI;
 
-		backgroundColor = make_float3(tex2D<float4>(sceneData.hdrMap, u, v));
+		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
 		backgroundColor = make_float3(0.02f);
 	return backgroundColor;
 }
 
-inline __device__ float3 color(Ray& r, unsigned int& rngState)
+inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
 {
-	Ray currentRay = r;
+	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 15; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
 		currentRay.invDirection = 1 / currentRay.direction;
 
-		tlas.Intersect(currentRay);
+		IntersectTLAS(scene.tlas, currentRay);
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
 		{ 
-			float3 backgroundColor = sampleBackground(currentRay.direction);
+			float3 backgroundColor = SampleBackground(scene, currentRay.direction);
 			return currentThroughput * backgroundColor + emission;
 		}
 
-		HitResult hitResult;
+		D_HitResult hitResult;
 		hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
 		hitResult.rIn = currentRay;
 
-		BVHInstance& instance = tlas.blas[currentRay.hit.instanceIdx];
-		Triangle& triangle = instance.bvh->triangles[currentRay.hit.triIdx];
+		const D_BVHInstance& instance = scene.tlas.blas[currentRay.hit.instanceIdx];
+		const D_Triangle& triangle = scene.tlas.bvhs[instance.bvhIdx].triangles[currentRay.hit.triIdx];
 		float u = currentRay.hit.u, v = currentRay.hit.v;
 
 		// Interpolating and rotating the normal
@@ -101,21 +97,18 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 
 		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
-		hitResult.material = materials[instance.materialId];
+		hitResult.material = scene.materials[instance.materialId];
 
 		if (hitResult.material.diffuseMapId == -1)
 			hitResult.albedo = hitResult.material.diffuse.albedo;
 		else
 		{
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.diffuse.albedo = make_float3(tex2D<float4>(diffuseMaps[hitResult.material.diffuseMapId], uv.x, uv.y));
-
+			hitResult.material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[hitResult.material.diffuseMapId], uv.x, uv.y));
 		}
 		if (hitResult.material.emissiveMapId != -1) {
 			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-			hitResult.material.emissive = make_float3(tex2D<float4>(emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
-			//if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && threadIdx.y == 0)
-			//	printf("emissive map: %f, %f, %f\n", hitResult.material.emissive.x, hitResult.material.emissive.y, hitResult.material.emissive.z);
+			hitResult.material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
 		}
 
 		// Normal flipping
@@ -123,7 +116,7 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		//	hitResult.normal = -hitResult.normal;
 
 		// Invert normals for non transmissive material if the primitive is backfacing the ray
-		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != Material::Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
+		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::D_Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
 		{
 			hitResult.normal = -hitResult.normal;
 			gNormal = -gNormal;
@@ -149,13 +142,13 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 		bool scattered = false;
 		switch (hitResult.material.type)
 		{
-		case Material::Type::DIFFUSE:
+		case D_Material::D_Type::DIFFUSE:
 			scattered = BSDF::Sample<LambertianBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
-		case Material::Type::DIELECTRIC:
+		case D_Material::D_Type::DIELECTRIC:
 			scattered = BSDF::Sample<DielectricBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
-		case Material::Type::CONDUCTOR:
+		case D_Material::D_Type::CONDUCTOR:
 			scattered = BSDF::Sample<ConductorBSDF>(hitResult, wi, wo, throughput, rngState);
 			break;
 		default:
@@ -196,33 +189,35 @@ inline __device__ float3 color(Ray& r, unsigned int& rngState)
 	return emission;
 }
 
-__global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* accumulationBuffer)
+__global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t frameNumber, float3* accumulationBuffer)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
 	uint2 pixel = make_uint2(i, j);
 
-	uint2 resolution = cameraData.resolution;
+	D_Camera camera = scene.camera;
+	uint2 resolution = camera.resolution;
 
 	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
 		return;
 
 	unsigned int rngState = Random::InitRNG(pixel, resolution, frameNumber);
 
-	// Avoid using modulo, it significantly impacts performance
+	// Normalized jittered coordinates
 	float x = (pixel.x + Random::Rand(rngState)) / (float)resolution.x;
 	float y = (pixel.y + Random::Rand(rngState)) / (float)resolution.y;
 
-	float2 rd = cameraData.lensRadius * Random::RandomInUnitDisk(rngState);
-	float3 offset = cameraData.right * rd.x + cameraData.up * rd.y;
+	float2 rd = camera.lensRadius * Random::RandomInUnitDisk(rngState);
+	float3 offset = camera.right * rd.x + camera.up * rd.y;
 
-	Ray ray(
-		cameraData.position + offset,
-		normalize(cameraData.lowerLeftCorner + x * cameraData.viewportX + y * cameraData.viewportY - cameraData.position - offset)
+	D_Ray ray(
+		camera.position + offset,
+		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
 	);
 
-	float3 c = color(ray, rngState);
+	float3 c = Color(scene, ray, rngState);
+
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
 	else
@@ -230,91 +225,22 @@ __global__ void traceRay(uint32_t* outBufferPtr, uint32_t frameNumber, float3* a
 
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 
-	outBufferPtr[pixel.y * resolution.x + pixel.x] = toColorUInt(Utils::LinearToGamma(tonemap(c)));
+	outBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
 }
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer)
+void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
+	uint32_t frameNumber, float3* accumulationBuffer)
 {
-	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer->GetCudaResource()));
+	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer.GetCudaResource()));
 	size_t size = 0;
 	uint32_t* devicePtr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer->GetCudaResource()));
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer.GetCudaResource()));
 
-	uint32_t tx = 16, ty = 16;
-	dim3 blocks(pixelBuffer->GetWidth() / tx + 1, pixelBuffer->GetHeight() / ty + 1);
-	dim3 threads(tx, ty);
+	dim3 blocks(pixelBuffer.GetWidth() / BLOCK_SIZE + 1, pixelBuffer.GetHeight() / BLOCK_SIZE + 1);
+	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
 
-	traceRay<<<blocks, threads>>>(devicePtr, frameNumber, accumulationBuffer);
+	TraceRay<<<blocks, threads>>>(scene, devicePtr, frameNumber, accumulationBuffer);
 
 	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer->GetCudaResource(), 0));
-}
-
-void InitDeviceSceneData()
-{
-	SceneData scene;
-	scene.hasHdrMap = false;
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-}
-
-void SendHDRMapToDevice(const Texture& map)
-{
-	// Channel descriptor for 4 Channels (RGBA)
-	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
-	cudaArray_t cuArray;
-	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, map.width, map.height));
-
-	const size_t spitch = map.width * 4 * sizeof(float);
-	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, map.pixels, spitch, map.width * 4 * sizeof(float), map.height, cudaMemcpyHostToDevice));
-
-	cudaResourceDesc resDesc;
-	memset(&resDesc, 0, sizeof(resDesc));
-	resDesc.resType = cudaResourceTypeArray;
-	resDesc.res.array.array = cuArray;
-
-	cudaTextureDesc texDesc;
-	memset(&texDesc, 0, sizeof(texDesc));
-	texDesc.addressMode[0] = cudaAddressModeWrap;
-	texDesc.addressMode[1] = cudaAddressModeWrap;
-	texDesc.filterMode = cudaFilterModeLinear;
-	texDesc.readMode = cudaReadModeElementType;
-	texDesc.normalizedCoords = 1;
-
-	cudaTextureObject_t texObject = 0;
-	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
-
-	SceneData scene;
-	scene.hasHdrMap = true;
-	scene.hdrMap = texObject;
-	checkCudaErrors(cudaMemcpyToSymbol(sceneData, &scene, sizeof(SceneData)));
-}
-
-void SendCameraDataToDevice(Camera* camera)
-{
-	float3 position = camera->GetPosition();
-	float3 forwardDirection = camera->GetForwardDirection();
-	float3 rightDirection = camera->GetRightDirection();
-	float3 upDirection = cross(rightDirection, forwardDirection);
-
-	float aspectRatio = camera->GetViewportWidth() / (float)camera->GetViewportHeight();
-	float halfHeight = camera->GetFocusDist() * tanf(camera->GetVerticalFOV() / 2.0f * M_PI / 180.0f);
-	float halfWidth = aspectRatio * halfHeight;
-
-	float3 viewportX = 2 * halfWidth * rightDirection;
-	float3 viewportY = 2 * halfHeight * upDirection;
-	float3 lowerLeftCorner = position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera->GetFocusDist();
-
-	float lensRadius = camera->GetFocusDist() * tanf(camera->GetDefocusAngle() / 2.0f * M_PI / 180.0f);
-
-	CameraData data = {
-		position,
-		rightDirection,
-		upDirection,
-		lensRadius,
-		lowerLeftCorner,
-		viewportX,
-		viewportY,
-		make_uint2(camera->GetViewportWidth(), camera->GetViewportHeight())
-	};
-	checkCudaErrors(cudaMemcpyToSymbol(cameraData, &data, sizeof(CameraData)));
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
 }

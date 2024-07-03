@@ -2,21 +2,15 @@
 #include "OBJLoader.h"
 #include "IMGLoader.h"
 
-AssetManager::AssetManager()
-{
-	m_MaterialSymbolAddress = getMaterialSymbolAddress();
-	m_MeshSymbolAddress = getMeshSymbolAddress();
-}
-
-AssetManager::~AssetManager()
-{
-}
-
 void AssetManager::Reset()
 {
 	m_Materials.clear();
 	m_InvalidMaterials.clear();
 	m_DiffuseMaps.clear();
+	m_EmissiveMaps.clear();
+	m_DeviceDiffuseMaps.Clear();
+	m_DeviceEmissiveMaps.Clear();
+	m_DeviceMaterials.Clear();
 	m_Meshes.clear();
 }
 
@@ -24,7 +18,10 @@ void AssetManager::AddMesh(const std::string& path, const std::string filename)
 {
 	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(path, filename, this);
 	for (Mesh& mesh : meshes)
+	{
 		m_Meshes.push_back(mesh);
+		m_Bvhs.push_back(mesh.bvh8);
+	}
 }
 
 void AssetManager::AddMaterial()
@@ -37,8 +34,8 @@ void AssetManager::AddMaterial()
 int AssetManager::AddMaterial(const Material& material)
 {
 	m_Materials.push_back(material);
+	m_DeviceMaterials.PushBack(material);
 	Material& m = m_Materials[m_Materials.size() - 1];
-	newDeviceMaterial(m, m_Materials.size());
 	return m_Materials.size() - 1;
 }
 
@@ -47,7 +44,7 @@ void AssetManager::InvalidateMaterial(uint32_t index)
 	m_InvalidMaterials.insert(index);
 }
 
-int AssetManager::AddTexture(Texture& texture)
+int AssetManager::AddTexture(const Texture& texture)
 {
 	if (texture.pixels == NULL)
 	{
@@ -57,15 +54,13 @@ int AssetManager::AddTexture(Texture& texture)
 	if (texture.type == Texture::Type::DIFFUSE)
 	{
 		m_DiffuseMaps.push_back(texture);
-		Texture& m = m_DiffuseMaps[m_DiffuseMaps.size() - 1];
-		newDeviceTexture(m, m_DiffuseMaps.size());
+		m_DeviceDiffuseMaps.PushBack(texture);
 		return m_DiffuseMaps.size() - 1;
 	}
 	else if (texture.type == Texture::Type::EMISSIVE)
 	{
 		m_EmissiveMaps.push_back(texture);
-		Texture& m = m_EmissiveMaps[m_EmissiveMaps.size() - 1];
-		newDeviceTexture(m, m_EmissiveMaps.size());
+		m_DeviceEmissiveMaps.PushBack(texture);
 		return m_EmissiveMaps.size() - 1;
 	}
 }
@@ -82,7 +77,7 @@ bool AssetManager::SendDataToDevice()
 	for (uint32_t id : m_InvalidMaterials)
 	{
 		invalid = true;
-		cpyMaterialToDevice(m_Materials[id], id);
+		m_DeviceMaterials[id] = m_Materials[id];
 	}
 	m_InvalidMaterials.clear();
 	return invalid;

@@ -3,40 +3,36 @@
 #include <cuda_runtime_api.h>
 
 #include "BVH.h"
+#include "BVH8.h"
 #include "Math/Mat4.h"
 #include "Geometry/AABB.h"
+#include "Cuda/BVH/BVHInstance.cuh"
 
 class BVHInstance
 {
 public:
 	BVHInstance() = default;
-	BVHInstance(BVH* blas) : bvh(blas) {
+	BVHInstance(unsigned int blasIdx, BVH8* bvhs)
+		: m_BvhIdx(blasIdx), m_Bvh(bvhs) 
+	{
 		Mat4 m;
-		SetTransform(m); 
+		SetTransform(m);
 	}
 
 	void SetTransform(Mat4& t);
 	void SetTransform(float3 pos, float3 r, float3 s);
 
+	const AABB& GetBounds() const { return m_Bounds; }
+
 	void AssignMaterial(int mIdx);
 
-public:
-	BVH* bvh = nullptr;
-	Mat4 invTransform;
-	Mat4 transform;
-	AABB bounds;
-	int materialId;
+	static D_BVHInstance ToDevice(const BVHInstance& bvhInstance);
 
-	inline __host__ __device__ void Intersect(Ray& ray, uint32_t instanceIdx)
-	{
-		Ray backupRay = ray;
-		ray.origin = invTransform.TransformPoint(ray.origin);
-		ray.direction = invTransform.TransformVector(ray.direction);
-		ray.invDirection = 1 / ray.direction;
-
-		bvh->Intersect(ray, instanceIdx);
-
-		backupRay.hit = ray.hit;
-		ray = backupRay;
-	}
+private:
+	unsigned int m_BvhIdx = 0;
+	BVH8* m_Bvh;
+	Mat4 m_InvTransform;
+	Mat4 m_Transform;
+	AABB m_Bounds;
+	int m_MaterialId;
 };

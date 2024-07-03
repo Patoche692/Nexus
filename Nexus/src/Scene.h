@@ -1,11 +1,15 @@
 #pragma once
 
 #include <iostream>
+#include "Memory/Device/DeviceVector.h"
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
 #include "Assets/AssetManager.h"
 #include "Geometry/MeshInstance.h"
+#include "Cuda/Material.cuh"
+#include "Cuda/BVH/BVHInstance.cuh"
+#include "Cuda/Scene.cuh"
 
 class Scene
 {
@@ -20,6 +24,7 @@ public:
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }
+	bool IsInvalid() { return m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid(); }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
@@ -28,16 +33,26 @@ public:
 	void AddHDRMap(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
-	bool SendDataToDevice();
+	//bool SendDataToDevice();
+
+	// Create or update the device scene and returns a pointer to the D_Scene object
+	static D_Scene ToDevice(Scene& scene);
 
 private:
 	std::shared_ptr<Camera> m_Camera;
 
 	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
+
 	std::set<uint32_t> m_InvalidMeshInstances;
 	std::shared_ptr<TLAS> m_Tlas;
+
 	Texture m_HdrMap;
 
 	AssetManager m_AssetManager;
+
+	// Device members
+	cudaTextureObject_t m_DeviceHdrMap;
+	DeviceVector<Material, D_Material> m_DeviceMaterials;
+	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBVHInstances;
 };

@@ -1,52 +1,78 @@
 #include <vector>
+#include <numeric>
 #include "BVH.h"
 #include "Geometry/AABB.h"
 #include "Utils/Utils.h"
 
-BVH::BVH(std::vector<Triangle>& tri)
+BVH2::BVH2(const std::vector<Triangle>& tri)
 {
-	triCount = tri.size();
-	triangles = new Triangle[triCount];
-	nodes = new BVHNode[2 * triCount];
-	triangleIdx = new uint32_t[triCount];
-
-	memcpy(triangles, tri.data(), triCount * sizeof(Triangle));
-
-	Build();
+	triangles = tri;
+	triangleIdx = std::vector<uint32_t>(tri.size());
 }
 
-BVH::~BVH()
+void BVH2::Build()
 {
-	delete[] triangles;
-	delete[] nodes;
-	delete[] triangleIdx;
-}
+	// Fill triangle indices with consecutive integers starting from 0
+	std::iota(triangleIdx.begin(), triangleIdx.end(), 0);
 
-void BVH::Build()
-{
-	nodesUsed = 2;
-
-	for (uint32_t i = 0; i < triCount; i++)
-		triangleIdx[i] = i;
-
-	BVHNode& root = nodes[0];
+	BVH2Node root;
 	root.leftNode = 0;
-	root.triCount = triCount;
+	root.triCount = triangles.size();
+	nodes.push_back(root);
 
 	UpdateNodeBounds(0);
 	Subdivide(0);
 }
 
-void BVH::Subdivide(uint32_t nodeIdx)
+void BVH2::SplitNodeInHalf(BVH2Node& node)
 {
-	BVHNode& node = nodes[nodeIdx];
-	int axis;
-	float splitPos;
+	int leftChildIdx = nodes.size();
+	BVH2Node leftChild;
+	leftChild.firstTriIdx = node.firstTriIdx;
+	leftChild.triCount = node.triCount / 2;
+
+	int rightChildIdx = nodes.size() + 1;
+	BVH2Node rightChild;
+	rightChild.firstTriIdx = node.firstTriIdx + node.triCount / 2;
+	rightChild.triCount = node.triCount - node.triCount / 2;
+	node.leftNode = leftChildIdx;
+	node.triCount = 0;
+
+	// node should not be used after this since its reference will be invalidated
+	nodes.push_back(leftChild);
+	nodes.push_back(rightChild);
+
+	UpdateNodeBounds(leftChildIdx);
+	UpdateNodeBounds(rightChildIdx);
+
+	Subdivide(leftChildIdx);
+	Subdivide(rightChildIdx);
+}
+
+void BVH2::Subdivide(uint32_t nodeIdx)
+{
+	BVH2Node& node = nodes[nodeIdx];
+
+	int axis = -1;
+	double splitPos;
 	float splitCost = FindBestSplitPlane(node, axis, splitPos);
 	float nodeCost = node.Cost();
 
-	if (splitCost > nodeCost)
+	// Set every leaf primitive count to 1 to allow for collapsing nodes for constructing other BVHs
+	if (node.triCount == 1)
 		return;
+
+	// If in one node triangles have the same centroid, they cannot be 
+	// separated by chopped binning. We have to separate them manually
+	else if (axis == -1)
+	{
+		SplitNodeInHalf(node);
+		return;
+	}
+
+	// Normally, we would return if the split cost is greater than the parent node cost
+	//if (splitCost > nodeCost)
+	//	return;
 
 	int i = node.firstTriIdx;
 	int j = i + node.triCount - 1;
@@ -62,17 +88,30 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	
 	int leftCount = i - node.firstTriIdx;
 	if (leftCount == 0 || leftCount == node.triCount)
+	{
+		if (node.triCount == 1)
+			return;
+
+		SplitNodeInHalf(node);
 		return;
+	}
 
-	int leftChildIdx = nodesUsed++;
-	int rightChildIdx = nodesUsed++;
+	int leftChildIdx = nodes.size();
+	int rightChildIdx = leftChildIdx + 1;
 
-	nodes[leftChildIdx].firstTriIdx = node.firstTriIdx;
-	nodes[leftChildIdx].triCount = leftCount;
-	nodes[rightChildIdx].firstTriIdx = i;
-	nodes[rightChildIdx].triCount = node.triCount - leftCount;
+	BVH2Node leftChild;
+	leftChild.firstTriIdx = node.firstTriIdx;
+	leftChild.triCount = leftCount;
+
+	BVH2Node rightChild;
+	rightChild.firstTriIdx = i;
+	rightChild.triCount = node.triCount - leftCount;
+
 	node.leftNode = leftChildIdx;
 	node.triCount = 0;
+
+	nodes.push_back(leftChild);
+	nodes.push_back(rightChild);
 
 	UpdateNodeBounds(leftChildIdx);
 	UpdateNodeBounds(rightChildIdx);
@@ -81,9 +120,9 @@ void BVH::Subdivide(uint32_t nodeIdx)
 	Subdivide(rightChildIdx);
 }
 
-void BVH::UpdateNodeBounds(uint32_t nodeIdx)
+void BVH2::UpdateNodeBounds(uint32_t nodeIdx)
 {
-	BVHNode& node = nodes[nodeIdx];
+	BVH2Node& node = nodes[nodeIdx];
 	node.aabbMin = make_float3(1e30f);
 	node.aabbMax = make_float3(-1e30f);
 	for (uint32_t first = node.firstTriIdx, i = 0; i < node.triCount; i++)
@@ -99,7 +138,7 @@ void BVH::UpdateNodeBounds(uint32_t nodeIdx)
 	}
 }
 
-float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
+float BVH2::FindBestSplitPlane(const BVH2Node& node, int& axis, double& splitPos)
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)
@@ -115,7 +154,7 @@ float BVH::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 			continue;
 
 		struct Bin { AABB bounds; int triCount = 0; } bins[BINS];
-		float scale = BINS / (boundsMax - boundsMin);
+		double scale = BINS / (boundsMax - boundsMin);
 
 		for (uint32_t i = 0; i < node.triCount; i++)
 		{

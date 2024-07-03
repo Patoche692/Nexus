@@ -2,7 +2,8 @@
 
 #include <cuda_runtime_api.h>
 #include "Utils/cuda_math.h"
-#include "Geometry/Material.h"
+#include "Cuda/Material.cuh"
+#include "Cuda/Geometry/Ray.cuh"
 #include "Cuda/Random.cuh"
 #include "Microfacet.cuh"
 #include "Fresnel.cuh"
@@ -16,13 +17,13 @@ struct DielectricBSDF
 	float eta;
 	float alpha;
 
-	inline __device__ void PrepareBSDFData(const float3& wi,  const Material& material)
+	inline __device__ void PrepareBSDFData(const float3& wi,  const D_Material& material)
 	{
 		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.dielectric.roughness * material.dielectric.roughness, 1.0e-4f, 1.0f);
 		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
 	}
 
-	inline __device__ bool Sample(const HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
+	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 

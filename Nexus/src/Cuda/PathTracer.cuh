@@ -5,7 +5,12 @@
 #include <glm/glm.hpp>
 #include "OpenGL/PixelBuffer.h"
 #include "Scene.h"
-#include "AssetManager.cuh"
+
+// Number of threads in a block
+#define BLOCK_SIZE 8
+
+#define WARP_SIZE 32	// Same size for all NVIDIA GPUs
+
 
 struct CameraData
 {
@@ -25,7 +30,4 @@ struct SceneData
 	cudaTextureObject_t hdrMap;
 };
 
-void RenderViewport(std::shared_ptr<PixelBuffer> pixelBuffer, uint32_t frameNumber, float3* accumulationBuffer);
-void InitDeviceSceneData();
-void SendHDRMapToDevice(const Texture& map);
-void SendCameraDataToDevice(Camera *camera);
+void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);

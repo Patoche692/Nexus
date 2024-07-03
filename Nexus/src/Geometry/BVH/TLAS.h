@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Memory/Device/DeviceVector.h"
 #include "Utils/cuda_math.h"
 #include "BVHInstance.h"
 #include "Utils/Utils.h"
+#include "Cuda/BVH/TLAS.cuh"
 
 struct TLASNode
 {
@@ -10,66 +12,32 @@ struct TLASNode
 	float3 aabbMax;
 	uint32_t leftRight;
 	uint32_t blasIdx;
-	inline __host__ __device__ bool IsLeaf() { return leftRight == 0; }
+	inline bool IsLeaf() { return leftRight == 0; }
 };
 
 class TLAS
 {
 public:
 	TLAS() = default;
-	TLAS(BVHInstance* bvhList, int N);
+	TLAS(const std::vector<BVHInstance>& bvhList, const std::vector<BVH8>& bvhs);
 	void Build();
+
+	void UpdateDeviceData();
+	void SetBVHInstances(const std::vector<BVHInstance>& bvhInstances) { m_Blas = bvhInstances; }
+	static D_TLAS ToDevice(const TLAS& tlas);
 
 private:
 	int FindBestMatch(int N, int A);
 
-public:
+private:
 
-	TLASNode* nodes;
-	BVHInstance* blas;
-	uint32_t nodesUsed, blasCount;
-	uint32_t* nodesIdx;
+	std::vector<TLASNode> m_Nodes;
+	std::vector<BVHInstance> m_Blas;
+	std::vector<uint32_t> m_InstancesIdx;
+	std::vector<BVH8> m_Bvhs;
 
-	inline __host__ __device__ void Intersect(Ray& ray)
-	{
-		TLASNode* node = &nodes[0], * stack[32];
-		uint32_t stackPtr = 0;
-
-		while (1)
-		{
-			if (node->IsLeaf())
-			{
-				blas[node->blasIdx].Intersect(ray, node->blasIdx);
-
-				if (stackPtr == 0)
-					break;
-				else
-					node = stack[--stackPtr];
-				continue;
-			}
-			TLASNode* child1 = &nodes[node->leftRight & 0xffff];
-			TLASNode* child2 = &nodes[node->leftRight >> 16];
-			float dist1 = AABB::intersectionAABB(ray, child1->aabbMin, child1->aabbMax);
-			float dist2 = AABB::intersectionAABB(ray, child2->aabbMin, child2->aabbMax);
-
-			if (dist1 > dist2)
-			{
-				Utils::Swap(dist1, dist2);
-				Utils::Swap(child1, child2);
-			}
-			if (dist1 == 1e30f)
-			{
-				if (stackPtr == 0)
-					break;
-				else
-					node = stack[--stackPtr];
-			}
-			else
-			{
-				node = child1;
-				if (dist2 != 1e30f)
-					stack[stackPtr++] = child2;
-			}
-		}
-	}
+	// Device members
+	DeviceVector<TLASNode, D_TLASNode> m_DeviceNodes;
+	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBlas;
+	DeviceVector<BVH8, D_BVH8> m_DeviceBvhs;
 };

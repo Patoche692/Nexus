@@ -139,13 +139,31 @@ Ray Camera::RayThroughPixel(int2 pixel)
 	return Ray(m_Position, direction);
 }
 
-bool Camera::SendDataToDevice()
+D_Camera Camera::ToDevice(const Camera& camera)
 {
-	if (m_Invalid) {
-		m_Invalid = false;
-		SendCameraDataToDevice(this);
-		return true;
-	}
-	return false;
+	D_Camera deviceCamera;
+
+	float3 forwardDirection = camera.m_ForwardDirection;
+	float3 upDirection = cross(camera.m_RightDirection, forwardDirection);
+	float aspectRatio = camera.m_ViewportWidth / (float)camera.m_ViewportHeight;
+	float halfHeight = camera.m_FocusDist * tanf(camera.m_VerticalFOV / 2.0f * M_PI / 180.0f);
+	float halfWidth = aspectRatio * halfHeight;
+
+	float3 viewportX = 2 * halfWidth * camera.m_RightDirection;
+	float3 viewportY = 2 * halfHeight * upDirection;
+	float3 lowerLeftCorner = camera.m_Position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera.m_FocusDist;
+
+	float lensRadius = camera.m_FocusDist * tanf(camera.m_DefocusAngle / 2.0f * M_PI / 180.0f);
+
+	deviceCamera.position = camera.m_Position;
+	deviceCamera.right = camera.m_RightDirection;
+	deviceCamera.up = upDirection;
+	deviceCamera.lensRadius = lensRadius;
+	deviceCamera.lowerLeftCorner = lowerLeftCorner;
+	deviceCamera.viewportX = viewportX;
+	deviceCamera.viewportY = viewportY;
+	deviceCamera.resolution = make_uint2(camera.m_ViewportWidth, camera.m_ViewportHeight);
+
+	return deviceCamera;
 }
 

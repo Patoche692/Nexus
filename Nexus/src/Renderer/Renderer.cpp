@@ -12,7 +12,8 @@
 
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene)
-	:m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene), m_MetricsPanel(scene)
+	: m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene),
+	m_MetricsPanel(scene), m_PixelBuffer(width, height), m_Texture(width, height)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -23,9 +24,6 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* s
     ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
-
-	m_PixelBuffer = std::make_shared<PixelBuffer>(width, height);
-	m_Texture = std::make_shared<OGLTexture>(width, height);
 
 	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 }
@@ -42,8 +40,6 @@ void Renderer::Reset()
 {
 	m_FrameNumber = 0;
 	m_MetricsPanel.Reset();
-	m_PixelBuffer = std::make_shared<PixelBuffer>(m_ViewportWidth, m_ViewportHeight);
-	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, m_ViewportWidth * m_ViewportHeight * sizeof(float3)));
 }
 
 void Renderer::Render(Scene& scene, float deltaTime)
@@ -57,7 +53,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	// Position UI and resize the texture and pixel buffer depending on the viewport size
 	RenderUI(scene);
 
-	if (scene.SendDataToDevice())
+	if (scene.IsInvalid())
 		m_FrameNumber = 0;
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
@@ -65,7 +61,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	{
 		m_FrameNumber++;
 
-		RenderViewport(m_PixelBuffer, m_FrameNumber, m_AccumulationBuffer);
+		RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
@@ -95,7 +91,6 @@ void Renderer::RenderUI(Scene& scene)
 				if (!fullPath.empty())
 				{
 					checkCudaErrors(cudaDeviceSynchronize());
-					checkCudaErrors(cudaDeviceReset());
 					Reset();
 					scene.Reset();
 
@@ -139,14 +134,14 @@ void Renderer::RenderUI(Scene& scene)
 		int2 hoveredPixel = make_int2(mousePos.x - viewportPos.x, mousePos.y - viewportPos.y);
 		hoveredPixel.y = m_ViewportHeight - hoveredPixel.y;
 
-		if (hoveredPixel.x >= 0 && hoveredPixel.x < m_ViewportWidth && hoveredPixel.y >= 0 && hoveredPixel.y < m_ViewportHeight)
-		{
-			std::shared_ptr<Camera> camera = scene.GetCamera();
-			Ray ray = camera->RayThroughPixel(hoveredPixel);
-			std::shared_ptr<TLAS> tlas = scene.GetTLAS();
-			tlas->Intersect(ray);
-			m_HierarchyPannel.SetSelectionContext(ray.hit.instanceIdx);
-		}
+		//if (hoveredPixel.x >= 0 && hoveredPixel.x < m_ViewportWidth && hoveredPixel.y >= 0 && hoveredPixel.y < m_ViewportHeight)
+		//{
+		//	std::shared_ptr<Camera> camera = scene.GetCamera();
+		//	Ray ray = camera->RayThroughPixel(hoveredPixel);
+		//	std::shared_ptr<TLAS> tlas = scene.GetTLAS();
+		//	tlas->Intersect(ray);
+		//	m_HierarchyPannel.SetSelectionContext(ray.hit.instanceIdx);
+		//}
 	}
 
 
@@ -156,7 +151,7 @@ void Renderer::RenderUI(Scene& scene)
 	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
 	OnResize(viewportWidth, viewportHeight);
 
-	ImGui::Image((void *)(intptr_t)m_Texture->GetHandle(), ImVec2(m_Texture->GetWidth(), m_Texture->GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::Image((void *)(intptr_t)m_Texture.GetHandle(), ImVec2(m_Texture.GetWidth(), m_Texture.GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
 	ImGui::PopStyleVar();
@@ -168,10 +163,10 @@ void Renderer::RenderUI(Scene& scene)
 
 void Renderer::UnpackToTexture()
 {
-	m_Texture->Bind();
-	m_PixelBuffer->Bind();
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture->GetWidth(), m_Texture->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	m_PixelBuffer->Unbind();
+	m_Texture.Bind();
+	m_PixelBuffer.Bind();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture.GetWidth(), m_Texture.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	m_PixelBuffer.Unbind();
 }
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
@@ -180,8 +175,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	{
 		m_FrameNumber = 0;
 		m_MetricsPanel.Reset();
-		m_Texture->OnResize(width, height);
-		m_PixelBuffer->OnResize(width, height);
+		m_Texture.OnResize(width, height);
+		m_PixelBuffer.OnResize(width, height);
 		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 
@@ -192,11 +187,11 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::SaveScreenshot()
 {
-	int width = m_Texture->GetWidth();
-	int height = m_Texture->GetHeight();
+	int width = m_Texture.GetWidth();
+	int height = m_Texture.GetHeight();
 	std::vector<unsigned char> pixels(width * height * 4);
 
-	glBindTexture(GL_TEXTURE_2D, m_Texture->GetHandle());
+	glBindTexture(GL_TEXTURE_2D, m_Texture.GetHandle());
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 

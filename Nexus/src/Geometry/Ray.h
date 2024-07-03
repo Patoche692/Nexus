@@ -16,8 +16,8 @@ struct Intersection
 
 struct Ray
 {
-	__host__ __device__ Ray() = default;
-	__host__ __device__ Ray(float3 o, float3 d)
+	Ray() = default;
+	Ray(float3 o, float3 d)
 		:origin(o), direction(d), invDirection(1/direction) {};
 
 	// Ray origin
@@ -31,7 +31,7 @@ struct Ray
 
 	Intersection hit;
 
-	inline __host__ __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
+	float3 PointAtParameter(float t) const { return origin + direction * t; };
 };
 
 

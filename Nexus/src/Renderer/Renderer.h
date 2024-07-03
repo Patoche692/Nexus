@@ -19,19 +19,18 @@ public:
 
 	void Reset();
 	void OnResize(uint32_t width, uint32_t height);
-	void Renderer::SaveScreenshot();
+	void SaveScreenshot();
 	void Render(Scene& scene, float deltaTime);
 	void RenderUI(Scene& scene);
 	void UnpackToTexture();
-	void UpdateTimer(float deltaTime);
 
-	std::shared_ptr<PixelBuffer> GetPixelBuffer() { return m_PixelBuffer; };
-	std::shared_ptr<OGLTexture> GetTexture() { return m_Texture; };
+	PixelBuffer GetPixelBuffer() { return m_PixelBuffer; };
+	OGLTexture GetTexture() { return m_Texture; };
 
 private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
-	std::shared_ptr<PixelBuffer> m_PixelBuffer;
-	std::shared_ptr<OGLTexture> m_Texture;
+	PixelBuffer m_PixelBuffer;
+	OGLTexture m_Texture;
 	uint32_t m_FrameNumber = 0;
 	float3* m_AccumulationBuffer;
 	Scene* m_Scene;
