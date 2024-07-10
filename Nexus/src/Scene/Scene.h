@@ -5,12 +5,13 @@
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
+#include "Light.h"
 #include "Assets/AssetManager.h"
 #include "Scene/MeshInstance.h"
 #include "Cuda/Scene/Material.cuh"
 #include "Cuda/BVH/BVHInstance.cuh"
 #include "Cuda/Scene/Scene.cuh"
-#include "Light.h"
+#include "Cuda/Scene/Light.cuh"
 
 class Scene
 {
@@ -40,6 +41,8 @@ public:
 	static D_Scene ToDevice(Scene& scene);
 
 private:
+
+private:
 	std::shared_ptr<Camera> m_Camera;
 
 	std::vector<BVHInstance> m_BVHInstances;
@@ -57,4 +60,5 @@ private:
 	cudaTextureObject_t m_DeviceHdrMap;
 	DeviceVector<Material, D_Material> m_DeviceMaterials;
 	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBVHInstances;
+	DeviceVector<Light, D_Light> m_DeviceLights;
 };
