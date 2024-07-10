@@ -4,7 +4,7 @@
 #include <vector>
 #include <cuda_runtime_api.h>
 #include "Geometry/Ray.h"
-#include "Cuda/Camera.cuh"
+#include "Cuda/Scene/Camera.cuh"
 
 class Camera 
 {

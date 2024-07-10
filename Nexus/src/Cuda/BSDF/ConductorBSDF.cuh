@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cuda/Random.cuh"
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 #include "Cuda/Geometry/Ray.cuh"
 #include "Utils/cuda_math.h"
 #include "Microfacet.cuh"

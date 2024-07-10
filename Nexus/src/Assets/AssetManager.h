@@ -3,12 +3,12 @@
 #include <iostream>
 #include <set>
 #include "Memory/Device/DeviceVector.h"
-#include "Geometry/Mesh.h"
-#include "Geometry/Material.h"
+#include "Assets/Mesh.h"
+#include "Assets/Material.h"
 #include "Geometry/BVH/BVHInstance.h"
 #include "Geometry/BVH/TLAS.h"
 #include "Texture.h"
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 
 class AssetManager
 {

@@ -5,13 +5,13 @@
 #include "BSDF/BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 #include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
 #include "BSDF/ConductorBSDF.cuh"
 #include "BVH/TLASTraversal.cuh"
-#include "Scene.cuh"
-#include "Camera.cuh"
+#include "Scene/Scene.cuh"
+#include "Scene/Camera.cuh"
 
 
 inline __device__ uint32_t ToColorUInt(float3 color)

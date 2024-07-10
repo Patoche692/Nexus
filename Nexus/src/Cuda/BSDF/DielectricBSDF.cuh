@@ -2,7 +2,7 @@
 
 #include <cuda_runtime_api.h>
 #include "Utils/cuda_math.h"
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 #include "Cuda/Geometry/Ray.cuh"
 #include "Cuda/Random.cuh"
 #include "Microfacet.cuh"

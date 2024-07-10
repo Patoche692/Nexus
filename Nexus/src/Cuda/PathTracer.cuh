@@ -4,7 +4,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include "OpenGL/PixelBuffer.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 
 // Number of threads in a block
 #define BLOCK_SIZE 8

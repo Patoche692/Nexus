@@ -1,7 +1,7 @@
 #pragma once
 #include "Cuda/Random.cuh"
 #include "Cuda/Geometry/Ray.cuh"
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 
 // Basic lambertian (diffuse) BSDF
 struct LambertianBSDF

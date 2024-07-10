@@ -6,10 +6,11 @@
 #include "Camera.h"
 #include "Geometry/Sphere.h"
 #include "Assets/AssetManager.h"
-#include "Geometry/MeshInstance.h"
-#include "Cuda/Material.cuh"
+#include "Scene/MeshInstance.h"
+#include "Cuda/Scene/Material.cuh"
 #include "Cuda/BVH/BVHInstance.cuh"
-#include "Cuda/Scene.cuh"
+#include "Cuda/Scene/Scene.cuh"
+#include "Light.h"
 
 class Scene
 {
@@ -43,6 +44,7 @@ private:
 
 	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
+	std::vector<Light> m_Lights;
 
 	std::set<uint32_t> m_InvalidMeshInstances;
 	std::shared_ptr<TLAS> m_Tlas;

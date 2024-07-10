@@ -4,10 +4,10 @@
 #include <cuda_runtime_api.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "Camera.h"
+#include "Scene/Camera.h"
 #include "OpenGL/PixelBuffer.h"
 #include "OpenGL/OGLTexture.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/MetricsPanel.h"
 

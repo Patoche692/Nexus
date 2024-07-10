@@ -1,6 +1,5 @@
 #pragma once
 #include "Utils/cuda_math.h"
-#include "Medium.h"
 
 
 struct Intersection
