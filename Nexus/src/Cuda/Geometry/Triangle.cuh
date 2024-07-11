@@ -69,11 +69,16 @@ struct D_Triangle
 	}
 
 	// Normal (not normalized)
-	inline __host__ __device__ float3 Normal() const
+	inline __device__ float3 Normal() const
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
 		return cross(edge0, edge1);
+	}
+
+	inline __device__ float Area() const
+	{
+		return fabs(pos0.x * (pos1.y - pos2.y) + pos1.x * (pos2.y - pos0.y) + pos2.x * (pos0.y - pos1.y)) / 2.0f;
 	}
 };
