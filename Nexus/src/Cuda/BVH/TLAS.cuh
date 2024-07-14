@@ -15,7 +15,10 @@ struct D_TLASNode
 struct D_TLAS
 {
 	D_TLASNode* nodes;
+
 	D_BVHInstance* blas;
+	uint32_t instanceCount;
+
 	D_BVH8* bvhs;
 };
 

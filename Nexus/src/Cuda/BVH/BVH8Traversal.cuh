@@ -123,7 +123,7 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, D_Ray& ray,
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
-inline __device__ void IntersectBVH8(const D_BVH8& bvh8, D_Ray& ray, const uint32_t instanceIdx)
+inline __device__ void BVH8Trace(const D_BVH8& bvh8, D_Ray& ray, const uint32_t instanceIdx)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
@@ -208,4 +208,95 @@ inline __device__ void IntersectBVH8(const D_BVH8& bvh8, D_Ray& ray, const uint3
 			nodeEntry = StackPop(sharedStack, stack, stackPtr);
 		}
 	}
+}
+
+
+// Shadow ray tracing: true if any hit
+inline __device__ bool BVH8TraceShadow(const D_BVH8& bvh8, D_Ray& ray)
+{
+	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
+	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
+	int stackPtr = 0;
+
+	uint32_t idx;
+
+	uint2 nodeEntry = make_uint2(0);
+	uint2 triangleEntry = make_uint2(0);
+	const uint32_t invOctant = 7 - Octant(ray.direction);
+
+	// We set the hits bit of the root node to 1
+	nodeEntry.y |= 0x80000000;
+
+	while (true)
+	{
+		// If the hits field is different from 0, it is an internal node entry
+		if (nodeEntry.y & 0xff000000)
+		{
+			// Position of the first non zero bit
+			const int nodeOffset = 31 - __clz(nodeEntry.y);
+
+			// Set the hits bit of the selected node to 0
+			nodeEntry.y &= ~(1 << nodeOffset);
+
+			// If some nodes are remaining in the hits field
+			if (nodeEntry.y & 0xff000000)
+			{
+				StackPush(sharedStack, stack, stackPtr, nodeEntry);
+			};
+
+			// Slot in (0 .. 7) referring to the octant order in which the node should be traversed
+			const int nodeSlot = (nodeOffset - 24) ^ invOctant;
+
+			// We need to account for the number of internal nodes in the parent node. The relative
+			// index is thus the number of neighboring internal nodes stored in the lower child slots
+			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
+
+			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
+
+			const D_BVH8Node& node = bvh8.nodes[nodeEntry.x + relativeNodeIdx];
+
+			IntersectChildren(node, ray, invOctant, nodeEntry, triangleEntry);
+		}
+		else
+		{
+			triangleEntry = nodeEntry;
+			nodeEntry = make_uint2(0);
+		}
+
+		while (triangleEntry.y)
+		{
+			//float ratio = __popc(__activemask()) / (float)WARP_SIZE;
+
+			// If the ratio of active threads in the warp is less than the threshold, postpone triangle intersection
+			//if (ratio < POSTPONE_RATIO_THRESHOLD)
+			//{
+			//	stack[stackPtr++] = triangleEntry;
+			//	break;
+			//}
+
+			const int triangleOffset = 31 - __clz(triangleEntry.y);
+
+			// Set the hits bit of the selected triangle to 0
+			triangleEntry.y &= ~(1 << (triangleOffset));
+
+			// Fetch the triangle index
+			const uint32_t triangleIdx = bvh8.triangleIdx[triangleEntry.x + triangleOffset];
+
+			assert(triangleIdx < bvh8.triCount);
+
+			// Ray triangle intersection
+			if (bvh8.triangles[triangleIdx].ShadowTrace(ray))
+				return true;
+		}
+
+		// If the node entry is empty (hits field equals 0), pop from the stack
+		if ((nodeEntry.y & 0xff000000) == 0)
+		{
+			if (stackPtr == 0)
+				break;
+
+			nodeEntry = StackPop(sharedStack, stack, stackPtr);
+		}
+	}
+	return false;
 }
