@@ -28,4 +28,6 @@ struct D_Light
 			uint32_t meshId;
 		} mesh;
 	};
+
+	Type type;
 };

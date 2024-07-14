@@ -35,12 +35,15 @@ public:
 	void AddHDRMap(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
-	//bool SendDataToDevice();
+	size_t AddLight(const Light& light);
+	void RemoveLight(const size_t index);
 
-	// Create or update the device scene and returns a pointer to the D_Scene object
+	// Create or update the device scene and returns a D_Scene object
 	static D_Scene ToDevice(Scene& scene);
 
 private:
+	// Check if the instance is a light, and add it to the lights vector if it is
+	void UpdateInstanceLighting(size_t index);
 
 private:
 	std::shared_ptr<Camera> m_Camera;
@@ -58,7 +61,6 @@ private:
 
 	// Device members
 	cudaTextureObject_t m_DeviceHdrMap;
-	DeviceVector<Material, D_Material> m_DeviceMaterials;
 	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBVHInstances;
 	DeviceVector<Light, D_Light> m_DeviceLights;
 };

@@ -5,13 +5,12 @@
 #include "BSDF/BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
-#include "Scene/Camera.h"
-#include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
 #include "BSDF/ConductorBSDF.cuh"
 #include "BVH/TLASTraversal.cuh"
 #include "Scene/Scene.cuh"
 #include "Scene/Camera.cuh"
+#include "Sampler.cuh"
 
 
 inline __device__ uint32_t ToColorUInt(float3 color)
@@ -62,19 +61,20 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 	return backgroundColor;
 }
 
-inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
+// Incoming radiance estimate on ray origin and in ray direction
+inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
 {
 	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < MAX_BOUNCES; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
 		currentRay.invDirection = 1 / currentRay.direction;
 
-		IntersectTLAS(scene.tlas, currentRay);
+		TLASTrace(scene.tlas, currentRay);
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
@@ -169,7 +169,23 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
 				currentRay.direction = wo;
 			}
+
+			D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
+
+			if (light.type == D_Light::Type::MESH_LIGHT)
+			{
+				D_BVHInstance instance = scene.tlas.blas[light.mesh.meshId];
+
+				uint32_t triangleIdx;
+				float2 uv;
+				Sampler::UniformSampleMesh(scene.tlas.bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
+				const float pdf = 1.0f / (scene.tlas.instanceCount * scene.tlas.bvhs[instance.bvhIdx].triCount);
+
+				D_Ray shadowRay = currentRay;
+				//float3 p = 
+			}
 		}
+
 
 		// Russian roulette
 		if (j > 2)
@@ -216,7 +232,7 @@ __global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t fram
 		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
 	);
 
-	float3 c = Color(scene, ray, rngState);
+	float3 c = Radiance(scene, ray, rngState);
 
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;

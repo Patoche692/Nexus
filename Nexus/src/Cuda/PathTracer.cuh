@@ -11,6 +11,7 @@
 
 #define WARP_SIZE 32	// Same size for all NVIDIA GPUs
 
+#define MAX_BOUNCES 10
 
 struct CameraData
 {
