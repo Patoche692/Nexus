@@ -61,6 +61,47 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 	return backgroundColor;
 }
 
+inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, unsigned int& rngState)
+{
+	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
+
+	if (light.type == D_Light::Type::MESH_LIGHT)
+	{
+		D_BVHInstance instance = scene.tlas.blas[light.mesh.meshId];
+
+		uint32_t triangleIdx;
+		float2 uv;
+		Sampler::UniformSampleMesh(scene.tlas.bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
+
+		D_Triangle triangle = scene.tlas.bvhs[instance.bvhIdx].triangles[triangleIdx];
+
+		const float pdf = 1.0f / (scene.tlas.instanceCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+
+		const float3 edge1 = triangle.pos1 - triangle.pos0;
+		const float3 edge2 = triangle.pos2 - triangle.pos0;
+		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
+		p = instance.transform.TransformPoint(p);
+
+		D_Ray shadowRay = r;
+		const float3 toLight = p - shadowRay.origin;
+		shadowRay.direction = normalize(toLight);
+
+		bool anyHit = TLASTraceShadow(scene.tlas, shadowRay);
+
+		if (anyHit)
+			return;
+
+		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
+		// Function G calculation (see Eric Veach's thesis on page 254)
+		const float cosThetaO = dot(gNormal, shadowRay.direction);
+		const float costThetaI = dot(hitResult.normal, shadowRay.direction);
+
+		const float dSquared = dot(toLight, toLight);
+
+	}
+}
+
 // Incoming radiance estimate on ray origin and in ray direction
 inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
 {
@@ -169,22 +210,8 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
 				currentRay.direction = wo;
 			}
-
-			D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
-
-			if (light.type == D_Light::Type::MESH_LIGHT)
-			{
-				D_BVHInstance instance = scene.tlas.blas[light.mesh.meshId];
-
-				uint32_t triangleIdx;
-				float2 uv;
-				Sampler::UniformSampleMesh(scene.tlas.bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
-				const float pdf = 1.0f / (scene.tlas.instanceCount * scene.tlas.bvhs[instance.bvhIdx].triCount);
-
-				D_Ray shadowRay = currentRay;
-				//float3 p = 
-			}
 		}
+
 
 
 		// Russian roulette
