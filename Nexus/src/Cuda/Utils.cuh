@@ -30,3 +30,8 @@ __device__ float vMinMin(float a, float b, float c) {
 inline __device__ uint32_t ExtractByte(uint32_t x, uint32_t i) {
 	return (x >> (i * 8)) & 0xff;
 }
+
+inline __device__ float Square(const float x)
+{
+	return x * x;
+}

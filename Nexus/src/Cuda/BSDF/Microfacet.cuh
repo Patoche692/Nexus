@@ -36,9 +36,9 @@ public:
 		return Smith_G1_Beckmann_Walter(Smith_G_a(alpha, sDotN));
 	}
 
-	inline static __device__ float Smith_G2(const float alpha, const float NdotL, const float wiDotN)
+	inline static __device__ float Smith_G2(const float alpha, const float woDotN, const float wiDotN)
 	{
-		float aL = Smith_G_a(alpha, NdotL);
+		float aL = Smith_G_a(alpha, woDotN);
 		float aV = Smith_G_a(alpha, wiDotN);
 		return Smith_G1_Beckmann_Walter(aL) * Smith_G1_Beckmann_Walter(aV);
 	}

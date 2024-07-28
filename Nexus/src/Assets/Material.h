@@ -9,6 +9,7 @@ struct Material
 	{
 		DIFFUSE,
 		DIELECTRIC,
+		PLASTIC,
 		CONDUCTOR
 	};
 
@@ -23,9 +24,15 @@ struct Material
 		{
 			float3 albedo;
 			float roughness;
-			float transmittance;
 			float ior;
 		} dielectric;
+
+		struct
+		{
+			float3 albedo;
+			float roughness;
+			float ior;
+		} plastic;
 
 		struct
 		{
