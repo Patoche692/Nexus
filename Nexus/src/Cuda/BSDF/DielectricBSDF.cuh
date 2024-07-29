@@ -2,6 +2,7 @@
 
 #include <cuda_runtime_api.h>
 #include "Utils/cuda_math.h"
+#include "Cuda/Utils.cuh"
 #include "Cuda/Scene/Material.cuh"
 #include "Cuda/Geometry/Ray.cuh"
 #include "Cuda/Random.cuh"
@@ -23,7 +24,7 @@ struct DielectricBSDF
 		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
 	}
 
-	inline __device__ void Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3 throughput, float& pdf)
+	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3 throughput, float& pdf)
 	{
 		const float wiDotN = wi.z;
 		const float woDotN = wo.z;
@@ -43,20 +44,24 @@ struct DielectricBSDF
 		const float G = Microfacet::Smith_G2(alpha, woDotN, wiDotN);
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
-		float bsdf;
 		if (reflected)
 		{
 			// BSDF times woDotN
-			bsdf = F * G * D / (4.0f * fabs(wiDotN));
-			throughput = make_float3(bsdf);
+			const float3 brdf = make_float3(F * G * D / (4.0f * fabs(wiDotN)));
+			throughput = brdf;
+
+			// pm * jacobian = pm * || dWhr / dWo ||
+			pdf = F * D * m.z / (4.0f * fabs(wiDotM));
 		}
 		else
 		{
-			const float denom = eta * wiDotM + woDotM;
-			bsdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN * woDotN) * denom * denom);
-			throughput = bsdf * hitResult.material.dielectric.albedo;
+			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN * woDotN) * Square(eta * wiDotM + woDotM)) * hitResult.material.dielectric.albedo;
+			throughput = btdf;
+
+			pdf = (1.0f - F) * D * m.z * woDotM / Square(eta * wiDotM + woDotM);
 		}
-		pdf = 
+
+		return true;
 	}
 
 	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)

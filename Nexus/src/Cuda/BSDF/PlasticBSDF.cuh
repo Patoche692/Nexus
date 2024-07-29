@@ -9,7 +9,7 @@
 #include "Fresnel.cuh"
 
 /* 
- * Rough plastic BSDF. It uses a basic microfacet model (specular + diffuse)
+ * Rough plastic BSDF. It uses a basic non physically accurate microfacet model (specular + diffuse)
  * It would be great to implement a layered model for this material, as described in
  * "Arbitrarily Layered Micro-Facet Surfaces" by Weidlich and Wilkie
  * See https://www.cg.tuwien.ac.at/research/publications/2007/weidlich_2007_almfs/weidlich_2007_almfs-paper.pdf
@@ -25,7 +25,8 @@ struct PlasticBSDF
 		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
 	}
 
-	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3 throughput, float& pdf)
+	// Evaluation function for a shadow ray
+	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3& throughput, float& pdf)
 	{
 		const float wiDotN = wi.z;
 		const float woDotN = wo.z;
@@ -43,18 +44,21 @@ struct PlasticBSDF
 		const float G = Microfacet::Smith_G2(alpha, woDotN, wiDotN);
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
-		// BSDF times woDotN
-		const float brdf = F * G * D / (4.0f * fabs(wiDotN));
+		// BRDF times woDotN
+		const float3 brdf = make_float3(F * G * D / (4.0f * fabs(wiDotN)));
 
 		// Diffuse bounce
-		const float btdf = 1.0f - F;
+		const float3 btdf = (1.0f - F) * hitResult.material.plastic.albedo * INV_PI * wo.z;
 
-		throughput = brdf + btdf * hitResult.material.plastic.albedo;
+		throughput = brdf + btdf;
 
+		// pm * jacobian = pm * || dWhr / dWo ||
 		const float pdfSpecular = D * m.z / (4.0f * fabs(wiDotM));
+
+		// cos(theta) / PI
 		const float pdfDiffuse = wo.z * INV_PI;
 
-		pdf = lerp(pdfDiffuse, pdfSpecular, F);
+		pdf = F * pdfSpecular + (1.0f - F) * pdfDiffuse;
 
 		return true;
 	}
