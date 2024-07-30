@@ -112,8 +112,14 @@ struct D_Triangle
 		return cross(edge0, edge1);
 	}
 
+	// See https://community.khronos.org/t/how-can-i-find-the-area-of-a-3d-triangle/49777/2
 	inline __device__ float Area() const
 	{
-		return fabs(pos0.x * (pos1.y - pos2.y) + pos1.x * (pos2.y - pos0.y) + pos2.x * (pos0.y - pos1.y)) / 2.0f;
+		const float3 e1 = pos1 - pos0;
+		const float3 e2 = pos2 - pos0;
+
+		const float3 e3 = cross(e1, e2);
+
+		return 0.5f * length(e3);
 	}
 };

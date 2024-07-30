@@ -4,7 +4,7 @@
 #include "Cuda/Scene/Material.cuh"
 
 // Basic lambertian (diffuse) BSDF
-struct LambertianBSDF
+struct D_LambertianBSDF
 {
 	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
 	{

@@ -64,6 +64,8 @@ struct Material
 		materialTypes.push_back('\0');
 		materialTypes.append("Dielectric");
 		materialTypes.push_back('\0');
+		materialTypes.append("Plastic");
+		materialTypes.push_back('\0');
 		materialTypes.append("Conductor");
 		materialTypes.push_back('\0');
 		return materialTypes;

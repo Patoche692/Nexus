@@ -7,7 +7,7 @@
 #include "Microfacet.cuh"
 #include "Fresnel.cuh"
 
-struct ConductorBSDF
+struct D_ConductorBSDF
 {
 	float alpha;
 	float3 eta;

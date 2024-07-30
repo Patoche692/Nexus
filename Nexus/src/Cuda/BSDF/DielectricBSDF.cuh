@@ -13,7 +13,7 @@
  *	Rough dielectric BSDF based on the paper "Microfacet Models for Refraction through Rough Surfaces"
  *	See https://www.graphics.cornell.edu/~bjw/microfacetbsdf.pdf
  */
-struct DielectricBSDF
+struct D_DielectricBSDF
 {
 	float eta;
 	float alpha;

@@ -14,7 +14,7 @@
  * "Arbitrarily Layered Micro-Facet Surfaces" by Weidlich and Wilkie
  * See https://www.cg.tuwien.ac.at/research/publications/2007/weidlich_2007_almfs/weidlich_2007_almfs-paper.pdf
  */
-struct PlasticBSDF
+struct D_PlasticBSDF
 {
 	float eta;
 	float alpha;
