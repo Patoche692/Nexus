@@ -4,6 +4,7 @@
 #include "Utils/Utils.h"
 #include "Utils/cuda_math.h"
 #include "CUDA/Random.cuh"
+#include "Cuda/Utils.cuh"
 
 class Microfacet 
 {
@@ -52,9 +53,14 @@ public:
 		return (wiDotM * Smith_G2(alpha, woDotN, wiDotN)) / (wiDotN * mDotN);
 	}
 
-	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float mDotN, const float woDotM)
+	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float mDotN, const float wiDotM)
 	{
-		return BeckmannD(max(0.00001f, alpha), mDotN) * mDotN / (4.0f * woDotM);
+		return BeckmannD(alpha, mDotN) * mDotN / (4.0f * wiDotM);
+	}
+
+	inline static __device__ float SampleWalterRefractionPdf(const float alpha, const float mDotN, const float wiDotM, const float woDotM, const float eta)
+	{
+		return BeckmannD(alpha, mDotN) * mDotN * woDotM / Square(eta * wiDotM + woDotM);
 	}
 
 	inline static __device__ float3 SampleSpecularHalfBeckWalt(const float alpha, unsigned int& rngState)

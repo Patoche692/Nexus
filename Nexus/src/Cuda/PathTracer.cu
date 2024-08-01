@@ -84,7 +84,10 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		D_Ray shadowRay;
 		shadowRay.origin = hitResult.p;
 		const float3 toLight = p - shadowRay.origin;
-		shadowRay.direction = normalize(toLight);
+		const float distance = length(toLight);
+		shadowRay.direction = toLight / distance;
+		shadowRay.invDirection = 1.0f / shadowRay.direction;
+		shadowRay.hit.t = distance;
 
 		bool anyHit = TLASTraceShadow(scene.tlas, shadowRay);
 
@@ -93,16 +96,14 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
-		// Function G (see Eric Veach's thesis on page 254)
-		const float cosThetaO = dot(gNormal, shadowRay.direction);
+		const float cosThetaO = -dot(gNormal, shadowRay.direction);
 		const float cosThetaI = dot(hitResult.normal, shadowRay.direction);
 
 		const float dSquared = dot(toLight, toLight);
-		const float area = triangle.Area();
 
-		float samplePdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * area);
+		float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
 		// Transform pdf over an area to pdf over directions
-		samplePdf *= dSquared / cosThetaO;
+		lightPdf *= dSquared / cosThetaO;
 
 		const D_Material& material = scene.materials[instance.materialId];
 
@@ -113,18 +114,22 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
 		float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
 
+		bool sampleIsValid;
 		switch (material.type)
 		{
 		case D_Material::D_Type::PLASTIC:
-			D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
 			break;
 		case D_Material::D_Type::DIELECTRIC:
-			D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			sampleIsValid = D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
 			break;
 		}
 
-		const float weight = 1.0f;// Sampler::PowerHeuristic(samplePdf, bsdfPdf);
-		return weight * throughput * material.emissive * material.intensity / samplePdf;
+		if (!sampleIsValid)
+			return make_float3(0.0f);
+
+		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
+		return weight * throughput * material.emissive * material.intensity / lightPdf;
 	}
 }
 
@@ -134,12 +139,13 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
+	float bsdfPdf = 1e6f;
 
-	for (int j = 0; j < 1; j++)
+	for (int j = 0; j < 2; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
-		currentRay.invDirection = 1 / currentRay.direction;
+		currentRay.invDirection = 1.0f / currentRay.direction;
 
 		TLASTrace(scene.tlas, currentRay);
 
@@ -189,8 +195,26 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 			gNormal = -gNormal;
 		}
 
-		if (fmaxf(hitResult.material.emissive) > 0.0f)
-			emission += hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
+		bool hitLight = false;
+		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
+		{
+			hitLight = true;
+			const float3 toLight = hitResult.p - currentRay.origin;
+			const float cosThetaO = -dot(gNormal, currentRay.direction);
+
+			const float dSquared = dot(toLight, toLight);
+
+			float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+			// Transform pdf over an area to pdf over directions
+			lightPdf *= dSquared / cosThetaO;
+
+			if (lightPdf < 1.0e5f && bsdfPdf < 1.0e7f)
+			{
+				const float weight = Sampler::PowerHeuristic(bsdfPdf, lightPdf);
+
+				emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
+			}
+		}
 
 
 		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
@@ -210,16 +234,16 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		switch (hitResult.material.type)
 		{
 		case D_Material::D_Type::DIFFUSE:
-			scattered = D_BSDF::Sample<D_LambertianBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		case D_Material::D_Type::DIELECTRIC:
-			scattered = D_BSDF::Sample<D_DielectricBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		case D_Material::D_Type::PLASTIC:
-			scattered = D_BSDF::Sample<D_PlasticBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		case D_Material::D_Type::CONDUCTOR:
-			scattered = D_BSDF::Sample<D_ConductorBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_ConductorBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		default:
 			break;
@@ -227,7 +251,8 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 
 		if (scattered)
 		{
-			emission += NextEventEstimation(scene, currentRay, hitResult, rngState);
+			if (!hitLight)
+				emission += NextEventEstimation(scene, currentRay, hitResult, rngState);
 
 			// Inverse ray transformation to world space
 			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
@@ -242,8 +267,6 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 				currentRay.direction = wo;
 			}
 		}
-
-
 
 		// Russian roulette
 		if (j > 2)

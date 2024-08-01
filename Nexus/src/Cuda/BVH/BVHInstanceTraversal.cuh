@@ -9,7 +9,7 @@ inline __device__ void BVHInstanceTrace(const D_BVHInstance& instance, const D_B
 	D_Ray backupRay = ray;
 	ray.origin = instance.invTransform.TransformPoint(ray.origin);
 	ray.direction = instance.invTransform.TransformVector(ray.direction);
-	ray.invDirection = 1 / ray.direction;
+	ray.invDirection = 1.0f / ray.direction;
 
 	BVH8Trace(bvhs[instance.bvhIdx], ray, instanceIdx);
 
@@ -22,11 +22,10 @@ inline __device__ bool BVHInstanceTraceShadow(const D_BVHInstance& instance, con
 	D_Ray backupRay = ray;
 	ray.origin = instance.invTransform.TransformPoint(ray.origin);
 	ray.direction = instance.invTransform.TransformVector(ray.direction);
-	ray.invDirection = 1 / ray.direction;
+	ray.invDirection = 1.0f / ray.direction;
 
 	bool anyHit = BVH8TraceShadow(bvhs[instance.bvhIdx], ray);
 
-	backupRay.hit = ray.hit;
 	ray = backupRay;
 
 	return anyHit;

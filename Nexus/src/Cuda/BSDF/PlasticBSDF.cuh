@@ -59,11 +59,14 @@ struct D_PlasticBSDF
 		const float pdfDiffuse = wo.z * INV_PI;
 
 		pdf = F * pdfSpecular + (1.0f - F) * pdfDiffuse;
+		
+		if (pdf > 1.0e5f)
+			return false;
 
 		return true;
 	}
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
+	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
@@ -78,7 +81,7 @@ struct D_PlasticBSDF
 			// Specular
 			wo = reflect(-wi, m);
 
-			const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
+			const float weight = Microfacet::WeightBeckmannWalter(alpha, fabs(wiDotM), fabs(wo.z), fabs(wi.z), m.z);
 
 			// Handle divisions by zero
 			if (weight > 1.0e10)
@@ -91,15 +94,17 @@ struct D_PlasticBSDF
 			// We dont need to include the Fresnel term since it's already included when
 			// we select between reflection and transmission (see paper page 7)
 			throughput = make_float3(weight); // * F / fr
+			pdf = Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
 		}
 
 		else
 		{
 			//Diffuse
-			wo = Utils::SgnE(wi.z) * Random::RandomCosineHemisphere(rngState);
+			wo = Random::RandomCosineHemisphere(rngState);
 			throughput = hitResult.material.dielectric.albedo;
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
+			pdf = INV_PI * wo.z;
 		}
 		return true;
 	}

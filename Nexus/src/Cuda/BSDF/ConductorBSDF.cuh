@@ -13,7 +13,14 @@ struct D_ConductorBSDF
 	float3 eta;
 	float3 k;
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, unsigned int& rngState)
+	inline __device__ void PrepareBSDFData(const float3& wi, const D_Material& material)
+	{
+		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.conductor.roughness * material.conductor.roughness, 1.0e-4f, 1.0f);
+		eta = wi.z < 0.0f ? material.conductor.ior : 1 / material.conductor.ior;
+		k = material.conductor.k;
+	}
+
+	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
@@ -35,16 +42,8 @@ struct D_ConductorBSDF
 			return false;
 
 		throughput = weight * F;
+		pdf = Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
 
 		return true;
 	}
-
-	inline __device__ void PrepareBSDFData(const float3& wi, const D_Material& material)
-	{
-		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.conductor.roughness * material.conductor.roughness, 1.0e-4f, 1.0f);
-		eta = wi.z < 0.0f ? material.conductor.ior : 1 / material.conductor.ior;
-		k = material.conductor.k;
-	}
-
-
 };
