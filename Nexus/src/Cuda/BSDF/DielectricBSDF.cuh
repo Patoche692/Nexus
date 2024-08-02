@@ -8,6 +8,7 @@
 #include "Cuda/Random.cuh"
 #include "Microfacet.cuh"
 #include "Fresnel.cuh"
+#include "Cuda/Sampler.cuh"
 
 /* 
  *	Rough dielectric BSDF based on the paper "Microfacet Models for Refraction through Rough Surfaces"
@@ -58,13 +59,10 @@ struct D_DielectricBSDF
 			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN * woDotN) * Square(eta * wiDotM + woDotM)) * hitResult.material.dielectric.albedo;
 			throughput = btdf;
 
-			pdf = (1.0f - F) * D * m.z * woDotM / Square(eta * wiDotM + woDotM);
+			pdf = (1.0f - F) * D * m.z * fabs(woDotM) / Square(eta * wiDotM + woDotM);
 		}
 
-		if (pdf > 1.0e5f)
-			return false;
-
-		return true;
+		return Sampler::IsPdfValid(pdf);
 	}
 
 	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
@@ -119,6 +117,6 @@ struct D_DielectricBSDF
 
 			pdf = Microfacet::SampleWalterRefractionPdf(alpha, m.z, fabs(wiDotM), fabs(woDotM), eta);
 		}
-		return true;
+		return Sampler::IsPdfValid(pdf);
 	}
 };

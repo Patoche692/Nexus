@@ -62,7 +62,7 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 	return backgroundColor;
 }
 
-inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, unsigned int& rngState)
+inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
 {
 	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
 
@@ -81,23 +81,35 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
 		p = instance.transform.TransformPoint(p);
 
+		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
+		const float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+
+		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
+		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
+		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
+
+		//if (wiGeometryBackSide != wiShadingBackSide)
+		//	return make_float3(0.0f);
+
 		D_Ray shadowRay;
-		shadowRay.origin = hitResult.p;
+		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
+		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitGNormal;
+
 		const float3 toLight = p - shadowRay.origin;
 		const float distance = length(toLight);
 		shadowRay.direction = toLight / distance;
 		shadowRay.invDirection = 1.0f / shadowRay.direction;
 		shadowRay.hit.t = distance;
 
+		const float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
+
 		bool anyHit = TLASTraceShadow(scene.tlas, shadowRay);
 
 		if (anyHit)
 			return make_float3(0.0f);
 
-		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
-
-		const float cosThetaO = -dot(gNormal, shadowRay.direction);
-		const float cosThetaI = dot(hitResult.normal, shadowRay.direction);
+		const float cosThetaO = fabs(dot(gNormal, shadowRay.direction));
 
 		const float dSquared = dot(toLight, toLight);
 
@@ -105,16 +117,15 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		// Transform pdf over an area to pdf over directions
 		lightPdf *= dSquared / cosThetaO;
 
+		if (!Sampler::IsPdfValid(lightPdf))
+			return make_float3(0.0f);
+
 		const D_Material& material = scene.materials[instance.materialId];
 
 		float3 throughput;
 		float bsdfPdf;
-		
-		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
-		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
-		float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
-
 		bool sampleIsValid;
+
 		switch (material.type)
 		{
 		case D_Material::D_Type::PLASTIC:
@@ -128,6 +139,7 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		if (!sampleIsValid)
 			return make_float3(0.0f);
 
+		//const float weight = 1.0f;
 		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
 		return weight * throughput * material.emissive * material.intensity / lightPdf;
 	}
@@ -139,9 +151,9 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
-	float bsdfPdf = 1e6f;
+	float bsdfPdf = 1e10f;
 
-	for (int j = 0; j < 2; j++)
+	for (int j = 0; j < MAX_BOUNCES; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -200,7 +212,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		{
 			hitLight = true;
 			const float3 toLight = hitResult.p - currentRay.origin;
-			const float cosThetaO = -dot(gNormal, currentRay.direction);
+			const float cosThetaO = fabs(dot(gNormal, currentRay.direction));
 
 			const float dSquared = dot(toLight, toLight);
 
@@ -208,12 +220,13 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 			// Transform pdf over an area to pdf over directions
 			lightPdf *= dSquared / cosThetaO;
 
-			if (lightPdf < 1.0e5f && bsdfPdf < 1.0e7f)
-			{
+			//if (lightPdf < 1.0e5f && bsdfPdf < 1.0e7f)
+			//{
 				const float weight = Sampler::PowerHeuristic(bsdfPdf, lightPdf);
+				//const float weight = 1.0f;
 
 				emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
-			}
+			//}
 		}
 
 
@@ -252,7 +265,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		if (scattered)
 		{
 			if (!hitLight)
-				emission += NextEventEstimation(scene, currentRay, hitResult, rngState);
+				emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
 
 			// Inverse ray transformation to world space
 			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));

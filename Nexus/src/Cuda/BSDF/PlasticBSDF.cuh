@@ -7,6 +7,7 @@
 #include "Cuda/Random.cuh"
 #include "Microfacet.cuh"
 #include "Fresnel.cuh"
+#include "Cuda/Sampler.cuh"
 
 /* 
  * Rough plastic BSDF. It uses a basic non physically accurate microfacet model (specular + diffuse)
@@ -33,7 +34,7 @@ struct D_PlasticBSDF
 
 		const bool reflected = wiDotN * woDotN > 0.0f;
 
-		if (wiDotN * woDotN < 0.0f)
+		if (!reflected)
 			return false;
 
 		const float3 m = normalize(wo + wi);
@@ -41,7 +42,7 @@ struct D_PlasticBSDF
 		const float wiDotM = dot(wi, m);
 		const float woDotM = dot(wo, m);
 		const float F = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
-		const float G = Microfacet::Smith_G2(alpha, woDotN, wiDotN);
+		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
 		// BRDF times woDotN
@@ -53,17 +54,14 @@ struct D_PlasticBSDF
 		throughput = brdf + btdf;
 
 		// pm * jacobian = pm * || dWhr / dWo ||
-		const float pdfSpecular = D * m.z / (4.0f * fabs(wiDotM));
+		const float pdfSpecular = D * m.z / (4.0f * wiDotM);
 
 		// cos(theta) / PI
 		const float pdfDiffuse = wo.z * INV_PI;
 
 		pdf = F * pdfSpecular + (1.0f - F) * pdfDiffuse;
 		
-		if (pdf > 1.0e5f)
-			return false;
-
-		return true;
+		return Sampler::IsPdfValid(pdf);
 	}
 
 	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
@@ -75,7 +73,7 @@ struct D_PlasticBSDF
 		float cosThetaT;
 		const float fr = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
 
-		// Randomly select a reflected or transmitted ray based on Fresnel reflectance
+		// Randomly select a specular or diffuse ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
 		{
 			// Specular
@@ -106,6 +104,7 @@ struct D_PlasticBSDF
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 			pdf = INV_PI * wo.z;
 		}
-		return true;
+
+		return Sampler::IsPdfValid(pdf);
 	}
 };

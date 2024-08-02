@@ -20,7 +20,7 @@ public:
 	}
 
 	inline static __device__ float Smith_G_a(const float alpha, const float sDotN) {
-		return sDotN / (max(0.00001f, alpha) * sqrt(1.0f - min(0.99999f, sDotN * sDotN)));
+		return sDotN / (alpha * sqrt(1.0f - min(0.99999f, sDotN * sDotN)));
 	}
 
 	inline static __device__ float Smith_G1_Beckmann_Walter(const float a) {

@@ -54,4 +54,9 @@ public:
 		triangleIdx = Uniform(bvh8.triCount, rngState);
 		uv = UniformSampleTriangle(rngState);
 	}
+
+	inline __device__ static bool IsPdfValid(const float pdf)
+	{
+		return isfinite(pdf) && pdf > 1.0e-5f;
+	}
 };

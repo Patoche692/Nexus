@@ -107,10 +107,10 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, D_Ray& ray,
 
 			const bool intersected = tmin <= tmax;
 			if (intersected) {
-				const uint32_t child_bits = ExtractByte(childBits4, j);
+				const uint32_t childBits = ExtractByte(childBits4, j);
 				const uint32_t bitIndex  = ExtractByte(bitIndex4,  j);
 
-				hitMask |= child_bits << bitIndex;
+				hitMask |= childBits << bitIndex;
 			}
 		}
 	}
