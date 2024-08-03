@@ -34,7 +34,7 @@ struct D_DielectricBSDF
 
 		float3 m;
 		if (reflected)
-			m = normalize(wo + wi);
+			m = Utils::SgnE(wiDotN) * normalize(wo + wi);
 		else
 			m = -normalize(wi * eta + wo);
 
@@ -42,7 +42,7 @@ struct D_DielectricBSDF
 		const float wiDotM = dot(wi, m);
 		const float woDotM = dot(wo, m);
 		const float F = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
-		const float G = Microfacet::Smith_G2(alpha, woDotN, wiDotN);
+		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
 		if (reflected)
@@ -56,7 +56,7 @@ struct D_DielectricBSDF
 		}
 		else
 		{
-			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN * woDotN) * Square(eta * wiDotM + woDotM)) * hitResult.material.dielectric.albedo;
+			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN) * Square(eta * wiDotM + woDotM)) * hitResult.material.dielectric.albedo;
 			throughput = btdf;
 
 			pdf = (1.0f - F) * D * m.z * fabs(woDotM) / Square(eta * wiDotM + woDotM);

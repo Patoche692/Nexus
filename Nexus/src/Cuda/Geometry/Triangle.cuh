@@ -97,7 +97,7 @@ struct D_Triangle
 
 		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0f && t < r.hit.t)
+		if (t > 0.0f && t < r.hit.t - 1e-4f)
 			return true;
 
 		return false;

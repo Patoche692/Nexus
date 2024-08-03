@@ -13,22 +13,10 @@
 
 #define MAX_BOUNCES 10
 
-struct CameraData
+struct D_Settings
 {
-	float3 position;
-	float3 right;
-	float3 up;
-	float lensRadius;
-	float3 lowerLeftCorner;
-	float3 viewportX;
-	float3 viewportY;
-	uint2 resolution;
-};
-
-struct SceneData
-{
-	bool hasHdrMap;
-	cudaTextureObject_t hdrMap;
+	bool useMIS = true;
 };
 
 void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);
+void SetSettings(const D_Settings& s);

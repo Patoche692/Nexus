@@ -13,6 +13,8 @@
 #include "Scene/Camera.cuh"
 #include "Sampler.cuh"
 
+__constant__ __device__ D_Settings settings;
+
 
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
@@ -126,7 +128,7 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		float bsdfPdf;
 		bool sampleIsValid;
 
-		switch (material.type)
+		switch (hitResult.material.type)
 		{
 		case D_Material::D_Type::PLASTIC:
 			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
@@ -141,7 +143,14 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		//const float weight = 1.0f;
 		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
-		return weight * throughput * material.emissive * material.intensity / lightPdf;
+
+		float3 emissive;
+		if (material.emissiveMapId != -1)
+			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
+		else
+			emissive = material.emissive;
+
+		return weight * throughput * emissive * material.intensity / lightPdf;
 	}
 }
 
@@ -210,23 +219,25 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		bool hitLight = false;
 		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
 		{
-			hitLight = true;
-			const float3 toLight = hitResult.p - currentRay.origin;
-			const float cosThetaO = fabs(dot(gNormal, currentRay.direction));
+			float weight = 1.0f;
 
-			const float dSquared = dot(toLight, toLight);
+			if (settings.useMIS)
+			{
+				hitLight = true;
+				const float3 toLight = hitResult.p - currentRay.origin;
+				const float cosThetaO = fabs(dot(gNormal, currentRay.direction));
 
-			float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
-			// Transform pdf over an area to pdf over directions
-			lightPdf *= dSquared / cosThetaO;
+				const float dSquared = dot(toLight, toLight);
 
-			//if (lightPdf < 1.0e5f && bsdfPdf < 1.0e7f)
-			//{
-				const float weight = Sampler::PowerHeuristic(bsdfPdf, lightPdf);
-				//const float weight = 1.0f;
+				float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+				// Transform pdf over an area to pdf over directions
+				lightPdf *= dSquared / cosThetaO;
 
-				emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
-			//}
+				weight = settings.useMIS ? Sampler::PowerHeuristic(bsdfPdf, lightPdf) : 1.0f;
+			}
+			//weight = 0.0f;
+
+			emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
 		}
 
 
@@ -264,7 +275,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 
 		if (scattered)
 		{
-			if (!hitLight)
+			if (!hitLight && settings.useMIS)
 				emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
 
 			// Inverse ray transformation to world space
@@ -353,4 +364,11 @@ void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
 
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
+}
+
+void SetSettings(const D_Settings& s) 
+{
+	D_Settings* deviceSettings;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&deviceSettings, settings));
+	checkCudaErrors(cudaMemcpy(deviceSettings, &s, sizeof(D_Settings), cudaMemcpyHostToDevice));
 }
