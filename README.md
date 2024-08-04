@@ -25,7 +25,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![rolls_royce](https://github.com/Patoche692/PathTracer/assets/54531293/9af03cd7-273b-4bad-bf69-3a73ff2f6604)-->
 <!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
 ![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
-![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)
+<!--![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)-->
 ![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
 <!--![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)-->
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
@@ -85,13 +85,33 @@ Nexus requires the following:
 
 
 ## Resources
-- [Ray Tracing in one weekend series](https://raytracing.github.io)
-- [Accelerated Ray Tracing in one weekend in CUDA](https://developer.nvidia.com/blog/accelerated-ray-tracing-cuda/)
-- [Physically based rendering book](https://www.pbr-book.org/4ed/contents)
+Here are the main resources I used for this project.
+
+### Path tracing in general
+- [Eric Veach's thesis](https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf). The best resource to understand all the theory behind Monte Carlo path tracing. It is code agnostic and fairly theorical but it helped me a lot to implement importance sampling, next event estimation and multiple importance sampling.
+- [Physically based rendering book](https://www.pbr-book.org/4ed/contents). The reference book for path tracing, detailing a complete path tracer implementation.
 - [Ray Tracing Gems II: Next Generation Real-Time Rendering with DXR, Vulkan, and OptiX](https://www.realtimerendering.com/raytracinggems/rtg2/index.html)
+
+### Getting started on ray tracing
 - The Cherno's [Ray tracing series](https://www.youtube.com/playlist?list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl)
+- [Ray Tracing in one weekend book series](https://raytracing.github.io)
 - [ScratchPixel website](https://scratchapixel.com)
-- Jacco Bikker's [guides](https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/) on fast SAH-based BVH construction
+- To get started with CUDA ray tracing: [Accelerated Ray Tracing in one weekend in CUDA](https://developer.nvidia.com/blog/accelerated-ray-tracing-cuda/)
+
+### BVH
+- Jacco Bikker's [guides](https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/) on SAH-based BVHs really helped me implement my first BVH and traversal on the GPU which was surprisingly fast.
+- [Stich et al. 2009](https://www.nvidia.in/docs/IO/77714/sbvh.pdf) explain in details binned building and spatial splits for BVH2.
+- [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf) for compressed wide BVHs.
+
+### PBR materials
+- [Crash Course in BRDF Implementation](https://boksajak.github.io/files/CrashCourseBRDF.pdf) detailing the theory and implementation for diffuse and microfacet models.
+- [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449)). I used this paper to implement my rough dielectric BSDF.
+- [Weidlich and Wilkie 2007](https://www.cg.tuwien.ac.at/research/publications/2007/weidlich_2007_almfs/weidlich_2007_almfs-paper.pdf) for layered BSDFs (not yet implemented in my path tracer, but I will use it for my rough plastic BSDF).
+
+### Sampling
+- [Computer Graphics at TU Wien videos](https://www.youtube.com/watch?v=FU1dbi827LY) for next event estimation and multiple importance sampling.
+
+I also had a look at other renderer implementations such as Blender's [cycles](https://github.com/blender/cycles), [Tungsten renderer](https://github.com/tunabrain/tungsten), and [Jan van Bergen's CUDA ray tracer](https://github.com/jan-van-bergen/GPU-Raytracer).
 
 ## Models
 - [LuxCore example scenes](https://luxcorerender.org/example-scenes/)
