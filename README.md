@@ -7,8 +7,9 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 - [Prerequisites](#prerequisites)
 - [Build](#build)
 - [Usage](#usage)
-- [Dependencies](#dependencies)
 - [Resources](#resources)
+- [Dependencies](#dependencies)
+- [Models](#models)
 
 ## Screenshots
 
@@ -74,16 +75,6 @@ Nexus requires the following:
 - Controls: hold right click and use WASD keys to move and the mouse to change the camera orientation
 - You can change the meshes and camera properties in the UI
 
-## Dependencies
-- [GLFW](https://www.glfw.org) and [GLEW](https://glew.sourceforge.net)
-- [glm](https://github.com/g-truc/glm)
-- [CUDA](https://developer.nvidia.com/cuda-downloads) 12.4
-- [CUDA math helper](https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_math.h) for common operations on CUDA vector types
-- [Assimp](https://github.com/assimp/assimp) for model loading
-- [ImGui](https://github.com/ocornut/imgui) for user interface
-- [stb](https://github.com/nothings/stb) for importing and exporting images
-
-
 ## Resources
 Here are the main resources I used for this project.
 
@@ -105,13 +96,22 @@ Here are the main resources I used for this project.
 
 ### PBR materials
 - [Crash Course in BRDF Implementation](https://boksajak.github.io/files/CrashCourseBRDF.pdf) detailing the theory and implementation for diffuse and microfacet models.
-- [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449)). I used this paper to implement my rough dielectric BSDF.
+- [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449). I used this paper to implement my rough dielectric BSDF.
 - [Weidlich and Wilkie 2007](https://www.cg.tuwien.ac.at/research/publications/2007/weidlich_2007_almfs/weidlich_2007_almfs-paper.pdf) for layered BSDFs (not yet implemented in my path tracer, but I will use it for my rough plastic BSDF).
 
 ### Sampling
 - [Computer Graphics at TU Wien videos](https://www.youtube.com/watch?v=FU1dbi827LY) for next event estimation and multiple importance sampling.
 
 I also had a look at other renderer implementations such as Blender's [cycles](https://github.com/blender/cycles), [Tungsten renderer](https://github.com/tunabrain/tungsten), and [Jan van Bergen's CUDA ray tracer](https://github.com/jan-van-bergen/GPU-Raytracer).
+
+## Dependencies
+- [GLFW](https://www.glfw.org) and [GLEW](https://glew.sourceforge.net)
+- [glm](https://github.com/g-truc/glm)
+- [CUDA](https://developer.nvidia.com/cuda-downloads) 12.4
+- [CUDA math helper](https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_math.h) for common operations on CUDA vector types
+- [Assimp](https://github.com/assimp/assimp) for model loading
+- [ImGui](https://github.com/ocornut/imgui) for user interface
+- [stb](https://github.com/nothings/stb) for importing and exporting images
 
 ## Models
 - [LuxCore example scenes](https://luxcorerender.org/example-scenes/)
