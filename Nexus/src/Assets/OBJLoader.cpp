@@ -76,7 +76,7 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 	{
 		aiMaterial* material = scene->mMaterials[i];
 		Material newMaterial;
-		newMaterial.type = Material::Type::DIELECTRIC;
+		newMaterial.type = Material::Type::PLASTIC;
 
 		aiColor3D diffuse(0.0f);
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -96,7 +96,10 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 
 		float transmissionFactor = 0.0f;
 		material->Get(AI_MATKEY_TRANSMISSION_FACTOR, transmissionFactor);
-		newMaterial.dielectric.transmittance = transmissionFactor;
+
+		// We assume every partially transmissive material is a dielectric
+		if (transmissionFactor > 0.0f)
+			newMaterial.type = Material::Type::DIELECTRIC;
 
 		float ior = 1.45f;
 		material->Get(AI_MATKEY_REFRACTI, ior);

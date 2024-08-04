@@ -4,6 +4,7 @@
 #include "Cuda/BVH/TLAS.cuh"
 #include "Material.cuh"
 #include "Camera.cuh"
+#include "Light.cuh"
 
 struct D_Scene
 {
@@ -14,6 +15,10 @@ struct D_Scene
 	cudaTextureObject_t* emissiveMaps;
 
 	D_TLAS tlas;
+
+	D_Light* lights;
+	uint32_t lightCount;
+
 	D_Material* materials;
 	D_Camera camera;
 };

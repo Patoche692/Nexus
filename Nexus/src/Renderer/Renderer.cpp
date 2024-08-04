@@ -2,7 +2,6 @@
 #include <stb_image_write.h>
 
 #include "Renderer.h"
-#include "Cuda/PathTracer.cuh"
 #include "Utils/Utils.h"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -56,15 +55,24 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (scene.IsInvalid())
 		m_FrameNumber = 0;
 
+	if (m_SettingsInvalid)
+	{
+		SetSettings(m_Settings);
+		m_SettingsInvalid = false;
+	}
+
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	if (!scene.IsEmpty())
 	{
-		m_FrameNumber++;
+		//if (m_FrameNumber < 24)
+		//{
+			m_FrameNumber++;
 
-		RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
+			RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
 
-		// Unpack the pixel buffer written by cuda to the renderer texture
-		UnpackToTexture();
+			// Unpack the pixel buffer written by cuda to the renderer texture
+			UnpackToTexture();
+		//}
 
 	}
 	else
@@ -158,7 +166,13 @@ void Renderer::RenderUI(Scene& scene)
 	
 	m_HierarchyPannel.OnImGuiRender();
 
-	m_MetricsPanel.OnImGuiRender(m_FrameNumber);
+	const bool useMIS = m_Settings.useMIS;
+	m_MetricsPanel.OnImGuiRender(m_FrameNumber, m_Settings);
+	if (m_Settings.useMIS != useMIS)
+	{
+		m_SettingsInvalid = true;
+		m_FrameNumber = 0;
+	}
 }
 
 void Renderer::UnpackToTexture()

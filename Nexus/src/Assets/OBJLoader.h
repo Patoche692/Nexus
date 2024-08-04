@@ -6,7 +6,7 @@
 
 #include "Geometry/Triangle.h"
 #include "Geometry/BVH/BVH.h"
-#include "Geometry/Mesh.h"
+#include "Assets/Mesh.h"
 #include "Assets/AssetManager.h"
 
 class OBJLoader

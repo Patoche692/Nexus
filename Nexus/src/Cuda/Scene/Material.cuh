@@ -4,23 +4,37 @@
 
 struct D_Material
 {
-	enum struct D_Type : char {
+	enum struct D_Type : char
+	{
 		DIFFUSE,
 		DIELECTRIC,
+		PLASTIC,
 		CONDUCTOR
 	};
 
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			float3 albedo;
 		} diffuse;
-		struct {
+
+		struct
+		{
 			float3 albedo;
 			float roughness;
-			float transmittance;
 			float ior;
 		} dielectric;
-		struct {
+
+		struct
+		{
+			float3 albedo;
+			float roughness;
+			float ior;
+		} plastic;
+
+		struct
+		{
 			float3 ior;
 			float3 k;
 			float roughness;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 
 struct D_Intersection
 {

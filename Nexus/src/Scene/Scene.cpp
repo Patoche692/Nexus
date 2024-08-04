@@ -39,9 +39,14 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
 
-	InvalidateMeshInstance(m_MeshInstances.size() - 1);
+	const size_t instanceId = m_MeshInstances.size() - 1;
 
-	return m_MeshInstances[m_MeshInstances.size() - 1];
+	// Create light if needed
+	UpdateInstanceLighting(instanceId);
+
+	InvalidateMeshInstance(instanceId);
+
+	return m_MeshInstances[instanceId];
 }
 
 void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::string& fileName)
@@ -64,6 +69,17 @@ void Scene::InvalidateMeshInstance(uint32_t instanceId)
 	m_InvalidMeshInstances.insert(instanceId);
 }
 
+size_t Scene::AddLight(const Light& light)
+{
+	m_Lights.push_back(light);
+	return m_Lights.size() - 1;
+}
+
+void Scene::RemoveLight(const size_t index)
+{
+	m_Lights.erase(m_Lights.begin() + index);
+}
+
 D_Scene Scene::ToDevice(Scene& scene)
 {
 	D_Scene deviceScene;
@@ -80,6 +96,8 @@ D_Scene Scene::ToDevice(Scene& scene)
 	deviceScene.diffuseMaps = deviceDiffuseMaps.Data();
 	deviceScene.emissiveMaps = deviceEmissiveMaps.Data();
 	deviceScene.materials = deviceMaterials.Data();
+	deviceScene.lights = scene.m_DeviceLights.Data();
+	deviceScene.lightCount = scene.m_DeviceLights.Size();
 
 	deviceScene.hasHdrMap = scene.m_HdrMap.pixels != nullptr;
 	// TODO: clear m_DeviceHdrMap when reset
@@ -94,11 +112,13 @@ D_Scene Scene::ToDevice(Scene& scene)
 			MeshInstance& meshInstance = scene.m_MeshInstances[i];
 			scene.m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
 			if (meshInstance.materialId != -1)
+			{
 				scene.m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
-			
+				scene.UpdateInstanceLighting(i);
+			}
 		}
-		scene.m_Tlas->Build();
 		scene.m_Tlas->SetBVHInstances(scene.m_BVHInstances);
+		scene.m_Tlas->Build();
 		scene.m_Tlas->UpdateDeviceData();
 
 		scene.m_InvalidMeshInstances.clear();
@@ -108,4 +128,31 @@ D_Scene Scene::ToDevice(Scene& scene)
 	deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
 
 	return deviceScene;
+}
+
+void Scene::UpdateInstanceLighting(size_t index)
+{
+	const MeshInstance& meshInstance = m_MeshInstances[index];
+
+	if (meshInstance.materialId == -1)
+		return;
+
+	// If light already in the scene, return
+	for (Light& light : m_Lights)
+	{
+		if (light.type == Light::Type::MESH_LIGHT && light.mesh.meshId == index)
+			return;
+	}
+
+	const Material& material = m_AssetManager.GetMaterials()[meshInstance.materialId];
+	// If mesh has an emissive material, add it to the lights list
+	if (material.emissiveMapId != -1 ||
+		material.intensity * fmaxf(material.emissive) > 0.0f)
+	{
+		Light meshLight;
+		meshLight.type = Light::Type::MESH_LIGHT;
+		meshLight.mesh.meshId = index;
+		m_Lights.push_back(meshLight);
+		m_DeviceLights.PushBack(meshLight);
+	}
 }

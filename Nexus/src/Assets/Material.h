@@ -1,28 +1,41 @@
 #pragma once
 #include <string>
-#include "Cuda/Material.cuh"
+#include "Cuda/Scene/Material.cuh"
 #include "Utils/cuda_math.h"
-#include "Ray.h"
 
-struct Material {
-
-	enum struct Type : char {
+struct Material
+{
+	enum struct Type : char
+	{
 		DIFFUSE,
 		DIELECTRIC,
+		PLASTIC,
 		CONDUCTOR
 	};
 
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			float3 albedo;
 		} diffuse;
-		struct {
+
+		struct
+		{
 			float3 albedo;
 			float roughness;
-			float transmittance;
 			float ior;
 		} dielectric;
-		struct {
+
+		struct
+		{
+			float3 albedo;
+			float roughness;
+			float ior;
+		} plastic;
+
+		struct
+		{
 			float3 ior;
 			float3 k;
 			float roughness;
@@ -50,6 +63,8 @@ struct Material {
 		materialTypes.append("Diffuse");
 		materialTypes.push_back('\0');
 		materialTypes.append("Dielectric");
+		materialTypes.push_back('\0');
+		materialTypes.append("Plastic");
 		materialTypes.push_back('\0');
 		materialTypes.append("Conductor");
 		materialTypes.push_back('\0');

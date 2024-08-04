@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "BVH/BVHInstance.h"
-#include "Mesh.h"
+#include "Geometry/BVH/BVHInstance.h"
+#include "Assets/Mesh.h"
 
 struct MeshInstance
 {

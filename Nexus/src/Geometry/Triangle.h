@@ -1,6 +1,6 @@
 #pragma once
 #include "Utils/cuda_math.h"
-#include "Material.h"
+#include "Assets/Material.h"
 #include "Cuda/Geometry/Triangle.cuh"
 
 

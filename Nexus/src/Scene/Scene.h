@@ -5,11 +5,13 @@
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
+#include "Light.h"
 #include "Assets/AssetManager.h"
-#include "Geometry/MeshInstance.h"
-#include "Cuda/Material.cuh"
+#include "Scene/MeshInstance.h"
+#include "Cuda/Scene/Material.cuh"
 #include "Cuda/BVH/BVHInstance.cuh"
-#include "Cuda/Scene.cuh"
+#include "Cuda/Scene/Scene.cuh"
+#include "Cuda/Scene/Light.cuh"
 
 class Scene
 {
@@ -33,16 +35,22 @@ public:
 	void AddHDRMap(const std::string& filePath, const std::string& fileName);
 	void InvalidateMeshInstance(uint32_t instanceId);
 
-	//bool SendDataToDevice();
+	size_t AddLight(const Light& light);
+	void RemoveLight(const size_t index);
 
-	// Create or update the device scene and returns a pointer to the D_Scene object
+	// Create or update the device scene and returns a D_Scene object
 	static D_Scene ToDevice(Scene& scene);
+
+private:
+	// Check if the instance is a light, and add it to the lights vector if it is
+	void UpdateInstanceLighting(size_t index);
 
 private:
 	std::shared_ptr<Camera> m_Camera;
 
 	std::vector<BVHInstance> m_BVHInstances;
 	std::vector<MeshInstance> m_MeshInstances;
+	std::vector<Light> m_Lights;
 
 	std::set<uint32_t> m_InvalidMeshInstances;
 	std::shared_ptr<TLAS> m_Tlas;
@@ -53,6 +61,6 @@ private:
 
 	// Device members
 	cudaTextureObject_t m_DeviceHdrMap;
-	DeviceVector<Material, D_Material> m_DeviceMaterials;
 	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBVHInstances;
+	DeviceVector<Light, D_Light> m_DeviceLights;
 };

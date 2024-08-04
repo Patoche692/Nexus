@@ -171,9 +171,15 @@ void SceneHierarchyPanel::DrawProperties(int selectionContext)
 					assetManager.InvalidateMaterial(meshInstance.materialId);
 				if (ImGui::DragFloat("Roughness", &material.dielectric.roughness, 0.01f, 0.0f, 1.0f))
 					assetManager.InvalidateMaterial(meshInstance.materialId);
-				if (ImGui::DragFloat("Transmittance", &material.dielectric.transmittance, 0.01f, 0.0f, 1.0f))
-					assetManager.InvalidateMaterial(meshInstance.materialId);
 				if (ImGui::DragFloat("Refraction index", &material.dielectric.ior, 0.01f, 1.0f, 2.5f))
+					assetManager.InvalidateMaterial(meshInstance.materialId);
+				break;
+			case Material::Type::PLASTIC:
+				if (ImGui::ColorEdit3("Albedo", (float*)&material.plastic.albedo))
+					assetManager.InvalidateMaterial(meshInstance.materialId);
+				if (ImGui::DragFloat("Roughness", &material.plastic.roughness, 0.01f, 0.0f, 1.0f))
+					assetManager.InvalidateMaterial(meshInstance.materialId);
+				if (ImGui::DragFloat("Refraction index", &material.plastic.ior, 0.01f, 1.0f, 2.5f))
 					assetManager.InvalidateMaterial(meshInstance.materialId);
 				break;
 			case Material::Type::CONDUCTOR:

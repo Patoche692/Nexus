@@ -58,7 +58,7 @@ struct D_Triangle
 
 		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0000f && t < r.hit.t)
+		if (t > 0.0f && t < r.hit.t)
 		{
 			r.hit.t = t;
 			r.hit.u = u;
@@ -68,12 +68,58 @@ struct D_Triangle
 		}
 	}
 
+	// true if any hit, else false
+	inline __device__ bool ShadowTrace(D_Ray& r)
+	{
+		float3 edge0 = pos1 - pos0;
+		float3 edge1 = pos2 - pos0;
+
+		float3 rayCrossEdge1 = cross(r.direction, edge1);
+		float det = dot(edge0, rayCrossEdge1);
+
+		if (det < 1.0e-8 && det > -1.0e-8)
+			return false;
+
+		float invDet = 1.0f / det;
+
+		float3 s = r.origin - pos0;
+		
+		float u = invDet * dot(s, rayCrossEdge1);
+
+		if (u < 0.0f || u > 1.0f)
+			return false;
+
+		const float3 sCrossEdge0 = cross(s, edge0);
+		const float v = invDet * dot(r.direction, sCrossEdge0);
+
+		if (v < 0.0f || u + v > 1.0f)
+			return false;
+
+		const float t = invDet * dot(edge1, sCrossEdge0);
+
+		if (t > 0.0f && t < r.hit.t - 1e-4f)
+			return true;
+
+		return false;
+	}
+
 	// Normal (not normalized)
-	inline __host__ __device__ float3 Normal() const
+	inline __device__ float3 Normal() const
 	{
 		float3 edge0 = pos1 - pos0;
 		float3 edge1 = pos2 - pos0;
 
 		return cross(edge0, edge1);
+	}
+
+	// See https://community.khronos.org/t/how-can-i-find-the-area-of-a-3d-triangle/49777/2
+	inline __device__ float Area() const
+	{
+		const float3 e1 = pos1 - pos0;
+		const float3 e2 = pos2 - pos0;
+
+		const float3 e3 = cross(e1, e2);
+
+		return 0.5f * length(e3);
 	}
 };

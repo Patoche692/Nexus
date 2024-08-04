@@ -4,7 +4,7 @@
 
 TLAS::TLAS(const std::vector<BVHInstance>& bvhList, const std::vector<BVH8>& bvhs)
 {
-	m_Blas = bvhList;
+	m_BvhInstances = bvhList;
 	m_Bvhs = bvhs;
 }
 
@@ -15,19 +15,19 @@ void TLAS::Build()
 
 	m_Nodes.emplace_back();
 
-	for (uint32_t i = 0; i < m_Blas.size(); i++)
+	for (uint32_t i = 0; i < m_BvhInstances.size(); i++)
 	{
 		m_InstancesIdx.push_back(i + 1);
 
 		TLASNode node;
-		node.aabbMin = m_Blas[i].GetBounds().bMin;
-		node.aabbMax = m_Blas[i].GetBounds().bMax;
+		node.aabbMin = m_BvhInstances[i].GetBounds().bMin;
+		node.aabbMax = m_BvhInstances[i].GetBounds().bMax;
 		node.blasIdx = i;
 		node.leftRight = 0;
 		m_Nodes.push_back(node);
 	}
 
-	int nodeIndices = m_Blas.size();
+	int nodeIndices = m_BvhInstances.size();
 	int A = 0, B = FindBestMatch(nodeIndices, A);
 
 	while (nodeIndices > 1)
@@ -79,7 +79,7 @@ int TLAS::FindBestMatch(int N, int A)
 
 void TLAS::UpdateDeviceData()
 {
-	m_DeviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(m_Blas);
+	m_DeviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(m_BvhInstances);
 	m_DeviceNodes = DeviceVector<TLASNode, D_TLASNode>(m_Nodes);
 	m_DeviceBvhs = DeviceVector<BVH8, D_BVH8>(m_Bvhs);
 }
@@ -90,5 +90,6 @@ D_TLAS TLAS::ToDevice(const TLAS& tlas)
 	deviceTlas.blas = tlas.m_DeviceBlas.Data();
 	deviceTlas.nodes = tlas.m_DeviceNodes.Data();
 	deviceTlas.bvhs = tlas.m_DeviceBvhs.Data();
+	deviceTlas.instanceCount = tlas.m_BvhInstances.size();
 	return deviceTlas;
 }

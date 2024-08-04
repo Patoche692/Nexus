@@ -4,6 +4,7 @@
 #include "Utils/Utils.h"
 #include "Utils/cuda_math.h"
 #include "CUDA/Random.cuh"
+#include "Cuda/Utils.cuh"
 
 class Microfacet 
 {
@@ -19,7 +20,7 @@ public:
 	}
 
 	inline static __device__ float Smith_G_a(const float alpha, const float sDotN) {
-		return sDotN / (max(0.00001f, alpha) * sqrt(1.0f - min(0.99999f, sDotN * sDotN)));
+		return sDotN / (alpha * sqrt(1.0f - min(0.99999f, sDotN * sDotN)));
 	}
 
 	inline static __device__ float Smith_G1_Beckmann_Walter(const float a) {
@@ -36,9 +37,9 @@ public:
 		return Smith_G1_Beckmann_Walter(Smith_G_a(alpha, sDotN));
 	}
 
-	inline static __device__ float Smith_G2(const float alpha, const float NdotL, const float wiDotN)
+	inline static __device__ float Smith_G2(const float alpha, const float woDotN, const float wiDotN)
 	{
-		float aL = Smith_G_a(alpha, NdotL);
+		float aL = Smith_G_a(alpha, woDotN);
 		float aV = Smith_G_a(alpha, wiDotN);
 		return Smith_G1_Beckmann_Walter(aL) * Smith_G1_Beckmann_Walter(aV);
 	}
@@ -52,9 +53,14 @@ public:
 		return (wiDotM * Smith_G2(alpha, woDotN, wiDotN)) / (wiDotN * mDotN);
 	}
 
-	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float mDotN, const float woDotM)
+	inline static __device__ float SampleWalterReflectionPdf(const float alpha, const float mDotN, const float wiDotM)
 	{
-		return BeckmannD(max(0.00001f, alpha), mDotN) * mDotN / (4.0f * woDotM);
+		return BeckmannD(alpha, mDotN) * mDotN / (4.0f * wiDotM);
+	}
+
+	inline static __device__ float SampleWalterRefractionPdf(const float alpha, const float mDotN, const float wiDotM, const float woDotM, const float eta)
+	{
+		return BeckmannD(alpha, mDotN) * mDotN * woDotM / Square(eta * wiDotM + woDotM);
 	}
 
 	inline static __device__ float3 SampleSpecularHalfBeckWalt(const float alpha, unsigned int& rngState)

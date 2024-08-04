@@ -23,8 +23,11 @@ public:
 	void Build();
 
 	void UpdateDeviceData();
-	void SetBVHInstances(const std::vector<BVHInstance>& bvhInstances) { m_Blas = bvhInstances; }
+	void SetBVHInstances(const std::vector<BVHInstance>& bvhInstances) { m_BvhInstances = bvhInstances; }
+
 	static D_TLAS ToDevice(const TLAS& tlas);
+
+	std::vector<BVHInstance>& GetInstances() { return m_BvhInstances; }
 
 private:
 	int FindBestMatch(int N, int A);
@@ -32,7 +35,7 @@ private:
 private:
 
 	std::vector<TLASNode> m_Nodes;
-	std::vector<BVHInstance> m_Blas;
+	std::vector<BVHInstance> m_BvhInstances;
 	std::vector<uint32_t> m_InstancesIdx;
 	std::vector<BVH8> m_Bvhs;
 

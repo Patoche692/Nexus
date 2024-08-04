@@ -1,17 +1,19 @@
 #include "PathTracer.cuh"
 #include "Random.cuh"
-#include "BSDF/DielectricBSDF.cuh"
 #include "BSDF/LambertianBSDF.cuh"
+#include "BSDF/DielectricBSDF.cuh"
+#include "BSDF/PlasticBSDF.cuh"
+#include "BSDF/ConductorBSDF.cuh"
 #include "BSDF/BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
-#include "Camera.h"
-#include "Geometry/BVH/TLAS.h"
 #include "texture_indirect_functions.h"
-#include "BSDF/ConductorBSDF.cuh"
 #include "BVH/TLASTraversal.cuh"
-#include "Scene.cuh"
-#include "Camera.cuh"
+#include "Scene/Scene.cuh"
+#include "Scene/Camera.cuh"
+#include "Sampler.cuh"
+
+__constant__ __device__ D_Settings settings;
 
 
 inline __device__ uint32_t ToColorUInt(float3 color)
@@ -58,23 +60,124 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
-		backgroundColor = make_float3(0.02f);
+		backgroundColor = make_float3(0.00f);
 	return backgroundColor;
 }
 
-inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
+inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
+{
+	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
+
+	if (light.type == D_Light::Type::MESH_LIGHT)
+	{
+		D_BVHInstance instance = scene.tlas.blas[light.mesh.meshId];
+
+		uint32_t triangleIdx;
+		float2 uv;
+		Sampler::UniformSampleMesh(scene.tlas.bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
+
+		D_Triangle triangle = scene.tlas.bvhs[instance.bvhIdx].triangles[triangleIdx];
+
+		const float3 edge1 = triangle.pos1 - triangle.pos0;
+		const float3 edge2 = triangle.pos2 - triangle.pos0;
+		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
+		p = instance.transform.TransformPoint(p);
+
+		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
+		const float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+
+		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
+		float3 shadingNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
+		shadingNormal = normalize(instance.transform.TransformVector(shadingNormal));
+
+		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
+		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
+
+		//if (wiGeometryBackSide != wiShadingBackSide)
+		//	return make_float3(0.0f);
+
+		D_Ray shadowRay;
+		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
+		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitResult.normal;
+
+		const float3 toLight = p - shadowRay.origin;
+		const float distance = length(toLight);
+		shadowRay.direction = toLight / distance;
+		shadowRay.invDirection = 1.0f / shadowRay.direction;
+		shadowRay.hit.t = distance;
+
+		const float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
+
+		bool anyHit = TLASTraceShadow(scene.tlas, shadowRay);
+
+		if (anyHit)
+			return make_float3(0.0f);
+
+		const float cosThetaO = fabs(dot(shadingNormal, shadowRay.direction));
+
+		const float dSquared = dot(toLight, toLight);
+
+		float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+		// Transform pdf over an area to pdf over directions
+		lightPdf *= dSquared / cosThetaO;
+
+		if (!Sampler::IsPdfValid(lightPdf))
+			return make_float3(0.0f);
+
+		const D_Material& material = scene.materials[instance.materialId];
+
+		float3 throughput;
+		float bsdfPdf;
+		bool sampleIsValid;
+
+		switch (hitResult.material.type)
+		{
+		case D_Material::D_Type::DIFFUSE:
+			sampleIsValid = D_BSDF::Eval<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		case D_Material::D_Type::PLASTIC:
+			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		case D_Material::D_Type::DIELECTRIC:
+			sampleIsValid = D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		}
+
+		if (!sampleIsValid)
+			return make_float3(0.0f);
+
+		//const float weight = 1.0f;
+		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
+
+		float3 emissive;
+		if (material.emissiveMapId != -1)
+		{
+			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
+			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
+		}
+		else
+			emissive = material.emissive;
+
+		return weight * throughput * emissive * material.intensity / lightPdf;
+	}
+}
+
+// Incoming radiance estimate on ray origin and in ray direction
+inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
 {
 	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
+	float lastBsdfPdf = 1e10f;
 
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < MAX_BOUNCES; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
-		currentRay.invDirection = 1 / currentRay.direction;
+		currentRay.invDirection = 1.0f / currentRay.direction;
 
-		IntersectTLAS(scene.tlas, currentRay);
+		TLASTrace(scene.tlas, currentRay);
 
 		// If no intersection, sample background
 		if (currentRay.hit.t == 1e30f)
@@ -116,15 +219,11 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		//	hitResult.normal = -hitResult.normal;
 
 		// Invert normals for non transmissive material if the primitive is backfacing the ray
-		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::D_Type::DIELECTRIC || hitResult.material.dielectric.transmittance == 0.0f))
+		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::D_Type::DIELECTRIC))
 		{
 			hitResult.normal = -hitResult.normal;
 			gNormal = -gNormal;
 		}
-
-		if (fmaxf(hitResult.material.emissive) > 0.0f)
-			emission += hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
-
 
 		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
 		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
@@ -140,35 +239,67 @@ inline __device__ float3 Color(const D_Scene& scene, const D_Ray& r, unsigned in
 		float3 wo;
 
 		bool scattered = false;
+		float bsdfPdf;
 		switch (hitResult.material.type)
 		{
 		case D_Material::D_Type::DIFFUSE:
-			scattered = BSDF::Sample<LambertianBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		case D_Material::D_Type::DIELECTRIC:
-			scattered = BSDF::Sample<DielectricBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
+			break;
+		case D_Material::D_Type::PLASTIC:
+			scattered = D_BSDF::Sample<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		case D_Material::D_Type::CONDUCTOR:
-			scattered = BSDF::Sample<ConductorBSDF>(hitResult, wi, wo, throughput, rngState);
+			scattered = D_BSDF::Sample<D_ConductorBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
 			break;
 		default:
 			break;
 		}
 
-		if (scattered)
-		{
-			// Inverse ray transformation to world space
-			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-			bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
-			bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
+		if (!scattered)
+			continue;
 
-			if (woGeometryBackSide == woShadingBackSide)
+		bool hitLight = false;
+		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
+		{
+			float weight = 1.0f;
+
+			if (settings.useMIS)
 			{
-				currentThroughput *= throughput;
-				float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
-				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
-				currentRay.direction = wo;
+				hitLight = true;
+				const float cosThetaO = fabs(dot(hitResult.normal, currentRay.direction));
+
+				const float dSquared = Square(currentRay.hit.t);
+
+				float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+				// Transform pdf over an area to pdf over directions
+				lightPdf *= dSquared / cosThetaO;
+
+				weight = settings.useMIS ? Sampler::PowerHeuristic(lastBsdfPdf, lightPdf) : 1.0f;
 			}
+			//weight = 0.0f;
+
+			emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
+		}
+		lastBsdfPdf = bsdfPdf;
+
+
+		if (settings.useMIS)
+			emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
+
+		// Inverse ray transformation to world space
+		wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+		bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
+		bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
+
+		if (woGeometryBackSide == woShadingBackSide)
+		{
+			currentThroughput *= throughput;
+			float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
+			currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
+			currentRay.direction = wo;
 		}
 
 		// Russian roulette
@@ -216,7 +347,7 @@ __global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t fram
 		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
 	);
 
-	float3 c = Color(scene, ray, rngState);
+	float3 c = Radiance(scene, ray, rngState);
 
 	if (frameNumber == 1)
 		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
@@ -243,4 +374,11 @@ void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
 
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
+}
+
+void SetSettings(const D_Settings& s) 
+{
+	D_Settings* deviceSettings;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&deviceSettings, settings));
+	checkCudaErrors(cudaMemcpy(deviceSettings, &s, sizeof(D_Settings), cudaMemcpyHostToDevice));
 }

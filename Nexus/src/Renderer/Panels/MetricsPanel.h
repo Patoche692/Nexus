@@ -1,5 +1,6 @@
 #pragma once
-#include "Scene.h"
+#include "Scene/Scene.h"
+#include "Cuda/PathTracer.cuh"
 
 class MetricsPanel 
 {
@@ -8,7 +9,7 @@ public:
 
 	void Reset();
 	void UpdateMetrics(float deltaTime);
-	void OnImGuiRender(uint32_t frameNumber);
+	void OnImGuiRender(uint32_t frameNumber, D_Settings& settings);
 
 private:
 
