@@ -60,7 +60,7 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
-		backgroundColor = make_float3(0.02f);
+		backgroundColor = make_float3(0.00f);
 	return backgroundColor;
 }
 
@@ -88,6 +88,9 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
+		float3 shadingNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
+		shadingNormal = normalize(instance.transform.TransformVector(shadingNormal));
+
 		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
 		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
 
@@ -96,7 +99,7 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		D_Ray shadowRay;
 		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
-		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitGNormal;
+		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitResult.normal;
 
 		const float3 toLight = p - shadowRay.origin;
 		const float distance = length(toLight);
@@ -111,7 +114,7 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		if (anyHit)
 			return make_float3(0.0f);
 
-		const float cosThetaO = fabs(dot(gNormal, shadowRay.direction));
+		const float cosThetaO = fabs(dot(shadingNormal, shadowRay.direction));
 
 		const float dSquared = dot(toLight, toLight);
 
@@ -130,6 +133,9 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		switch (hitResult.material.type)
 		{
+		case D_Material::D_Type::DIFFUSE:
+			sampleIsValid = D_BSDF::Eval<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
 		case D_Material::D_Type::PLASTIC:
 			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
 			break;
@@ -146,7 +152,10 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		float3 emissive;
 		if (material.emissiveMapId != -1)
-			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
+		{
+			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
+			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
+		}
 		else
 			emissive = material.emissive;
 
@@ -160,7 +169,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 	D_Ray currentRay = r;
 	float3 currentThroughput = make_float3(1.0f);
 	float3 emission = make_float3(0.0f);
-	float bsdfPdf = 1e10f;
+	float lastBsdfPdf = 1e10f;
 
 	for (int j = 0; j < MAX_BOUNCES; j++)
 	{
@@ -216,31 +225,6 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 			gNormal = -gNormal;
 		}
 
-		bool hitLight = false;
-		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
-		{
-			float weight = 1.0f;
-
-			if (settings.useMIS)
-			{
-				hitLight = true;
-				const float3 toLight = hitResult.p - currentRay.origin;
-				const float cosThetaO = fabs(dot(gNormal, currentRay.direction));
-
-				const float dSquared = dot(toLight, toLight);
-
-				float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
-				// Transform pdf over an area to pdf over directions
-				lightPdf *= dSquared / cosThetaO;
-
-				weight = settings.useMIS ? Sampler::PowerHeuristic(bsdfPdf, lightPdf) : 1.0f;
-			}
-			//weight = 0.0f;
-
-			emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
-		}
-
-
 		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
 		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
 		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
@@ -255,6 +239,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		float3 wo;
 
 		bool scattered = false;
+		float bsdfPdf;
 		switch (hitResult.material.type)
 		{
 		case D_Material::D_Type::DIFFUSE:
@@ -273,23 +258,48 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 			break;
 		}
 
-		if (scattered)
+		if (!scattered)
+			continue;
+
+		bool hitLight = false;
+		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
 		{
-			if (!hitLight && settings.useMIS)
-				emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
+			float weight = 1.0f;
 
-			// Inverse ray transformation to world space
-			wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-			bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
-			bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
-
-			if (woGeometryBackSide == woShadingBackSide)
+			if (settings.useMIS)
 			{
-				currentThroughput *= throughput;
-				float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
-				currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
-				currentRay.direction = wo;
+				hitLight = true;
+				const float cosThetaO = fabs(dot(hitResult.normal, currentRay.direction));
+
+				const float dSquared = Square(currentRay.hit.t);
+
+				float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
+				// Transform pdf over an area to pdf over directions
+				lightPdf *= dSquared / cosThetaO;
+
+				weight = settings.useMIS ? Sampler::PowerHeuristic(lastBsdfPdf, lightPdf) : 1.0f;
 			}
+			//weight = 0.0f;
+
+			emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
+		}
+		lastBsdfPdf = bsdfPdf;
+
+
+		if (settings.useMIS)
+			emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
+
+		// Inverse ray transformation to world space
+		wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+		bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
+		bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
+
+		if (woGeometryBackSide == woShadingBackSide)
+		{
+			currentThroughput *= throughput;
+			float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
+			currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
+			currentRay.direction = wo;
 		}
 
 		// Russian roulette

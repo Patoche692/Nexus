@@ -137,6 +137,13 @@ void Scene::UpdateInstanceLighting(size_t index)
 	if (meshInstance.materialId == -1)
 		return;
 
+	// If light already in the scene, return
+	for (Light& light : m_Lights)
+	{
+		if (light.type == Light::Type::MESH_LIGHT && light.mesh.meshId == index)
+			return;
+	}
+
 	const Material& material = m_AssetManager.GetMaterials()[meshInstance.materialId];
 	// If mesh has an emissive material, add it to the lights list
 	if (material.emissiveMapId != -1 ||

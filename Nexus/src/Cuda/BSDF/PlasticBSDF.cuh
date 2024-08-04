@@ -40,7 +40,6 @@ struct D_PlasticBSDF
 		const float3 m = normalize(wo + wi);
 		float cosThetaT;
 		const float wiDotM = dot(wi, m);
-		const float woDotM = dot(wo, m);
 		const float F = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
 		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
@@ -92,7 +91,7 @@ struct D_PlasticBSDF
 			// We dont need to include the Fresnel term since it's already included when
 			// we select between reflection and transmission (see paper page 7)
 			throughput = make_float3(weight); // * F / fr
-			pdf = Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
+			pdf = fr * Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
 		}
 
 		else
@@ -102,7 +101,7 @@ struct D_PlasticBSDF
 			throughput = hitResult.material.dielectric.albedo;
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
-			pdf = INV_PI * wo.z;
+			pdf = (1.0f - fr) * INV_PI * wo.z;
 		}
 
 		return Sampler::IsPdfValid(pdf);

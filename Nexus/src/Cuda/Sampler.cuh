@@ -57,6 +57,6 @@ public:
 
 	inline __device__ static bool IsPdfValid(const float pdf)
 	{
-		return isfinite(pdf) && pdf > 1.0e-5f;
+		return isfinite(pdf) && pdf > 1.0e-4f;
 	}
 };

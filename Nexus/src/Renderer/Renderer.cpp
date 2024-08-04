@@ -64,12 +64,15 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	if (!scene.IsEmpty())
 	{
-		m_FrameNumber++;
+		//if (m_FrameNumber < 24)
+		//{
+			m_FrameNumber++;
 
-		RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
+			RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
 
-		// Unpack the pixel buffer written by cuda to the renderer texture
-		UnpackToTexture();
+			// Unpack the pixel buffer written by cuda to the renderer texture
+			UnpackToTexture();
+		//}
 
 	}
 	else

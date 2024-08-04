@@ -93,7 +93,7 @@ struct D_DielectricBSDF
 			// We dont need to include the Fresnel term since it's already included when
 			// we select between reflection and refraction (see paper page 7)
 			throughput = make_float3(weight); // * F / fr
-			pdf = Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
+			pdf = fr * Microfacet::SampleWalterReflectionPdf(alpha, m.z, fabs(wiDotM));
 		}
 
 		else
@@ -115,7 +115,7 @@ struct D_DielectricBSDF
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 			const float woDotM = dot(wo, m);
 
-			pdf = Microfacet::SampleWalterRefractionPdf(alpha, m.z, fabs(wiDotM), fabs(woDotM), eta);
+			pdf = (1.0f - fr) * Microfacet::SampleWalterRefractionPdf(alpha, m.z, fabs(wiDotM), fabs(woDotM), eta);
 		}
 		return Sampler::IsPdfValid(pdf);
 	}
