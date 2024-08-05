@@ -32,7 +32,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 ![24spp_MIS_IS_Comparison](https://github.com/user-attachments/assets/bf24f824-c643-47df-ae4d-c474273aa8fb)
-<center>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp</center>
+<p align="center"><em>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp</em></p>
 
 
 ## Features
@@ -81,28 +81,28 @@ Nexus requires the following:
 ## Resources
 Here are the main resources I used for this project.
 
-### Path tracing in general
+#### Path tracing in general
 - [Eric Veach's thesis](https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf). The best resource to understand all the theory behind Monte Carlo path tracing. It is code agnostic and fairly theorical but it helped me a lot to implement importance sampling, next event estimation and multiple importance sampling.
 - [Physically based rendering book](https://www.pbr-book.org/4ed/contents). The reference book for path tracing, detailing a complete path tracer implementation.
 - [Ray Tracing Gems II: Next Generation Real-Time Rendering with DXR, Vulkan, and OptiX](https://www.realtimerendering.com/raytracinggems/rtg2/index.html)
 
-### Getting started on ray tracing
+#### Getting started on ray tracing
 - The Cherno's [Ray tracing series](https://www.youtube.com/playlist?list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl)
 - [Ray Tracing in one weekend book series](https://raytracing.github.io)
 - [ScratchPixel website](https://scratchapixel.com)
 - To get started with CUDA ray tracing: [Accelerated Ray Tracing in one weekend in CUDA](https://developer.nvidia.com/blog/accelerated-ray-tracing-cuda/)
 
-### BVH
+#### BVH
 - Jacco Bikker's [guides](https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/) on SAH-based BVHs really helped me implement my first BVH and traversal on the GPU which was surprisingly fast.
 - [Stich et al. 2009](https://www.nvidia.in/docs/IO/77714/sbvh.pdf) explain in details binned building and spatial splits for BVH2.
 - [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf) for compressed wide BVHs.
 
-### PBR materials
+#### PBR materials
 - [Crash Course in BRDF Implementation](https://boksajak.github.io/files/CrashCourseBRDF.pdf) detailing the theory and implementation for diffuse and microfacet models.
 - [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449). I used this paper to implement my rough dielectric BSDF.
 - [Weidlich and Wilkie 2007](https://www.cg.tuwien.ac.at/research/publications/2007/weidlich_2007_almfs/weidlich_2007_almfs-paper.pdf) for layered BSDFs (not yet implemented in my path tracer, but I will use it for my rough plastic BSDF).
 
-### Sampling
+#### Sampling
 - [Computer Graphics at TU Wien videos](https://www.youtube.com/watch?v=FU1dbi827LY) for next event estimation and multiple importance sampling.
 
 I also had a look at other renderer implementations such as Blender's [cycles](https://github.com/blender/cycles), [Tungsten renderer](https://github.com/tunabrain/tungsten), and [Jan van Bergen's CUDA ray tracer](https://github.com/jan-van-bergen/GPU-Raytracer).
