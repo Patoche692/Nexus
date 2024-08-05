@@ -27,10 +27,13 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![rolls_royce4](https://github.com/Patoche692/PathTracer/assets/54531293/244558e1-872b-45f5-ac1f-b6b38f027ba0)-->
 ![coffee](https://github.com/Patoche692/PathTracer/assets/54531293/b860d5a9-99b1-43ef-ad98-8ae17d41a931)
 <!--![monster_under_bed](https://github.com/Patoche692/PathTracer/assets/54531293/fdd2a636-e2ef-47cf-8449-c7b2c030d534)-->
-![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800)
+<!--![iphone](https://github.com/Patoche692/PathTracer/assets/54531293/d30c0db5-5a8e-4793-bc39-8d8730093800) -->
 <!--![iron_man](https://github.com/Patoche692/PathTracer/assets/54531293/700463ed-03cc-412c-a283-ac726a1282ef)-->
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
+![24spp_MIS_IS_Comparison](https://github.com/user-attachments/assets/bf24f824-c643-47df-ae4d-c474273aa8fb)
+24spp Cornell Box render. Left: MIS render. Right: naive render (BSDF sampling). 
+
 
 ## Features
 - Interactive camera with thin lens approximation: FOV, defocus blur
