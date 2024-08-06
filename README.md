@@ -13,7 +13,8 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 
 ## Screenshots
 
-![cannelle_et_fromage3](https://github.com/Patoche692/PathTracer/assets/54531293/1356478c-4c1c-4192-93fb-3798a642b5f4)
+<!--![cannelle_et_fromage3](https://github.com/Patoche692/PathTracer/assets/54531293/1356478c-4c1c-4192-93fb-3798a642b5f4)-->
+![cannelle_et_fromage8](https://github.com/user-attachments/assets/a21a9b3a-3cea-4d76-8ee3-3f16de8e4f3a)
 ![stormtrooper](https://github.com/Patoche692/PathTracer/assets/54531293/865d00db-9711-469a-be3f-c5fe647e4d72)
 ![mustang](https://github.com/Patoche692/PathTracer/assets/54531293/ffa3f777-da30-4935-92d9-2c21f2d0bc0b)
 ![water2](https://github.com/Patoche692/Nexus/assets/54531293/7d4a0d12-b630-4024-915d-b26194f49ca7)
@@ -36,7 +37,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 
 
 ## Features
-- Interactive camera with thin lens approximation: FOV, defocus blur
+- Interactive camera with thin lens approximation: FOV, defocus blur.
 - BVH:
    - Standard SAH-based BVH (BVH2) using binned building
    - Compressed-wide BVH (BVH8), see [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf). BVH2 is collapsed into an 8-ary BVH. Nodes are compressed to 80 bytes to limit memory bandwidth on the GPU. Full efficiency is not used so far since I have not yet implemented wavefront path tracing.
@@ -47,7 +48,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
    - Rough dielectric BSDF (Beckmann microfacet model, see [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449)).
    - Rough plastic BSDF (mix between diffuse and rough specular)
    - Rough conductor BSDF
-- Importance sampling: cosine weighted for diffuse materials, VNDF sampling for rough materials
+- Importance sampling: cosine weighted for diffuse materials, VNDF sampling for rough materials.
 - Multiple importance sampling, see [Veach 1997](https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf). BSDF importance sampling is combined with next event estimation (direct light sampling) and the results from both sampling strategies are weighted using the power heuristic to get low-variance results.
 - Texture mapping (diffuse, emissive)
 - HDR environment maps
