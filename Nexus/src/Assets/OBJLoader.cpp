@@ -80,7 +80,7 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 
 		aiColor3D diffuse(0.0f);
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-		newMaterial.dielectric.albedo = make_float3(diffuse.r, diffuse.g, diffuse.b);
+		newMaterial.plastic.albedo = make_float3(diffuse.r, diffuse.g, diffuse.b);
 
 		aiColor3D emission(0.0f);
 		material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
@@ -103,14 +103,14 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 
 		float ior = 1.45f;
 		material->Get(AI_MATKEY_REFRACTI, ior);
-		newMaterial.dielectric.ior = ior;
+		newMaterial.plastic.ior = ior;
 
 		float shininess = 0.0f;
 		if (AI_SUCCESS != aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess))
 		{
 			shininess = 20.0f;
 		}
-		newMaterial.dielectric.roughness = clamp(1.0f - sqrt(shininess) / 31.62278f, 0.0f, 1.0f);
+		newMaterial.plastic.roughness = clamp(1.0f - sqrt(shininess) / 31.62278f, 0.0f, 1.0f);
 
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 		{

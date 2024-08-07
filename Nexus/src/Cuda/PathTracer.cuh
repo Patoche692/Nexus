@@ -11,12 +11,6 @@
 
 #define WARP_SIZE 32	// Same size for all NVIDIA GPUs
 
-#define MAX_BOUNCES 10
-
-struct D_Settings
-{
-	bool useMIS = true;
-};
+#define LIMIT_BOUNCES 30
 
 void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);
-void SetSettings(const D_Settings& s);

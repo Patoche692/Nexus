@@ -27,8 +27,6 @@ public:
 
 	PixelBuffer GetPixelBuffer() { return m_PixelBuffer; }
 	OGLTexture GetTexture() { return m_Texture; }
-	D_Settings& GetSettings() { return m_Settings; }
-	void InvalidateSettings() { m_SettingsInvalid = true; }
 
 private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
@@ -39,7 +37,5 @@ private:
 	Scene* m_Scene;
 	SceneHierarchyPanel m_HierarchyPannel;
 	MetricsPanel m_MetricsPanel;
-	D_Settings m_Settings;
-	bool m_SettingsInvalid = true;
 };
 

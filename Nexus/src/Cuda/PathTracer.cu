@@ -13,9 +13,6 @@
 #include "Scene/Camera.cuh"
 #include "Sampler.cuh"
 
-__constant__ __device__ D_Settings settings;
-
-
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
 	float4 clamped = clamp(make_float4(color, 1.0f), make_float4(0.0f), make_float4(1.0f));
@@ -60,7 +57,7 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
 	else
-		backgroundColor = make_float3(0.00f);
+		backgroundColor = scene.renderSettings.backgroundColor * scene.renderSettings.backgroundIntensity;
 	return backgroundColor;
 }
 
@@ -171,7 +168,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 	float3 emission = make_float3(0.0f);
 	float lastBsdfPdf = 1e10f;
 
-	for (int j = 0; j < MAX_BOUNCES; j++)
+	for (int j = 0; j < scene.renderSettings.maxBounces; j++)
 	{
 		// Reset the hit position and calculate the inverse of the new direction
 		currentRay.hit.t = 1e30f;
@@ -266,7 +263,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		{
 			float weight = 1.0f;
 
-			if (settings.useMIS)
+			if (scene.renderSettings.useMIS)
 			{
 				hitLight = true;
 				const float cosThetaO = fabs(dot(hitResult.normal, currentRay.direction));
@@ -277,7 +274,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 				// Transform pdf over an area to pdf over directions
 				lightPdf *= dSquared / cosThetaO;
 
-				weight = settings.useMIS ? Sampler::PowerHeuristic(lastBsdfPdf, lightPdf) : 1.0f;
+				weight = scene.renderSettings.useMIS ? Sampler::PowerHeuristic(lastBsdfPdf, lightPdf) : 1.0f;
 			}
 			//weight = 0.0f;
 
@@ -286,7 +283,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		lastBsdfPdf = bsdfPdf;
 
 
-		if (settings.useMIS)
+		if (scene.renderSettings.useMIS)
 			emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
 
 		// Inverse ray transformation to world space
@@ -374,11 +371,4 @@ void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
 
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
-}
-
-void SetSettings(const D_Settings& s) 
-{
-	D_Settings* deviceSettings;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&deviceSettings, settings));
-	checkCudaErrors(cudaMemcpy(deviceSettings, &s, sizeof(D_Settings), cudaMemcpyHostToDevice));
 }

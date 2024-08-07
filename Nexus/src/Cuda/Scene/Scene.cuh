@@ -6,6 +6,10 @@
 #include "Camera.cuh"
 #include "Light.cuh"
 
+#include "Renderer/RenderSettings.h"
+
+using D_RenderSettings = RenderSettings;
+
 struct D_Scene
 {
 	bool hasHdrMap = false;
@@ -21,4 +25,6 @@ struct D_Scene
 
 	D_Material* materials;
 	D_Camera camera;
+
+	D_RenderSettings renderSettings;
 };
