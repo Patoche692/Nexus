@@ -9,7 +9,7 @@ public:
 
 	void Reset();
 	void UpdateMetrics(float deltaTime);
-	void OnImGuiRender(uint32_t frameNumber, D_Settings& settings);
+	void OnImGuiRender(uint32_t frameNumber);
 
 private:
 

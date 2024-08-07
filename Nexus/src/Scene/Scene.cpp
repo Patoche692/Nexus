@@ -5,12 +5,13 @@
 
 
 Scene::Scene(uint32_t width, uint32_t height)
-	:m_Camera(std::make_shared<Camera>(make_float3(0.0f, 4.0f, 14.0f), make_float3(0.0f, 0.0f, -1.0f), 45.0f, width, height, 5.0f, 0.0f))
+	:m_Camera(std::make_shared<Camera>(make_float3(0.0f, 4.0f, 14.0f), make_float3(0.0f, 0.0f, -1.0f), 60.0f, width, height, 5.0f, 0.0f))
 {
 }
 
 void Scene::Reset()
 {
+	m_Invalid = true;
 	m_BVHInstances.clear();
 	m_InvalidMeshInstances.clear();
 	m_MeshInstances.clear();
@@ -84,10 +85,7 @@ D_Scene Scene::ToDevice(Scene& scene)
 {
 	D_Scene deviceScene;
 
-	bool invalid = false;
-
-	if (scene.m_AssetManager.SendDataToDevice())
-		invalid = true;
+	scene.m_AssetManager.SendDataToDevice();
 
 	DeviceVector<Texture, cudaTextureObject_t>& deviceDiffuseMaps = scene.m_AssetManager.GetDeviceDiffuseMaps();
 	DeviceVector<Texture, cudaTextureObject_t>& deviceEmissiveMaps = scene.m_AssetManager.GetDeviceEmissiveMaps();
@@ -98,6 +96,8 @@ D_Scene Scene::ToDevice(Scene& scene)
 	deviceScene.materials = deviceMaterials.Data();
 	deviceScene.lights = scene.m_DeviceLights.Data();
 	deviceScene.lightCount = scene.m_DeviceLights.Size();
+
+	deviceScene.renderSettings = scene.m_RenderSettings;
 
 	deviceScene.hasHdrMap = scene.m_HdrMap.pixels != nullptr;
 	// TODO: clear m_DeviceHdrMap when reset
@@ -122,10 +122,11 @@ D_Scene Scene::ToDevice(Scene& scene)
 		scene.m_Tlas->UpdateDeviceData();
 
 		scene.m_InvalidMeshInstances.clear();
-		invalid = true;
 	}
 
 	deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
+
+	scene.m_Invalid = false;
 
 	return deviceScene;
 }

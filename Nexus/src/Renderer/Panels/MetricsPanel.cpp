@@ -41,7 +41,7 @@ void MetricsPanel::UpdateMetrics(float deltaTime)
 
 }
 
-void MetricsPanel::OnImGuiRender(uint32_t frameNumber, D_Settings& settings)
+void MetricsPanel::OnImGuiRender(uint32_t frameNumber)
 {
 	std::shared_ptr<Camera> camera = m_Context->GetCamera();
 
@@ -59,15 +59,30 @@ void MetricsPanel::OnImGuiRender(uint32_t frameNumber, D_Settings& settings)
 	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::Text("Camera");
-	if (ImGui::SliderFloat("Vertical FOV", &camera->GetVerticalFOV(), 1.0f, 180.0f))
+	if (ImGui::SliderFloat("Horizontal FOV", &camera->GetHorizontalFOV(), 1.0f, 180.0f))
 		camera->Invalidate();
 	if (ImGui::DragFloat("Focus distance", &camera->GetFocusDist(), 0.02f, 0.01f, 1000.0f))
 		camera->Invalidate();
 	if (ImGui::DragFloat("Defocus angle", &camera->GetDefocusAngle(), 0.2f, 0.0f, 180.0f))
 		camera->Invalidate();
 
-	ImGui::Text("Settings");
-	ImGui::Checkbox("Use MIS", &settings.useMIS);
+	RenderSettings& renderSettings = m_Context->GetRenderSettings();
+	ImGui::Text("Render settings");
+	if (ImGui::Checkbox("Use MIS", &renderSettings.useMIS))
+		m_Context->Invalidate();
+
+	int maxBounces = renderSettings.maxBounces;
+
+	if (ImGui::SliderInt("Bounces", &maxBounces, 1, LIMIT_BOUNCES))
+		m_Context->Invalidate();
+
+	renderSettings.maxBounces = maxBounces;
+
+	if (ImGui::ColorEdit3("Background color", (float*)&renderSettings.backgroundColor))
+		m_Context->Invalidate();
+
+	if (ImGui::DragFloat("Background intensity", &renderSettings.backgroundIntensity, 0.01))
+		m_Context->Invalidate();
 
 	ImGui::End();
 }

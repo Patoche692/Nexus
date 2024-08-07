@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Geometry/Sphere.h"
 #include "Light.h"
+#include "Renderer/RenderSettings.h"
 #include "Assets/AssetManager.h"
 #include "Scene/MeshInstance.h"
 #include "Cuda/Scene/Material.cuh"
@@ -25,8 +26,11 @@ public:
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
+	RenderSettings& GetRenderSettings() { return m_RenderSettings; }
+
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }
-	bool IsInvalid() { return m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid(); }
+	void Invalidate() { m_Invalid = true; }
+	bool IsInvalid() { return m_Invalid || m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid() || m_AssetManager.IsInvalid(); }
 
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
@@ -58,6 +62,10 @@ private:
 	Texture m_HdrMap;
 
 	AssetManager m_AssetManager;
+
+	RenderSettings m_RenderSettings;
+
+	bool m_Invalid = true;
 
 	// Device members
 	cudaTextureObject_t m_DeviceHdrMap;

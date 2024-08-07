@@ -37,6 +37,8 @@ public:
 
 	bool SendDataToDevice();
 
+	bool IsInvalid() { return m_InvalidMaterials.size() > 0; }
+
 private:
 	std::vector<Material> m_Materials;
 	std::set<uint32_t> m_InvalidMaterials;

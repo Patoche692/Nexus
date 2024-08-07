@@ -55,12 +55,6 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (scene.IsInvalid())
 		m_FrameNumber = 0;
 
-	if (m_SettingsInvalid)
-	{
-		SetSettings(m_Settings);
-		m_SettingsInvalid = false;
-	}
-
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	if (!scene.IsEmpty())
 	{
@@ -166,13 +160,7 @@ void Renderer::RenderUI(Scene& scene)
 	
 	m_HierarchyPannel.OnImGuiRender();
 
-	const bool useMIS = m_Settings.useMIS;
-	m_MetricsPanel.OnImGuiRender(m_FrameNumber, m_Settings);
-	if (m_Settings.useMIS != useMIS)
-	{
-		m_SettingsInvalid = true;
-		m_FrameNumber = 0;
-	}
+	m_MetricsPanel.OnImGuiRender(m_FrameNumber);
 }
 
 void Renderer::UnpackToTexture()
