@@ -4,6 +4,7 @@
 #include "BVHInstanceTraversal.cuh"
 #include "Cuda/Geometry/AABB.cuh"
 
+// TODO: convert TLAS to a BVH8
 inline __device__ void TLASTrace(const D_TLAS& tlas, D_Ray& ray)
 {
 	D_TLASNode* node = &tlas.nodes[0], * stack[16];

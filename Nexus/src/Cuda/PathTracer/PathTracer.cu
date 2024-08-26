@@ -1,17 +1,17 @@
 #include "PathTracer.cuh"
-#include "Random.cuh"
-#include "BSDF/LambertianBSDF.cuh"
-#include "BSDF/DielectricBSDF.cuh"
-#include "BSDF/PlasticBSDF.cuh"
-#include "BSDF/ConductorBSDF.cuh"
-#include "BSDF/BSDF.cuh"
+#include "Cuda/Random.cuh"
+#include "Cuda/BSDF/LambertianBSDF.cuh"
+#include "Cuda/BSDF/DielectricBSDF.cuh"
+#include "Cuda/BSDF/PlasticBSDF.cuh"
+#include "Cuda/BSDF/ConductorBSDF.cuh"
+#include "Cuda/BSDF/BSDF.cuh"
 #include "Utils/cuda_math.h"
 #include "Utils/Utils.h"
 #include "texture_indirect_functions.h"
-#include "BVH/TLASTraversal.cuh"
-#include "Scene/Scene.cuh"
-#include "Scene/Camera.cuh"
-#include "Sampler.cuh"
+#include "Cuda/BVH/TLASTraversal.cuh"
+#include "Cuda/Scene/Scene.cuh"
+#include "Cuda/Scene/Camera.cuh"
+#include "Cuda/Sampler.cuh"
 
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
@@ -302,7 +302,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		// Russian roulette
 		if (j > 2)
 		{
-			float p = clamp(fmaxf(currentThroughput), 0.01f, 1.0f);
+			float p = fmaxf(currentThroughput);// clamp(fmaxf(currentThroughput), 0.01f, 1.0f);
 			if (Random::Rand(rngState) < p)
 			{
 				// To get unbiased results, we need to increase the contribution of

@@ -53,6 +53,7 @@ struct D_PlasticBSDF
 		throughput = brdf + btdf;
 
 		// pm * jacobian = pm * || dWhr / dWo ||
+		// We can replace woDotM with wiDotM since for a reflection both are equal
 		const float pdfSpecular = D * m.z / (4.0f * wiDotM);
 
 		// cos(theta) / PI

@@ -14,7 +14,7 @@ inline __device__ void IntersectBVH2(const D_BVH2& bvh, D_Ray& ray, const uint32
 		if (node->IsLeaf())
 		{
 			for (uint32_t i = 0; i < node->triCount; i++)
-				bvh.triangles[bvh.triangleIdx[node->leftNode + i]].Hit(ray, instanceIdx, bvh.triangleIdx[node->leftNode + i]);
+				bvh.triangles[bvh.triangleIdx[node->leftNode + i]].Trace(ray, instanceIdx, bvh.triangleIdx[node->leftNode + i]);
 
 			if (stackPtr == 0)
 				break;

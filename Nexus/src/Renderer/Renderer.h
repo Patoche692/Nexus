@@ -10,7 +10,7 @@
 #include "Scene/Scene.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/MetricsPanel.h"
-#include "Cuda/PathTracer.cuh"
+#include "Cuda/PathTracer/PathTracer.cuh"
 
 class Renderer
 {

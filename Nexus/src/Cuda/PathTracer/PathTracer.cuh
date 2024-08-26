@@ -11,6 +11,6 @@
 
 #define WARP_SIZE 32	// Same size for all NVIDIA GPUs
 
-#define LIMIT_BOUNCES 30
+#define PATH_MAX_LENGTH 30
 
 void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);

@@ -52,6 +52,7 @@ struct D_DielectricBSDF
 			throughput = brdf;
 
 			// pm * jacobian = pm * || dWhr / dWo ||
+			// We can replace woDotM with wiDotM since for a reflection both are equal
 			pdf = F * D * m.z / (4.0f * fabs(wiDotM));
 		}
 		else

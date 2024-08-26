@@ -2,7 +2,7 @@
 
 #include <cudart_platform.h>
 #include <device_launch_parameters.h>
-#include "Cuda/PathTracer.cuh"
+#include "Cuda/PathTracer/PathTracer.cuh"
 #include "Cuda/Utils.cuh"
 #include "BVH8.cuh"
 
@@ -43,10 +43,24 @@ inline __device__ void StackPush(
 }
 
 
-inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, D_Ray& ray, const uint32_t invOctant, uint2& internalEntry, uint2& triangleEntry)
+__forceinline__ __device__ void ChildTrace(
+	const D_BVH8Node* nodes,
+	const uint32_t nodeIdx,
+	D_Ray& ray,
+	const uint32_t invOctant4,
+	uint2& internalEntry,
+	uint2& triangleEntry
+)
 {
-	const float3 p = make_float3(bvh8node.p_e_imask);
-	const uint32_t e_imask = __float_as_uint(bvh8node.p_e_imask.w);
+	const float4 p_e_imask				= __ldg(&nodes[nodeIdx].p_e_imask);
+	const float4 childidx_tridx_meta	= __ldg(&nodes[nodeIdx].childidx_tridx_meta);
+	const float4 qlox_qloy				= __ldg(&nodes[nodeIdx].qlox_qloy);
+	const float4 qloz_qhix				= __ldg(&nodes[nodeIdx].qloz_qhix);
+	const float4 qhiy_qhiz				= __ldg(&nodes[nodeIdx].qhiy_qhiz);
+
+	const float3 p = make_float3(p_e_imask);
+	const uint32_t e_imask = __float_as_uint(p_e_imask.w);
+
 	const byte ex = ExtractByte(e_imask, 0);
 	const byte ey = ExtractByte(e_imask, 1);
 	const byte ez = ExtractByte(e_imask, 2);
@@ -62,25 +76,23 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, D_Ray& ray,
 
 	const float3 transformedOrigin = (p - ray.origin) * ray.invDirection;
 
-	const uint32_t invOctant4 = invOctant * 0x01010101;
-
 	#pragma unroll
 	for (int i = 0; i < 2; i++)
 	{
-		const uint32_t meta4 = __float_as_uint(i == 0 ? bvh8node.childidx_tridx_meta.z : bvh8node.childidx_tridx_meta.w);
+		const uint32_t meta4 = __float_as_uint(i == 0 ? childidx_tridx_meta.z : childidx_tridx_meta.w);
 		const uint32_t isInner4 = (meta4 & (meta4 << 1)) & 0x10101010;
 		const uint32_t innerMask4 = SignExtendS8x4(isInner4 << 3);
 		const uint32_t bitIndex4 = (meta4 ^ (invOctant4 & innerMask4)) & 0x1f1f1f1f;
 		const uint32_t childBits4 = (meta4 >> 5) & 0x07070707;
 
-		const uint32_t qlox = __float_as_uint(i == 0 ? bvh8node.qlox_qloy.x : bvh8node.qlox_qloy.y);
-		const uint32_t qhix = __float_as_uint(i == 0 ? bvh8node.qloz_qhix.z : bvh8node.qloz_qhix.w);
+		const uint32_t qlox = __float_as_uint(i == 0 ? qlox_qloy.x : qlox_qloy.y);
+		const uint32_t qhix = __float_as_uint(i == 0 ? qloz_qhix.z : qloz_qhix.w);
 
-		const uint32_t qloy = __float_as_uint(i == 0 ? bvh8node.qlox_qloy.z : bvh8node.qlox_qloy.w);
-		const uint32_t qhiy = __float_as_uint(i == 0 ? bvh8node.qhiy_qhiz.x : bvh8node.qhiy_qhiz.y);
+		const uint32_t qloy = __float_as_uint(i == 0 ? qlox_qloy.z : qlox_qloy.w);
+		const uint32_t qhiy = __float_as_uint(i == 0 ? qhiy_qhiz.x : qhiy_qhiz.y);
 
-		const uint32_t qloz = __float_as_uint(i == 0 ? bvh8node.qloz_qhix.x : bvh8node.qloz_qhix.y);
-		const uint32_t qhiz = __float_as_uint(i == 0 ? bvh8node.qhiy_qhiz.z : bvh8node.qhiy_qhiz.w);
+		const uint32_t qloz = __float_as_uint(i == 0 ? qloz_qhix.x : qloz_qhix.y);
+		const uint32_t qhiz = __float_as_uint(i == 0 ? qhiy_qhiz.z : qhiy_qhiz.w);
 
 		const uint32_t xMin = ray.direction.x < 0.0f ? qhix : qlox;
 		const uint32_t xMax = ray.direction.x < 0.0f ? qlox : qhix;
@@ -114,12 +126,12 @@ inline __device__ void IntersectChildren(const D_BVH8Node& bvh8node, D_Ray& ray,
 			}
 		}
 	}
-	const uint32_t imask = ExtractByte(__float_as_uint(bvh8node.p_e_imask.w), 3);
+	const uint32_t imask = ExtractByte(__float_as_uint(p_e_imask.w), 3);
 
-	internalEntry.x = __float_as_uint(bvh8node.childidx_tridx_meta.x);
+	internalEntry.x = __float_as_uint(childidx_tridx_meta.x);
 	internalEntry.y = (hitMask & 0xff000000) | imask;
 
-	triangleEntry.x = __float_as_uint(bvh8node.childidx_tridx_meta.y);
+	triangleEntry.x = __float_as_uint(childidx_tridx_meta.y);
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
@@ -134,7 +146,9 @@ inline __device__ void BVH8Trace(const D_BVH8& bvh8, D_Ray& ray, const uint32_t 
 	uint2 nodeEntry = make_uint2(0);
 	uint2 triangleEntry = make_uint2(0);
 	const uint32_t invOctant = 7 - Octant(ray.direction);
+	const uint32_t invOctant4 = invOctant * 0x01010101;
 
+	const D_BVH8Node* nodes = bvh8.nodes;
 	// We set the hits bit of the root node to 1
 	nodeEntry.y |= 0x80000000;
 
@@ -164,9 +178,7 @@ inline __device__ void BVH8Trace(const D_BVH8& bvh8, D_Ray& ray, const uint32_t 
 
 			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
 
-			const D_BVH8Node& node = bvh8.nodes[nodeEntry.x + relativeNodeIdx];
-
-			IntersectChildren(node, ray, invOctant, nodeEntry, triangleEntry);
+			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
 		}
 		else
 		{
@@ -196,7 +208,7 @@ inline __device__ void BVH8Trace(const D_BVH8& bvh8, D_Ray& ray, const uint32_t 
 			assert(triangleIdx < bvh8.triCount);
 
 			// Ray triangle intersection
-			bvh8.triangles[triangleIdx].Hit(ray, instanceIdx, triangleIdx);
+			bvh8.triangles[triangleIdx].Trace(ray, instanceIdx, triangleIdx);
 		}
 
 		// If the node entry is empty (hits field equals 0), pop from the stack
@@ -223,7 +235,9 @@ inline __device__ bool BVH8TraceShadow(const D_BVH8& bvh8, D_Ray& ray)
 	uint2 nodeEntry = make_uint2(0);
 	uint2 triangleEntry = make_uint2(0);
 	const uint32_t invOctant = 7 - Octant(ray.direction);
+	const uint32_t invOctant4 = invOctant * 0x01010101;
 
+	const D_BVH8Node* nodes = bvh8.nodes;
 	// We set the hits bit of the root node to 1
 	nodeEntry.y |= 0x80000000;
 
@@ -253,9 +267,7 @@ inline __device__ bool BVH8TraceShadow(const D_BVH8& bvh8, D_Ray& ray)
 
 			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
 
-			const D_BVH8Node& node = bvh8.nodes[nodeEntry.x + relativeNodeIdx];
-
-			IntersectChildren(node, ray, invOctant, nodeEntry, triangleEntry);
+			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
 		}
 		else
 		{
