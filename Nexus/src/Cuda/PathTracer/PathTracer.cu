@@ -12,6 +12,7 @@
 #include "Cuda/Scene/Scene.cuh"
 #include "Cuda/Scene/Camera.cuh"
 #include "Cuda/Sampler.cuh"
+#include "LogicStage.cuh"
 
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
@@ -319,10 +320,10 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 
 __global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t frameNumber, float3* accumulationBuffer)
 {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	const int i = blockIdx.x * blockDim.x + threadIdx.x;
+	const int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	uint2 pixel = make_uint2(i, j);
+	const uint2 pixel = make_uint2(i, j);
 
 	D_Camera camera = scene.camera;
 	uint2 resolution = camera.resolution;
@@ -363,6 +364,28 @@ void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
 	size_t size = 0;
 	uint32_t* devicePtr = 0;
 	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer.GetCudaResource()));
+
+	cudaGraph_t graph;
+	checkCudaErrors(cudaGraphCreate(&graph, 0));
+
+	cudaGraphNode_t graphNode;
+	cudaKernelNodeParams nodeParams = { 0 };
+	memset(&nodeParams, 0, sizeof(nodeParams));
+
+	nodeParams.func = (void*)TraceRay;
+	nodeParams.blockDim = dim3(8, 8, 1);
+	nodeParams.gridDim = dim3(8, 8, 1);
+	void* args[4] = { (void*)&scene, &devicePtr, &frameNumber, &accumulationBuffer};
+	nodeParams.kernelParams = args;
+	nodeParams.sharedMemBytes = 0;
+	nodeParams.extra = NULL;
+
+	checkCudaErrors(cudaGraphAddKernelNode(&graphNode, graph, NULL, 0, &nodeParams));
+
+	checkCudaErrors(cudaGraphDestroy(graph));
+	//int minGridSize, int blockSize;
+	//cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, TraceRay);
+	//std::cout << minGridSize << ", " << blockSize << std::endl;
 
 	dim3 blocks(pixelBuffer.GetWidth() / BLOCK_SIZE + 1, pixelBuffer.GetHeight() / BLOCK_SIZE + 1);
 	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);

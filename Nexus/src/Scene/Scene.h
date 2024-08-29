@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"

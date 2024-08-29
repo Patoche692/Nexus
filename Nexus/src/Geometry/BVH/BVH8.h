@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 #include "Utils/cuda_math.h"
 #include "BVH.h"
 #include "Cuda/BVH/BVH8.cuh"

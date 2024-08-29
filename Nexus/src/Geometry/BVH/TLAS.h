@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 #include "Utils/cuda_math.h"
 #include "BVHInstance.h"
 #include "Utils/Utils.h"

@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <set>
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 #include "Assets/Mesh.h"
 #include "Assets/Material.h"
 #include "Geometry/BVH/BVHInstance.h"

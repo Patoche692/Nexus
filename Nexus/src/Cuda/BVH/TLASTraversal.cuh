@@ -4,6 +4,14 @@
 #include "BVHInstanceTraversal.cuh"
 #include "Cuda/Geometry/AABB.cuh"
 
+struct PathState
+{
+
+};
+
+__device__ __constant__ PathState pathState;
+
+
 // TODO: convert TLAS to a BVH8
 inline __device__ void TLASTrace(const D_TLAS& tlas, D_Ray& ray)
 {
