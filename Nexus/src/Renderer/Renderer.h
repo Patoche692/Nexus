@@ -11,6 +11,7 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/MetricsPanel.h"
 #include "Cuda/PathTracer/PathTracer.cuh"
+#include "Device/Kernels/CUDAGraph.h"
 
 class Renderer
 {
@@ -37,5 +38,7 @@ private:
 	Scene* m_Scene;
 	SceneHierarchyPanel m_HierarchyPannel;
 	MetricsPanel m_MetricsPanel;
+
+	//CUDAGraph m_RenderGraph;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <cuda_runtime_api.h>
-#include "Memory/Device/CudaMemory.h"
+#include "Device/CudaMemory.h"
 
 template<typename T>
 class DeviceAllocator

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "Memory/Host/Allocators/Allocator.h"
+#include "Memory/Allocators/Allocator.h"
 
 /*
  * Vector class based on The Cherno's video. See https://www.youtube.com/watch?v=ryRf4Jh_YC0

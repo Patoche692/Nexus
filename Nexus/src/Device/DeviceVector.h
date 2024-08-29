@@ -3,7 +3,7 @@
 #include "Allocators/DeviceAllocator.h"
 #include "CudaMemory.h"
 #include "DeviceInstance.h"
-#include "Memory/Host/Vector.h"
+#include "Memory/Vector.h"
 
 /*
  * Device vector for trivial types (does not handle copy / move constructors
