@@ -6,7 +6,7 @@ CUDAGraph::CUDAGraph()
 {
 	checkCudaErrors(cudaGraphCreate(&m_Graph, 0));
 	checkCudaErrors(cudaStreamCreate(&m_Stream));
-	checkCudaErrors(cudaGraphInstantiate(&m_GraphExec, m_Graph, 0));
+	BuildGraph();
 }
 
 CUDAGraph::~CUDAGraph()
@@ -16,9 +16,22 @@ CUDAGraph::~CUDAGraph()
 	checkCudaErrors(cudaGraphDestroy(m_Graph));
 }
 
+void CUDAGraph::Reset()
+{
+	checkCudaErrors(cudaGraphDestroy(m_Graph));
+	checkCudaErrors(cudaGraphCreate(&m_Graph, 0));
+}
+
+void CUDAGraph::BuildGraph()
+{
+	checkCudaErrors(cudaGraphInstantiate(&m_GraphExec, m_Graph, 0));
+}
+
 void CUDAGraph::Execute()
 {
-	checkCudaErrors(cudaGraphLaunch(m_GraphExec, m_Stream));
+	checkCudaErrors(cudaDeviceSynchronize());
+	checkCudaErrors(cudaGraphLaunch(m_GraphExec, 0));
+	checkCudaErrors(cudaDeviceSynchronize());
 }
 
 void CUDAGraph::AddKernelNode(CUDAKernel& kernel)
@@ -30,6 +43,7 @@ void CUDAGraph::AddKernelNode(CUDAKernel& kernel)
 	nodeParams.extra = nullptr;
 	nodeParams.kernelParams = kernel.GetLaunchParameters();
 	nodeParams.func = kernel.GetFunction();
+	nodeParams.sharedMemBytes = 0;
 
-	checkCudaErrors(cudaGraphAddKernelNode(&kernelNode, m_Graph, NULL, 0, &nodeParams));
+	checkCudaErrors(cudaGraphAddKernelNode(&kernelNode, m_Graph, nullptr, 0, &nodeParams));
 }

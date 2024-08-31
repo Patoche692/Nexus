@@ -7,7 +7,7 @@ class CUDAKernel
 {
 public:
 	CUDAKernel() = default;
-	CUDAKernel(void* function, dim3 gridsize, dim3 blockSize, std::vector<void*> params)
+	CUDAKernel(void* function, dim3 gridsize, dim3 blockSize, std::vector<void*> params = std::vector<void*>())
 		: m_Function(function), m_GridSize(gridsize), m_BlockSize(blockSize), m_LaunchParameters(params) {}
 
 	virtual void Init() { }

@@ -10,12 +10,10 @@ public:
 	CUDAGraph();
 	~CUDAGraph();
 
-
+	void Reset();
+	void BuildGraph();
 	void Execute();
-
 	void AddKernelNode(CUDAKernel& kernel);
-
-
 
 private:
 	cudaGraph_t m_Graph;

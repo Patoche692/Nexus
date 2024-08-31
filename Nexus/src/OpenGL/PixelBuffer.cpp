@@ -13,12 +13,12 @@ PixelBuffer::PixelBuffer(uint32_t width, uint32_t height)
     Unbind();
 }
 
-void PixelBuffer::Bind()
+void PixelBuffer::Bind() const
 {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_Handle);
 }
 
-void PixelBuffer::Unbind()
+void PixelBuffer::Unbind() const
 {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }

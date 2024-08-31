@@ -32,6 +32,10 @@ public:
 	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceDiffuseMaps() { return m_DeviceDiffuseMaps; }
 	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceEmissiveMaps() { return m_DeviceEmissiveMaps; }
 
+	const DeviceVector<Material, D_Material>& GetDeviceMaterials() const { return m_DeviceMaterials; }
+	const DeviceVector<Texture, cudaTextureObject_t>& GetDeviceDiffuseMaps() const { return m_DeviceDiffuseMaps; }
+	const DeviceVector<Texture, cudaTextureObject_t>& GetDeviceEmissiveMaps() const { return m_DeviceEmissiveMaps; }
+
 	int AddTexture(const Texture& texture);
 	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
 

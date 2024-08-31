@@ -32,6 +32,7 @@ public:
 	void Invalidate() { m_Invalid = true; }
 	bool IsInvalid() { return m_Invalid || m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid() || m_AssetManager.IsInvalid(); }
 
+	void Update();
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
 	std::vector<MeshInstance>& GetMeshInstances() { return m_MeshInstances; }
@@ -43,7 +44,7 @@ public:
 	void RemoveLight(const size_t index);
 
 	// Create or update the device scene and returns a D_Scene object
-	static D_Scene ToDevice(Scene& scene);
+	static D_Scene ToDevice(const Scene& scene);
 
 private:
 	// Check if the instance is a light, and add it to the lights vector if it is

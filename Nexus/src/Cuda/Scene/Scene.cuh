@@ -8,11 +8,18 @@
 
 #include "Renderer/RenderSettings.h"
 
-using D_RenderSettings = RenderSettings;
+struct D_RenderSettings
+{
+	bool useMIS;
+	unsigned char pathLength;
+
+	float3 backgroundColor;
+	float backgroundIntensity;
+};
 
 struct D_Scene
 {
-	bool hasHdrMap = false;
+	bool hasHdrMap;
 	cudaTextureObject_t hdrMap;
 
 	cudaTextureObject_t* diffuseMaps;

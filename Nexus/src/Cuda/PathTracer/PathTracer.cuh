@@ -14,5 +14,10 @@
 
 #define PATH_MAX_LENGTH 30
 
-void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene, uint32_t frameNumber, float3* accumulationBuffer);
 
+__global__ void TraceRay();
+
+D_Scene* GetDeviceSceneAddress();
+float3** GetDeviceAccumulationBufferAddress();
+uint32_t** GetDeviceRenderBufferAddress();
+uint32_t* GetDeviceFrameNumberAddress();

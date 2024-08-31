@@ -14,6 +14,12 @@
 #include "Cuda/Sampler.cuh"
 #include "LogicStage.cuh"
 
+
+__device__ __constant__ uint32_t frameNumber;
+__device__ __constant__ float3* accumulationBuffer;
+__device__ __constant__ uint32_t* renderBuffer;
+__device__ __constant__ D_Scene scene;
+
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
 	float4 clamped = clamp(make_float4(color, 1.0f), make_float4(0.0f), make_float4(1.0f));
@@ -318,7 +324,7 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 	return emission;
 }
 
-__global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t frameNumber, float3* accumulationBuffer)
+__global__ void TraceRay()
 {
 	const int i = blockIdx.x * blockDim.x + threadIdx.x;
 	const int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -354,44 +360,33 @@ __global__ void TraceRay(const D_Scene scene, uint32_t* outBuffer, uint32_t fram
 
 	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
 
-	outBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
+	renderBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
 }
 
-void RenderViewport(PixelBuffer& pixelBuffer, const D_Scene& scene,
-	uint32_t frameNumber, float3* accumulationBuffer)
+D_Scene* GetDeviceSceneAddress()
 {
-	checkCudaErrors(cudaGraphicsMapResources(1, &pixelBuffer.GetCudaResource()));
-	size_t size = 0;
-	uint32_t* devicePtr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, pixelBuffer.GetCudaResource()));
+	D_Scene* deviceScene;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&deviceScene, scene));
+	return deviceScene;
+}
 
-	cudaGraph_t graph;
-	checkCudaErrors(cudaGraphCreate(&graph, 0));
+float3** GetDeviceAccumulationBufferAddress()
+{
+	float3** buffer;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&buffer, accumulationBuffer));
+	return buffer;
+}
 
-	cudaGraphNode_t graphNode;
-	cudaKernelNodeParams nodeParams = { 0 };
-	memset(&nodeParams, 0, sizeof(nodeParams));
+uint32_t** GetDeviceRenderBufferAddress()
+{
+	uint32_t** buffer;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&buffer, renderBuffer));
+	return buffer;
+}
 
-	nodeParams.func = (void*)TraceRay;
-	nodeParams.blockDim = dim3(8, 8, 1);
-	nodeParams.gridDim = dim3(8, 8, 1);
-	void* args[4] = { (void*)&scene, &devicePtr, &frameNumber, &accumulationBuffer};
-	nodeParams.kernelParams = args;
-	nodeParams.sharedMemBytes = 0;
-	nodeParams.extra = NULL;
-
-	checkCudaErrors(cudaGraphAddKernelNode(&graphNode, graph, NULL, 0, &nodeParams));
-
-	checkCudaErrors(cudaGraphDestroy(graph));
-	//int minGridSize, int blockSize;
-	//cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, TraceRay);
-	//std::cout << minGridSize << ", " << blockSize << std::endl;
-
-	dim3 blocks(pixelBuffer.GetWidth() / BLOCK_SIZE + 1, pixelBuffer.GetHeight() / BLOCK_SIZE + 1);
-	dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
-
-	TraceRay<<<blocks, threads>>>(scene, devicePtr, frameNumber, accumulationBuffer);
-
-	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaGraphicsUnmapResources(1, &pixelBuffer.GetCudaResource(), 0));
+uint32_t* GetDeviceFrameNumberAddress()
+{
+	uint32_t* target;
+	checkCudaErrors(cudaGetSymbolAddress((void**)&target, frameNumber));
+	return target;
 }

@@ -12,7 +12,7 @@
 
 Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* scene)
 	: m_ViewportWidth(width), m_ViewportHeight(height), m_Scene(scene), m_HierarchyPannel(scene),
-	m_MetricsPanel(scene), m_PixelBuffer(width, height), m_Texture(width, height)
+	m_MetricsPanel(scene), m_RenderTexture(width, height), m_PathTracer(width, height)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -23,13 +23,10 @@ Renderer::Renderer(uint32_t width, uint32_t height, GLFWwindow* window, Scene* s
     ImGui::StyleColorsCustomDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
-
-	checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
 }
 
 Renderer::~Renderer()
 {
-	checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
 	ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -37,7 +34,7 @@ Renderer::~Renderer()
 
 void Renderer::Reset()
 {
-	m_FrameNumber = 0;
+	m_PathTracer.Reset();
 	m_MetricsPanel.Reset();
 }
 
@@ -53,24 +50,26 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	RenderUI(scene);
 
 	if (scene.IsInvalid())
-		m_FrameNumber = 0;
+	{
+		scene.Update();
+		m_PathTracer.Reset();
+	}
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
 	if (!scene.IsEmpty())
 	{
 		//if (m_FrameNumber < 24)
 		//{
-			m_FrameNumber++;
+		m_PathTracer.UpdateDeviceScene(*m_Scene);
+		m_PathTracer.Render();
 
-			RenderViewport(m_PixelBuffer, Scene::ToDevice(scene), m_FrameNumber, m_AccumulationBuffer);
-
-			// Unpack the pixel buffer written by cuda to the renderer texture
-			UnpackToTexture();
+		// Unpack the pixel buffer written by cuda to the renderer texture
+		UnpackToTexture();
 		//}
 
 	}
 	else
-		m_FrameNumber = 0;
+		m_PathTracer.Reset();
 
 
 	ImGui::Render();
@@ -113,7 +112,7 @@ void Renderer::RenderUI(Scene& scene)
 					std::string fileName, filePath;
 					Utils::GetPathAndFileName(fullPath, filePath, fileName);
 					scene.AddHDRMap(filePath, fileName);
-					m_FrameNumber = 0;
+					m_PathTracer.Reset();
 				}
 			}
 
@@ -153,35 +152,32 @@ void Renderer::RenderUI(Scene& scene)
 	scene.GetCamera()->OnResize(viewportWidth, viewportHeight);
 	OnResize(viewportWidth, viewportHeight);
 
-	ImGui::Image((void *)(intptr_t)m_Texture.GetHandle(), ImVec2(m_Texture.GetWidth(), m_Texture.GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::Image((void *)(intptr_t)m_RenderTexture.GetHandle(), ImVec2(m_RenderTexture.GetWidth(), m_RenderTexture.GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
 
 	ImGui::End();
 	ImGui::PopStyleVar();
 	
 	m_HierarchyPannel.OnImGuiRender();
 
-	m_MetricsPanel.OnImGuiRender(m_FrameNumber);
+	m_MetricsPanel.OnImGuiRender(m_PathTracer.GetFrameNumber());
 }
 
 void Renderer::UnpackToTexture()
 {
-	m_Texture.Bind();
-	m_PixelBuffer.Bind();
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Texture.GetWidth(), m_Texture.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	m_PixelBuffer.Unbind();
+	m_RenderTexture.Bind();
+	const PixelBuffer& pixelBuffer = m_PathTracer.GetPixelBuffer();
+	pixelBuffer.Bind();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_RenderTexture.GetWidth(), m_RenderTexture.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	pixelBuffer.Unbind();
 }
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
 	if ((m_ViewportWidth != width || m_ViewportHeight != height) && width != 0 && height != 0)
 	{
-		m_FrameNumber = 0;
+		m_PathTracer.OnResize(width, height);
 		m_MetricsPanel.Reset();
-		m_Texture.OnResize(width, height);
-		m_PixelBuffer.OnResize(width, height);
-		checkCudaErrors(cudaFree((void*)m_AccumulationBuffer));
-		checkCudaErrors(cudaMalloc((void**)&m_AccumulationBuffer, width * height * sizeof(float3)));
-
+		m_RenderTexture.OnResize(width, height);
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
 	}
@@ -189,11 +185,11 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::SaveScreenshot()
 {
-	int width = m_Texture.GetWidth();
-	int height = m_Texture.GetHeight();
+	int width = m_RenderTexture.GetWidth();
+	int height = m_RenderTexture.GetHeight();
 	std::vector<unsigned char> pixels(width * height * 4);
 
-	glBindTexture(GL_TEXTURE_2D, m_Texture.GetHandle());
+	glBindTexture(GL_TEXTURE_2D, m_RenderTexture.GetHandle());
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 
