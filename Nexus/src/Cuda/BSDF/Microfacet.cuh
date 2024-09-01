@@ -15,7 +15,7 @@ public:
 		const float alphaSq = alpha * alpha;
 		const float cosThetaSq = mDotN * mDotN;
 		const float numerator = exp((cosThetaSq - 1.0f) / (alphaSq * cosThetaSq));
-		const float denominator = M_PI * alphaSq * cosThetaSq * cosThetaSq;
+		const float denominator = PI * alphaSq * cosThetaSq * cosThetaSq;
 		return numerator / denominator;
 	}
 

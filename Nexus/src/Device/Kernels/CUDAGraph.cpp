@@ -4,34 +4,33 @@
 
 CUDAGraph::CUDAGraph()
 {
-	checkCudaErrors(cudaGraphCreate(&m_Graph, 0));
-	checkCudaErrors(cudaStreamCreate(&m_Stream));
+	CheckCudaErrors(cudaGraphCreate(&m_Graph, 0));
+	CheckCudaErrors(cudaStreamCreate(&m_Stream));
 	BuildGraph();
 }
 
 CUDAGraph::~CUDAGraph()
 {
-	checkCudaErrors(cudaGraphExecDestroy(m_GraphExec));
-	checkCudaErrors(cudaStreamDestroy(m_Stream));
-	checkCudaErrors(cudaGraphDestroy(m_Graph));
+	CheckCudaErrors(cudaGraphExecDestroy(m_GraphExec));
+	CheckCudaErrors(cudaStreamDestroy(m_Stream));
+	CheckCudaErrors(cudaGraphDestroy(m_Graph));
 }
 
 void CUDAGraph::Reset()
 {
-	checkCudaErrors(cudaGraphDestroy(m_Graph));
-	checkCudaErrors(cudaGraphCreate(&m_Graph, 0));
+	CheckCudaErrors(cudaGraphDestroy(m_Graph));
+	CheckCudaErrors(cudaGraphCreate(&m_Graph, 0));
 }
 
 void CUDAGraph::BuildGraph()
 {
-	checkCudaErrors(cudaGraphInstantiate(&m_GraphExec, m_Graph, 0));
+	CheckCudaErrors(cudaGraphInstantiate(&m_GraphExec, m_Graph, 0));
 }
 
 void CUDAGraph::Execute()
 {
-	checkCudaErrors(cudaDeviceSynchronize());
-	checkCudaErrors(cudaGraphLaunch(m_GraphExec, 0));
-	checkCudaErrors(cudaDeviceSynchronize());
+	CheckCudaErrors(cudaDeviceSynchronize());
+	CheckCudaErrors(cudaGraphLaunch(m_GraphExec, m_Stream));
 }
 
 void CUDAGraph::AddKernelNode(CUDAKernel& kernel)
@@ -45,5 +44,5 @@ void CUDAGraph::AddKernelNode(CUDAKernel& kernel)
 	nodeParams.func = kernel.GetFunction();
 	nodeParams.sharedMemBytes = 0;
 
-	checkCudaErrors(cudaGraphAddKernelNode(&kernelNode, m_Graph, nullptr, 0, &nodeParams));
+	CheckCudaErrors(cudaGraphAddKernelNode(&kernelNode, m_Graph, nullptr, 0, &nodeParams));
 }

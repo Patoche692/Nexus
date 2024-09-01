@@ -91,14 +91,14 @@ void Renderer::RenderUI(Scene& scene)
 				);
 				if (!fullPath.empty())
 				{
-					checkCudaErrors(cudaDeviceSynchronize());
+					CheckCudaErrors(cudaDeviceSynchronize());
 					Reset();
 					scene.Reset();
 
 					std::string fileName, filePath;
 					Utils::GetPathAndFileName(fullPath, filePath, fileName);
 					scene.CreateMeshInstanceFromFile(filePath, fileName);
-					checkCudaErrors(cudaDeviceSynchronize());
+					CheckCudaErrors(cudaDeviceSynchronize());
 				}
 			}
 

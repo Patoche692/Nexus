@@ -11,7 +11,7 @@ public:
 	static T* Allocate(uint32_t count)
 	{
 		T* ptr;
-		checkCudaErrors(cudaMalloc((void**)&ptr, sizeof(T) * count));
+		CheckCudaErrors(cudaMalloc((void**)&ptr, sizeof(T) * count));
 		return ptr;
 	}
 
@@ -34,17 +34,17 @@ public:
 	template<typename T>
 	static void Copy(T* dst, T* src, uint32_t count, cudaMemcpyKind kind)
 	{
-		checkCudaErrors(cudaMemcpy((void*)dst, (void*)src, sizeof(T) * count, kind));
+		CheckCudaErrors(cudaMemcpy((void*)dst, (void*)src, sizeof(T) * count, kind));
 	}
 
 	template<typename T>
 	static void CopyAsync(T* dst, T* src, uint32_t count, cudaMemcpyKind kind)
 	{
-		checkCudaErrors(cudaMemcpyAsync((void*)dst, (void*)src, sizeof(T) * count, kind));
+		CheckCudaErrors(cudaMemcpyAsync((void*)dst, (void*)src, sizeof(T) * count, kind));
 	}
 
 	static void Free(void* ptr)
 	{
-		checkCudaErrors(cudaFree(ptr));
+		CheckCudaErrors(cudaFree(ptr));
 	}
 };

@@ -36,16 +36,16 @@ void PathTracer::Render()
 
 	m_DeviceFrameNumber = m_FrameNumber;
 
-	checkCudaErrors(cudaGraphicsMapResources(1, &m_PixelBuffer.GetCudaResource()));
+	CheckCudaErrors(cudaGraphicsMapResources(1, &m_PixelBuffer.GetCudaResource()));
 	size_t size = 0;
 	uint32_t* devicePtr = 0;
-	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, m_PixelBuffer.GetCudaResource()));
+	CheckCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)&devicePtr, &size, m_PixelBuffer.GetCudaResource()));
 	m_RenderBuffer = devicePtr;
 
 	m_RenderGraph.Execute();
 
-	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaGraphicsUnmapResources(1, &m_PixelBuffer.GetCudaResource(), 0));
+	CheckCudaErrors(cudaGetLastError());
+	CheckCudaErrors(cudaGraphicsUnmapResources(1, &m_PixelBuffer.GetCudaResource(), 0));
 }
 
 void PathTracer::OnResize(uint32_t width, uint32_t height)

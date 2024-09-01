@@ -4,11 +4,12 @@
 #include <iostream>
 #include "cuda_math.h"
 
-#define M_PI  3.14159265358979323846
+#define PI  3.14159265358979323846
 #define INV_PI 0.31830988618f
 #define TWO_TIMES_PI 6.28318530718f
 
-#define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
+#define CheckCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
+
 void check_cuda(cudaError_t result, char const* const func, const char* const file, int const line);
 
 namespace Utils
@@ -29,12 +30,12 @@ namespace Utils
 
 	inline __host__ __device__ float ToRadians(float angle)
 	{
-		return angle * M_PI / 180.0f;
+		return angle * PI / 180.0f;
 	}
 
 	inline __host__ __device__ float ToDegrees(float angle)
 	{
-		return angle * 180.0f / M_PI;
+		return angle * 180.0f / PI;
 	}
 
 	inline __host__ __device__ float3 LinearToGamma(const float3& color)

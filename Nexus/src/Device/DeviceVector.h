@@ -33,7 +33,7 @@ public:
 		m_Size = size;
 	}
 
-	DeviceVector(DeviceVector<THost, TDevice>& other)
+	DeviceVector(const DeviceVector<THost, TDevice>& other)
 		: m_Allocator(other.m_Allocator)
 	{
 		Realloc(other.Size());

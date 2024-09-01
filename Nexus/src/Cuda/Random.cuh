@@ -110,7 +110,7 @@ inline __device__ float3 Random::RandomCosineHemisphere(unsigned int& rngState)
 	float r2 = Rand(rngState);
 	float B = sqrt(r2);
 
-	float phi = 2 * M_PI * r1;
+	float phi = 2 * PI * r1;
 	float x = cos(phi) * B;
 	float y = sin(phi) * B;
 	float z = sqrt(1 - r2);
