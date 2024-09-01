@@ -15,10 +15,26 @@
 #include "LogicStage.cuh"
 
 
+struct D_PathStateSAO
+{
+	float3* origin;
+	float3* direction;
+	uint32_t* pixelIdx;
+
+	uint32_t size;
+};
+
+struct D_MaterialRequestSAO
+{
+	
+};
+
 __device__ __constant__ uint32_t frameNumber;
 __device__ __constant__ float3* accumulationBuffer;
 __device__ __constant__ uint32_t* renderBuffer;
 __device__ __constant__ D_Scene scene;
+__device__ __constant__ D_PathStateSAO pathState;
+
 
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
@@ -58,8 +74,8 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		const float phi = asin(direction.y);
 
 		// Equirectangular projection
-		const float u = (theta + M_PI) * INV_PI * 0.5;
-		const float v = 1.0f - (phi + M_PI * 0.5f) * INV_PI;
+		const float u = (theta + PI) * INV_PI * 0.5;
+		const float v = 1.0f - (phi + PI * 0.5f) * INV_PI;
 
 		backgroundColor = make_float3(tex2D<float4>(scene.hdrMap, u, v));
 	}
@@ -67,6 +83,67 @@ inline __device__ float3 SampleBackground(const D_Scene& scene, float3 direction
 		backgroundColor = scene.renderSettings.backgroundColor * scene.renderSettings.backgroundIntensity;
 	return backgroundColor;
 }
+
+__global__ void GenerateKernel()
+{
+	const uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	const uint32_t j = blockIdx.y * blockDim.y + threadIdx.y;
+
+	const uint2 pixel = make_uint2(i, j);
+
+	D_Camera camera = scene.camera;
+	uint2 resolution = camera.resolution;
+
+	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
+		return;
+
+	unsigned int rngState = Random::InitRNG(pixel, resolution, frameNumber);
+
+	// Normalized jittered coordinates
+	const float x = (pixel.x + Random::Rand(rngState)) / (float)resolution.x;
+	const float y = (pixel.y + Random::Rand(rngState)) / (float)resolution.y;
+
+	float2 rd = camera.lensRadius * Random::RandomInUnitDisk(rngState);
+	float3 offset = camera.right * rd.x + camera.up * rd.y;
+
+	D_Ray ray(
+		camera.position + offset,
+		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
+	);
+
+	const uint32_t index = i * resolution.x + j;
+	pathState.origin[index] = ray.origin;
+	pathState.direction[index] = ray.direction;
+	pathState.pixelIdx[index] = index;
+
+	atomicAdd(&pathState.size, 1);
+}
+
+
+__global__ void TraceKernel()
+{
+	const uint32_t index = atomicAdd(&pathState.size, -1);
+	D_Ray ray(
+		pathState.origin[index],
+		pathState.direction[index]
+	);
+	TLASTrace(scene.tlas, ray);
+
+
+}
+
+__global__ void TraceShadowKernel()
+{
+	const uint32_t index = atomicAdd(&pathState.size, -1);
+	D_Ray ray(
+		pathState.origin[index],
+		pathState.direction[index]
+	);
+	TLASTrace(scene.tlas, ray);
+
+
+}
+
 
 inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
 {
@@ -366,27 +443,27 @@ __global__ void TraceRay()
 D_Scene* GetDeviceSceneAddress()
 {
 	D_Scene* deviceScene;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&deviceScene, scene));
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&deviceScene, scene));
 	return deviceScene;
 }
 
 float3** GetDeviceAccumulationBufferAddress()
 {
 	float3** buffer;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&buffer, accumulationBuffer));
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&buffer, accumulationBuffer));
 	return buffer;
 }
 
 uint32_t** GetDeviceRenderBufferAddress()
 {
 	uint32_t** buffer;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&buffer, renderBuffer));
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&buffer, renderBuffer));
 	return buffer;
 }
 
 uint32_t* GetDeviceFrameNumberAddress()
 {
 	uint32_t* target;
-	checkCudaErrors(cudaGetSymbolAddress((void**)&target, frameNumber));
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, frameNumber));
 	return target;
 }

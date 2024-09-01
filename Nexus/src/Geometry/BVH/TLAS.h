@@ -10,37 +10,39 @@ struct TLASNode
 {
 	float3 aabbMin;
 	float3 aabbMax;
-	uint32_t leftRight;
-	uint32_t blasIdx;
-	inline bool IsLeaf() { return leftRight == 0; }
+	uint32_t left;
+	uint32_t right;
+	union
+	{
+		// If leaf: index of BLAS, if internal node: number of BLAS
+		uint32_t blasCount;
+		uint32_t blasIdx;
+	};
+	inline bool IsLeaf() const { return left == 0; }
 };
 
-class TLAS
+struct TLAS
 {
-public:
 	TLAS() = default;
-	TLAS(const std::vector<BVHInstance>& bvhList, const std::vector<BVH8>& bvhs);
+	TLAS(const std::vector<BVHInstance>& instancesList, const std::vector<BVH8>& bvhList);
 	void Build();
 
 	void UpdateDeviceData();
-	void SetBVHInstances(const std::vector<BVHInstance>& bvhInstances) { m_BvhInstances = bvhInstances; }
+	void SetBVHInstances(const std::vector<BVHInstance>& instances) { bvhInstances = instances; }
 
 	static D_TLAS ToDevice(const TLAS& tlas);
 
-	std::vector<BVHInstance>& GetInstances() { return m_BvhInstances; }
+	std::vector<BVHInstance>& GetInstances() { return bvhInstances; }
 
-private:
 	int FindBestMatch(int N, int A);
 
-private:
-
-	std::vector<TLASNode> m_Nodes;
-	std::vector<BVHInstance> m_BvhInstances;
-	std::vector<uint32_t> m_InstancesIdx;
-	std::vector<BVH8> m_Bvhs;
+	std::vector<TLASNode> nodes;
+	std::vector<BVHInstance> bvhInstances;
+	std::vector<uint32_t> instancesIdx;
+	std::vector<BVH8> bvhs;
 
 	// Device members
-	DeviceVector<TLASNode, D_TLASNode> m_DeviceNodes;
-	DeviceVector<BVHInstance, D_BVHInstance> m_DeviceBlas;
-	DeviceVector<BVH8, D_BVH8> m_DeviceBvhs;
+	DeviceVector<TLASNode, D_TLASNode> deviceNodes;
+	DeviceVector<BVHInstance, D_BVHInstance> deviceBlas;
+	DeviceVector<BVH8, D_BVH8> deviceBvhs;
 };
