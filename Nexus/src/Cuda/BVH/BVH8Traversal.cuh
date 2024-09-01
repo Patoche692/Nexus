@@ -186,16 +186,19 @@ inline __device__ void BVH8Trace(const D_BVH8& bvh8, D_Ray& ray, const uint32_t 
 			nodeEntry = make_uint2(0);
 		}
 
+		const float postponeThreshold = __popc(__activemask()) * POSTPONE_RATIO_THRESHOLD;
+
 		while (triangleEntry.y)
 		{
-			//float ratio = __popc(__activemask()) / (float)WARP_SIZE;
+			float ratio = __popc(__activemask());
 
-			// If the ratio of active threads in the warp is less than the threshold, postpone triangle intersection
-			//if (ratio < POSTPONE_RATIO_THRESHOLD)
-			//{
-			//	stack[stackPtr++] = triangleEntry;
-			//	break;
-			//}
+			// If the ratio of active threads in the warp performing triangle
+			// intersection is less than the threshold, postpone
+			if (ratio < postponeThreshold)
+			{
+				StackPush(sharedStack, stack, stackPtr, triangleEntry);
+				break;
+			}
 
 			const int triangleOffset = 31 - __clz(triangleEntry.y);
 
@@ -275,16 +278,19 @@ inline __device__ bool BVH8TraceShadow(const D_BVH8& bvh8, D_Ray& ray)
 			nodeEntry = make_uint2(0);
 		}
 
+		const float postponeThreshold = __popc(__activemask()) * POSTPONE_RATIO_THRESHOLD;
+
 		while (triangleEntry.y)
 		{
-			//float ratio = __popc(__activemask()) / (float)WARP_SIZE;
+			float ratio = __popc(__activemask());
 
-			// If the ratio of active threads in the warp is less than the threshold, postpone triangle intersection
-			//if (ratio < POSTPONE_RATIO_THRESHOLD)
-			//{
-			//	stack[stackPtr++] = triangleEntry;
-			//	break;
-			//}
+			// If the ratio of active threads in the warp performing triangle
+			// intersection is less than the threshold, postpone
+			if (ratio < postponeThreshold)
+			{
+				StackPush(sharedStack, stack, stackPtr, triangleEntry);
+				break;
+			}
 
 			const int triangleOffset = 31 - __clz(triangleEntry.y);
 

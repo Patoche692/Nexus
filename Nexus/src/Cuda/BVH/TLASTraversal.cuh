@@ -4,13 +4,6 @@
 #include "BVHInstanceTraversal.cuh"
 #include "Cuda/Geometry/AABB.cuh"
 
-struct PathState
-{
-
-};
-
-__device__ __constant__ PathState pathState;
-
 
 // TODO: convert TLAS to a BVH8
 inline __device__ void TLASTrace(const D_TLAS& tlas, D_Ray& ray)
@@ -30,8 +23,8 @@ inline __device__ void TLASTrace(const D_TLAS& tlas, D_Ray& ray)
 				node = stack[--stackPtr];
 			continue;
 		}
-		D_TLASNode* child1 = &tlas.nodes[node->leftRight & 0xffff];
-		D_TLASNode* child2 = &tlas.nodes[node->leftRight >> 16];
+		D_TLASNode* child1 = &tlas.nodes[node->right];
+		D_TLASNode* child2 = &tlas.nodes[node->left];
 		float dist1 = D_AABB::IntersectionAABB(ray, child1->aabbMin, child1->aabbMax);
 		float dist2 = D_AABB::IntersectionAABB(ray, child2->aabbMin, child2->aabbMax);
 
@@ -74,8 +67,8 @@ inline __device__ bool TLASTraceShadow(const D_TLAS& tlas, D_Ray& ray)
 				node = stack[--stackPtr];
 			continue;
 		}
-		D_TLASNode* child1 = &tlas.nodes[node->leftRight & 0xffff];
-		D_TLASNode* child2 = &tlas.nodes[node->leftRight >> 16];
+		D_TLASNode* child1 = &tlas.nodes[node->right];
+		D_TLASNode* child2 = &tlas.nodes[node->left];
 		float dist1 = D_AABB::IntersectionAABB(ray, child1->aabbMin, child1->aabbMax);
 		float dist2 = D_AABB::IntersectionAABB(ray, child2->aabbMin, child2->aabbMax);
 
