@@ -12,12 +12,8 @@ struct TLASNode
 	float3 aabbMax;
 	uint32_t left;
 	uint32_t right;
-	union
-	{
-		// If leaf: index of BLAS, if internal node: number of BLAS
-		uint32_t blasCount;
-		uint32_t blasIdx;
-	};
+	uint32_t blasCount;
+	uint32_t blasIdx;
 	inline bool IsLeaf() const { return left == 0; }
 };
 
@@ -26,6 +22,7 @@ struct TLAS
 	TLAS() = default;
 	TLAS(const std::vector<BVHInstance>& instancesList, const std::vector<BVH8>& bvhList);
 	void Build();
+	void Convert();
 
 	void UpdateDeviceData();
 	void SetBVHInstances(const std::vector<BVHInstance>& instances) { bvhInstances = instances; }
@@ -40,9 +37,14 @@ struct TLAS
 	std::vector<BVHInstance> bvhInstances;
 	std::vector<uint32_t> instancesIdx;
 	std::vector<BVH8> bvhs;
+	BVH8 bvh8;
 
 	// Device members
 	DeviceVector<TLASNode, D_TLASNode> deviceNodes;
 	DeviceVector<BVHInstance, D_BVHInstance> deviceBlas;
 	DeviceVector<BVH8, D_BVH8> deviceBvhs;
+
+	DeviceInstance<D_BVHInstance*> deviceBlasAddress;
+	DeviceInstance<D_BVH8*> deviceBvhsAddress;
+	DeviceInstance<BVH8, D_BVH8> deviceBvh8;
 };

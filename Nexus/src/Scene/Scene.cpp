@@ -2,6 +2,7 @@
 #include "Cuda/PathTracer/Pathtracer.cuh"
 #include "Utils/cuda_math.h"
 #include "Assets/IMGLoader.h"
+#include "Geometry/BVH/TLASBuilder.h"
 
 
 Scene::Scene(uint32_t width, uint32_t height)
@@ -44,6 +45,7 @@ void Scene::Update()
 		}
 		m_Tlas->SetBVHInstances(m_BVHInstances);
 		m_Tlas->Build();
+		m_Tlas->Convert();
 		m_Tlas->UpdateDeviceData();
 
 		m_InvalidMeshInstances.clear();
@@ -129,7 +131,8 @@ D_Scene Scene::ToDevice(const Scene& scene)
 	deviceScene.hdrMap = scene.m_DeviceHdrMap;
 	deviceScene.camera = Camera::ToDevice(*scene.m_Camera);
 
-	deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
+	//deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
+	//D_BVH8* deviceTlas = GetDeviceTLASAddress();
 
 	return deviceScene;
 }

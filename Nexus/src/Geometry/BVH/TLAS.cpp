@@ -1,8 +1,11 @@
 #include "TLAS.h"
 
 #include <cuda_runtime_api.h>
+#include "Geometry/BVH/TLASBuilder.h"
+#include "Cuda/PathTracer/PathTracer.cuh"
 
 TLAS::TLAS(const std::vector<BVHInstance>& instancesList, const std::vector<BVH8>& bvhList)
+	: deviceBvh8(GetDeviceTLASAddress()), deviceBlasAddress(GetDeviceBLASAddress()), deviceBvhsAddress(GetDeviceBVHAddress())
 {
 	bvhInstances = instancesList;
 	bvhs = bvhList;
@@ -23,6 +26,7 @@ void TLAS::Build()
 		node.aabbMin = bvhInstances[i].GetBounds().bMin;
 		node.aabbMax = bvhInstances[i].GetBounds().bMax;
 		node.blasIdx = i;
+		node.blasCount = 1;
 		node.left = 0;
 		node.right = 0;
 		nodes.push_back(node);
@@ -31,7 +35,6 @@ void TLAS::Build()
 	int nodeIndices = bvhInstances.size();
 	int A = 0, B = FindBestMatch(nodeIndices, A);
 
-	// TODO: handle case B = -1 (only one instance)
 	while (nodeIndices > 1)
 	{
 		int C = FindBestMatch(nodeIndices, B);
@@ -40,13 +43,10 @@ void TLAS::Build()
 			int nodeIdxA = instancesIdx[A], nodeIdxB = instancesIdx[B];
 			TLASNode& nodeA = nodes[nodeIdxA];
 			TLASNode& nodeB = nodes[nodeIdxB];
-			const uint32_t blasCountA = nodeA.IsLeaf() ? 1 : nodeA.blasCount;
-			const uint32_t blasCountB = nodeB.IsLeaf() ? 1 : nodeB.blasCount;
-
 			TLASNode newNode;
 			newNode.left = nodeIdxB;
 			newNode.right = nodeIdxA;
-			newNode.blasCount = blasCountA + blasCountB;
+			newNode.blasCount = nodeA.blasCount + nodeB.blasCount;
 			newNode.aabbMin = fminf(nodeA.aabbMin, nodeB.aabbMin);
 			newNode.aabbMax = fmaxf(nodeA.aabbMax, nodeB.aabbMax);
 			instancesIdx[A] = nodes.size();
@@ -59,13 +59,15 @@ void TLAS::Build()
 	}
 
 	nodes[0] = nodes[instancesIdx[A]];
-	TLASNode& nodeA = nodes[nodes[0].left];
-	TLASNode& nodeB = nodes[nodes[0].right];
-	const uint32_t blasCountA = nodeA.IsLeaf() ? 1 : nodeA.blasCount;
-	const uint32_t blasCountB = nodeB.IsLeaf() ? 1 : nodeB.blasCount;
-	nodes[0].blasCount = blasCountA + blasCountB;
 
 	deviceNodes = DeviceVector<TLASNode, D_TLASNode>(nodes.size());
+}
+
+void TLAS::Convert()
+{
+	TLASBuilder tlasBuilder(*this);
+	tlasBuilder.Init();
+	bvh8 = tlasBuilder.Build();
 }
 
 int TLAS::FindBestMatch(int N, int A)
@@ -93,14 +95,20 @@ int TLAS::FindBestMatch(int N, int A)
 
 void TLAS::UpdateDeviceData()
 {
+	bvh8.InitDeviceData();
 	deviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(bvhInstances);
 	deviceNodes = DeviceVector<TLASNode, D_TLASNode>(nodes);
 	deviceBvhs = DeviceVector<BVH8, D_BVH8>(bvhs);
+
+	deviceBvh8 = bvh8;
+	deviceBlasAddress = deviceBlas.Data();
+	deviceBvhsAddress = deviceBvhs.Data();
 }
 
 D_TLAS TLAS::ToDevice(const TLAS& tlas)
 {
 	D_TLAS deviceTlas;
+
 	deviceTlas.blas = tlas.deviceBlas.Data();
 	deviceTlas.nodes = tlas.deviceNodes.Data();
 	deviceTlas.bvhs = tlas.deviceBvhs.Data();

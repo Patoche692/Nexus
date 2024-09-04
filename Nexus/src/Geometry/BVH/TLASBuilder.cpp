@@ -17,6 +17,7 @@ BVH8 TLASBuilder::Build()
 {
     m_UsedNodes = 1;
     BVH8 bvh8;
+    bvh8.triangleIdx = m_Tlas.instancesIdx;
     bvh8.nodes.emplace_back();
     CollapseNode(bvh8, 0, 0);
     std::cout << "Used nodes: " << m_UsedNodes << std::endl;
@@ -25,7 +26,7 @@ BVH8 TLASBuilder::Build()
 
 float TLASBuilder::CLeaf(const TLASNode& node, int blasCount)
 {
-    if (blasCount > 1)
+    if (blasCount > P_MAX)
 		return 1.0e30f;
 
     AABB nodeAABB(node.aabbMin, node.aabbMax);
@@ -237,8 +238,9 @@ int TLASBuilder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxBvh2)
 
 	if (bvh2Node.IsLeaf())
     {
-
-		return bvh2Node.blasCount;
+		bvh8.triangleIdx[m_UsedIndices++] = bvh2Node.blasIdx;
+        assert(bvh2Node.blasIdx < 8);
+		return 1;
 	}
 
 	return CountTriangles(bvh8, bvh2Node.left) + CountTriangles(bvh8, bvh2Node.right);
@@ -309,9 +311,10 @@ void TLASBuilder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
             bvh8Node.qloz[i] = static_cast<byte>(floorf((childNode.aabbMin.z - bvh8Node.p.z) * scaleZ));
 
             // Encode the child's bounding box end point
-            bvh8Node.qhix[i] = static_cast<byte>(ceilf((childNode.aabbMax.x - bvh8Node.p.x) * scaleX));
-            bvh8Node.qhiy[i] = static_cast<byte>(ceilf((childNode.aabbMax.y - bvh8Node.p.y) * scaleY));
-            bvh8Node.qhiz[i] = static_cast<byte>(ceilf((childNode.aabbMax.z - bvh8Node.p.z) * scaleZ));
+            const float qhix = ceilf((childNode.aabbMax.x - bvh8Node.p.x) * scaleX);
+            bvh8Node.qhix[i] = static_cast<byte>(std::min(ceilf((childNode.aabbMax.x - bvh8Node.p.x) * scaleX), 255.0f));
+            bvh8Node.qhiy[i] = static_cast<byte>(std::min(ceilf((childNode.aabbMax.y - bvh8Node.p.y) * scaleY), 255.0f));
+            bvh8Node.qhiz[i] = static_cast<byte>(std::min(ceilf((childNode.aabbMax.z - bvh8Node.p.z) * scaleZ), 255.0f));
 
             if (eval.decision == Decision::INTERNAL)
             {
@@ -325,7 +328,7 @@ void TLASBuilder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
             }
             else if (eval.decision == Decision::LEAF)
             {
-                const int nTriangles = CountTriangles(bvh8, childrenIndices[i]);
+                const int nTriangles =  CountTriangles(bvh8, childrenIndices[i]);
                 assert(nTriangles <= P_MAX);
 
                 bvh8Node.meta[i] = 0;

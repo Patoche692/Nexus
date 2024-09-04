@@ -13,7 +13,7 @@ class TLASBuilder
 {
 public:
 
-	TLASBuilder(const TLAS& blas);
+	TLASBuilder(const TLAS& tlas);
 
 	enum struct Decision
 	{

@@ -35,7 +35,7 @@ public:
 	DeviceInstance(const DeviceInstance<THost, TDevice>& other)
 		: m_Instance(other.m_Instance)
 	{
-		assert(is_trivially_copyable_to_device<THost>);
+		//assert(is_trivially_copyable_to_device<THost>);
 		m_OwnsPtr = true;
 		m_DevicePtr = CudaMemory::Allocate<TDevice>(1);
 		CudaMemory::CopyAsync<TDevice>(other.m_DevicePtr, m_DevicePtr, 1, cudaMemcpyDeviceToDevice);

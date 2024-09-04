@@ -265,7 +265,7 @@ int BVH8Builder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxBvh2)
 	if (bvh2Node.IsLeaf())
     {
 
-		for (unsigned i = 0; i < bvh2Node.triCount; i++)
+		for (size_t i = 0; i < bvh2Node.triCount; i++)
         {
 			bvh8.triangleIdx[m_UsedIndices++] = m_Bvh2.triangleIdx[bvh2Node.firstTriIdx + i];
 		}
