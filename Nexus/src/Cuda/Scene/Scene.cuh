@@ -25,7 +25,7 @@ struct D_Scene
 	cudaTextureObject_t* diffuseMaps;
 	cudaTextureObject_t* emissiveMaps;
 
-	D_TLAS tlas;
+	//D_TLAS tlas;
 
 	D_Light* lights;
 	uint32_t lightCount;
