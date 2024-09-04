@@ -21,3 +21,6 @@ D_Scene* GetDeviceSceneAddress();
 float3** GetDeviceAccumulationBufferAddress();
 uint32_t** GetDeviceRenderBufferAddress();
 uint32_t* GetDeviceFrameNumberAddress();
+D_BVH8* GetDeviceTLASAddress();
+D_BVH8** GetDeviceBVHAddress();
+D_BVHInstance** GetDeviceBLASAddress();

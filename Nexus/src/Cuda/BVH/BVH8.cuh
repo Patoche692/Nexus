@@ -64,8 +64,8 @@ struct D_BVH8Node
 
 struct D_BVH8
 {
-	D_Triangle* triangles = nullptr;
-	uint32_t* triangleIdx = nullptr;
+	D_Triangle* triangles;
+	uint32_t* triangleIdx;
 	uint32_t nodesUsed, triCount;
-	D_BVH8Node* nodes = nullptr;
+	D_BVH8Node* nodes;
 };

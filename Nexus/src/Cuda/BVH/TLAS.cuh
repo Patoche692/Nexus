@@ -9,6 +9,7 @@ struct D_TLASNode
 	float3 aabbMax;
 	uint32_t left;
 	uint32_t right;
+	uint32_t blasCount;
 	uint32_t blasIdx;
 	inline __device__ bool IsLeaf() { return left == 0; }
 };
