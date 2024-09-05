@@ -20,8 +20,21 @@ void BVH2::Build()
 	root.triCount = triangles.size();
 	nodes.push_back(root);
 
+	ComputeTrianglesAABB();
 	UpdateNodeBounds(0);
 	Subdivide(0);
+}
+
+void BVH2::ComputeTrianglesAABB()
+{
+	for (const Triangle& triangle: triangles)
+	{
+		AABB triangleAABB;
+		triangleAABB.Grow(triangle.pos0);
+		triangleAABB.Grow(triangle.pos1);
+		triangleAABB.Grow(triangle.pos2);
+		trianglesAABB.push_back(triangleAABB);
+	}
 }
 
 void BVH2::SplitNodeInHalf(BVH2Node& node)
@@ -128,13 +141,9 @@ void BVH2::UpdateNodeBounds(uint32_t nodeIdx)
 	for (uint32_t first = node.firstTriIdx, i = 0; i < node.triCount; i++)
 	{
 		uint32_t leafTriIdx = triangleIdx[first + i];
-		Triangle& leafTri = triangles[leafTriIdx];
-		node.aabbMin = fminf(node.aabbMin, leafTri.pos0);
-		node.aabbMin = fminf(node.aabbMin, leafTri.pos1);
-		node.aabbMin = fminf(node.aabbMin, leafTri.pos2);
-		node.aabbMax = fmaxf(node.aabbMax, leafTri.pos0);
-		node.aabbMax = fmaxf(node.aabbMax, leafTri.pos1);
-		node.aabbMax = fmaxf(node.aabbMax, leafTri.pos2);
+		const AABB& triangleAABB = trianglesAABB[leafTriIdx];
+		node.aabbMin = fminf(node.aabbMin, triangleAABB.bMin);
+		node.aabbMax = fmaxf(node.aabbMax, triangleAABB.bMax);
 	}
 }
 
@@ -159,12 +168,12 @@ float BVH2::FindBestSplitPlane(const BVH2Node& node, int& axis, double& splitPos
 		for (uint32_t i = 0; i < node.triCount; i++)
 		{
 			Triangle& triangle = triangles[triangleIdx[node.firstTriIdx + i]];
+			const AABB triangleAABB = trianglesAABB[triangleIdx[node.firstTriIdx + i]];
 			float centroidCoord = *((float*)&triangle.centroid + a);
 			int binIdx = min((int)(BINS - 1), (int)((centroidCoord - boundsMin) * scale));
 			bins[binIdx].triCount++;
-			bins[binIdx].bounds.Grow(triangle.pos0);
-			bins[binIdx].bounds.Grow(triangle.pos1);
-			bins[binIdx].bounds.Grow(triangle.pos2);
+			bins[binIdx].bounds.bMin = fminf(bins[binIdx].bounds.bMin, triangleAABB.bMin);
+			bins[binIdx].bounds.bMax = fmaxf(bins[binIdx].bounds.bMax, triangleAABB.bMax);
 		}
 
 		float leftArea[BINS - 1], rightArea[BINS - 1];
