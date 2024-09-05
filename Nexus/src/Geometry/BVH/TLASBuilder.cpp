@@ -1,6 +1,6 @@
 #include "TLASBuilder.h"
 
-TLASBuilder::TLASBuilder(const TLAS& tlas) : m_Tlas(tlas)
+TLASBuilder::TLASBuilder(TLAS& tlas) : m_Tlas(tlas)
 {
     m_Evals = std::vector<std::vector<NodeEval>>(m_Tlas.nodes.size(), std::vector<NodeEval>(7));
     m_TriCount = std::vector<int>(m_Tlas.nodes.size());
@@ -232,33 +232,33 @@ void TLASBuilder::OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices)
 
 }
 
-int TLASBuilder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxBvh2)
+int TLASBuilder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxTlas)
 {
-	const TLASNode& bvh2Node = m_Tlas.nodes[nodeIdxBvh2];
+	const TLASNode& tlasNode = m_Tlas.nodes[nodeIdxTlas];
 
-	if (bvh2Node.IsLeaf())
+	if (tlasNode.IsLeaf())
     {
-		bvh8.triangleIdx[m_UsedIndices++] = bvh2Node.blasIdx;
-        assert(bvh2Node.blasIdx < 8);
+		bvh8.triangleIdx[m_UsedIndices++] = tlasNode.blasIdx;
+        assert(tlasNode.blasIdx < 8);
 		return 1;
 	}
 
-	return CountTriangles(bvh8, bvh2Node.left) + CountTriangles(bvh8, bvh2Node.right);
+	return CountTriangles(bvh8, tlasNode.left) + CountTriangles(bvh8, tlasNode.right);
 }
 
 
-void TLASBuilder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeIdxBvh8)
+void TLASBuilder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxTlas, uint32_t nodeIdxBvh8)
 {
-    const TLASNode& bvh2Node = m_Tlas.nodes[nodeIdxBvh2];
+    const TLASNode& tlasNode = m_Tlas.nodes[nodeIdxTlas];
 
     BVH8Node& bvh8Node = bvh8.nodes[nodeIdxBvh8];
 
     const float denom = 1.0f / (float)((1 << N_Q) - 1);
     
     // e along each axis
-    const float ex = ceilf(log2f((bvh2Node.aabbMax.x - bvh2Node.aabbMin.x) * denom));
-    const float ey = ceilf(log2f((bvh2Node.aabbMax.y - bvh2Node.aabbMin.y) * denom));
-    const float ez = ceilf(log2f((bvh2Node.aabbMax.z - bvh2Node.aabbMin.z) * denom));
+    const float ex = ceilf(log2f((tlasNode.aabbMax.x - tlasNode.aabbMin.x) * denom));
+    const float ey = ceilf(log2f((tlasNode.aabbMax.y - tlasNode.aabbMin.y) * denom));
+    const float ez = ceilf(log2f((tlasNode.aabbMax.z - tlasNode.aabbMin.z) * denom));
 
     float exe = exp2f(ex);
     float eye = exp2f(ey);
@@ -271,17 +271,17 @@ void TLASBuilder::CollapseNode(BVH8& bvh8, uint32_t nodeIdxBvh2, uint32_t nodeId
     bvh8Node.childBaseIdx = m_UsedNodes;
     bvh8Node.triangleBaseIdx = m_UsedIndices;
 
-    bvh8Node.p = bvh2Node.aabbMin;
+    bvh8Node.p = tlasNode.aabbMin;
     bvh8Node.imask = 0;
 
     int childrenIndices[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int indicesCount = 0;
 
     // Fill the array of children indices
-	GetChildrenIndices(nodeIdxBvh2, childrenIndices, 0, indicesCount);
+	GetChildrenIndices(nodeIdxTlas, childrenIndices, 0, indicesCount);
 
     // Order the children according to the octant traversal order
-    OrderChildren(nodeIdxBvh2, childrenIndices);
+    OrderChildren(nodeIdxTlas, childrenIndices);
 
     // Sum of triangles number in the node
     int nTrianglesTotal = 0;

@@ -13,7 +13,7 @@ class TLASBuilder
 {
 public:
 
-	TLASBuilder(const TLAS& tlas);
+	TLASBuilder(TLAS& tlas);
 
 	enum struct Decision
 	{
@@ -61,7 +61,7 @@ private:
 	void OrderChildren(uint32_t nodeIdxBvh2, int* childrenIndices);
 
 private:
-	TLAS m_Tlas;
+	TLAS& m_Tlas;
 
 	// Optimal SAH cost C(n, i) with decisions
 	std::vector<std::vector<NodeEval>> m_Evals;

@@ -11,9 +11,6 @@ public:
 
 	BVH8Builder(const std::vector<Triangle>& triangles);
 
-	// Init from another BVH2 that must already be built
-	BVH8Builder(const BVH2& bvh);
-
 	enum struct Decision
 	{
 		UNDEFINED = -1,

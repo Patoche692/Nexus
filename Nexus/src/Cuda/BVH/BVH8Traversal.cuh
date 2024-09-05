@@ -335,7 +335,7 @@ inline __device__ bool BVH8TraceShadow(D_Ray& ray)
 			// index is thus the number of neighboring internal nodes stored in the lower child slots
 			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
 
-			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
+			assert(nodeEntry.x + relativeNodeIdx < bvh.nodesUsed);
 
 			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
 		}
@@ -403,7 +403,7 @@ inline __device__ bool BVH8TraceShadow(D_Ray& ray)
 			// Fetch the triangle index
 			const uint32_t triangleIdx = bvh.triangleIdx[triangleEntry.x + triangleOffset];
 
-			assert(triangleIdx < bvh8.triCount);
+			assert(triangleIdx < bvh.triCount);
 
 			// Ray triangle intersection
 			if (bvh.triangles[triangleIdx].ShadowTrace(ray))
