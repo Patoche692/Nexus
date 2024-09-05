@@ -146,6 +146,8 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
 	int stackPtr = 0;
 
+	const D_Ray backupRay = ray;
+
 	uint32_t idx;
 	int32_t instanceStackDepth = -1;
 	uint32_t instanceIdx = -1;
@@ -157,7 +159,6 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 	uint32_t invOctant4 = invOctant * 0x01010101;
 
 	D_BVH8Node* nodes = tlas.nodes;
-	const D_Ray backupRay = ray;
 	// We set the hits bit of the root node to 1
 	nodeEntry.y |= 0x80000000;
 
@@ -281,101 +282,160 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 			nodeEntry = StackPop(sharedStack, stack, stackPtr);
 		}
 	}
+	ray.origin = backupRay.origin;
+	ray.direction = backupRay.direction;
+	ray.invDirection = backupRay.invDirection;
 }
 
 
 // Shadow ray tracing: true if any hit
-//inline __device__ bool BVH8TraceShadow(const D_BVH8& bvh8, D_Ray& ray)
-//{
-//	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
-//	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
-//	int stackPtr = 0;
-//
-//	uint32_t idx;
-//	int32_t instanceStackDepth = -1;
-//	uint32_t instanceIdx = -1;
-//	D_BVH8 bvh = tlas;
-//
-//	uint2 nodeEntry = make_uint2(0);
-//	uint2 triangleEntry = make_uint2(0);
-//	const uint32_t invOctant = 7 - Octant(ray.direction);
-//	const uint32_t invOctant4 = invOctant * 0x01010101;
-//
-//	const D_BVH8Node* nodes = bvh8.nodes;
-//	// We set the hits bit of the root node to 1
-//	nodeEntry.y |= 0x80000000;
-//
-//	while (true)
-//	{
-//		// If the hits field is different from 0, it is an internal node entry
-//		if (nodeEntry.y & 0xff000000)
-//		{
-//			// Position of the first non zero bit
-//			const int nodeOffset = 31 - __clz(nodeEntry.y);
-//
-//			// Set the hits bit of the selected node to 0
-//			nodeEntry.y &= ~(1 << nodeOffset);
-//
-//			// If some nodes are remaining in the hits field
-//			if (nodeEntry.y & 0xff000000)
-//			{
-//				StackPush(sharedStack, stack, stackPtr, nodeEntry);
-//			};
-//
-//			// Slot in (0 .. 7) referring to the octant order in which the node should be traversed
-//			const int nodeSlot = (nodeOffset - 24) ^ invOctant;
-//
-//			// We need to account for the number of internal nodes in the parent node. The relative
-//			// index is thus the number of neighboring internal nodes stored in the lower child slots
-//			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
-//
-//			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
-//
-//			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
-//		}
-//		else
-//		{
-//			triangleEntry = nodeEntry;
-//			nodeEntry = make_uint2(0);
-//		}
-//
-//		const float postponeThreshold = __popc(__activemask()) * POSTPONE_RATIO_THRESHOLD;
-//
-//		while (triangleEntry.y)
-//		{
-//			float ratio = __popc(__activemask());
-//
-//			// If the ratio of active threads in the warp performing triangle
-//			// intersection is less than the threshold, postpone
-//			if (ratio < postponeThreshold)
-//			{
-//				StackPush(sharedStack, stack, stackPtr, triangleEntry);
-//				break;
-//			}
-//
-//			const int triangleOffset = 31 - __clz(triangleEntry.y);
-//
-//			// Set the hits bit of the selected triangle to 0
-//			triangleEntry.y &= ~(1 << (triangleOffset));
-//
-//			// Fetch the triangle index
-//			const uint32_t triangleIdx = bvh8.triangleIdx[triangleEntry.x + triangleOffset];
-//
-//			assert(triangleIdx < bvh8.triCount);
-//
-//			// Ray triangle intersection
-//			if (bvh8.triangles[triangleIdx].ShadowTrace(ray))
-//				return true;
-//		}
-//
-//		// If the node entry is empty (hits field equals 0), pop from the stack
-//		if ((nodeEntry.y & 0xff000000) == 0)
-//		{
-//			if (stackPtr == 0)
-//				break;
-//
-//			nodeEntry = StackPop(sharedStack, stack, stackPtr);
-//		}
-//	}
-//	return false;
-//}
+inline __device__ bool BVH8TraceShadow(D_Ray& ray)
+{
+	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
+	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
+	int stackPtr = 0;
+
+	const D_Ray backupRay = ray;
+
+	uint32_t idx;
+	int32_t instanceStackDepth = -1;
+	uint32_t instanceIdx = -1;
+	D_BVH8 bvh = tlas;
+
+	uint2 nodeEntry = make_uint2(0);
+	uint2 triangleEntry = make_uint2(0);
+	uint32_t invOctant = 7 - Octant(ray.direction);
+	uint32_t invOctant4 = invOctant * 0x01010101;
+
+	const D_BVH8Node* nodes = tlas.nodes;
+	// We set the hits bit of the root node to 1
+	nodeEntry.y |= 0x80000000;
+
+	while (true)
+	{
+		// If the hits field is different from 0, it is an internal node entry
+		if (nodeEntry.y & 0xff000000)
+		{
+			// Position of the first non zero bit
+			const int nodeOffset = 31 - __clz(nodeEntry.y);
+
+			// Set the hits bit of the selected node to 0
+			nodeEntry.y &= ~(1 << nodeOffset);
+
+			// If some nodes are remaining in the hits field
+			if (nodeEntry.y & 0xff000000)
+			{
+				StackPush(sharedStack, stack, stackPtr, nodeEntry);
+			};
+
+			// Slot in (0 .. 7) referring to the octant order in which the node should be traversed
+			const int nodeSlot = (nodeOffset - 24) ^ invOctant;
+
+			// We need to account for the number of internal nodes in the parent node. The relative
+			// index is thus the number of neighboring internal nodes stored in the lower child slots
+			const int relativeNodeIdx = __popc(nodeEntry.y & ~(0xffffffff << nodeSlot));
+
+			assert(nodeEntry.x + relativeNodeIdx < bvh8.nodesUsed);
+
+			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
+		}
+		else
+		{
+			triangleEntry = nodeEntry;
+			nodeEntry = make_uint2(0);
+		}
+
+		const float postponeThreshold = __popc(__activemask()) * POSTPONE_RATIO_THRESHOLD;
+
+		while (triangleEntry.y)
+		{
+			// We reached a TLAS leaf == BVHInstance
+			if (instanceStackDepth == -1)
+			{
+				const int triangleOffset = 31 - __clz(triangleEntry.y);
+
+				// Set the hits bit of the selected triangle to 0
+				triangleEntry.y &= ~(1 << (triangleOffset));
+
+				instanceIdx = tlas.triangleIdx[triangleEntry.x + triangleOffset];
+
+				// If some leaf entries are remaining in TLAS
+				if (triangleEntry.y)
+					StackPush(sharedStack, stack, stackPtr, triangleEntry);
+
+				// If some child nodes are remaining in TLAS node entry
+				if (nodeEntry.y & 0xff000000)
+					StackPush(sharedStack, stack, stackPtr, nodeEntry);
+
+				instanceStackDepth = stackPtr;
+
+				const D_BVHInstance& bvhInstance = blas[instanceIdx];
+				bvh = bvhs[bvhInstance.bvhIdx];
+				nodes = bvh.nodes;
+
+				nodeEntry = make_uint2(0, 0x80000000);
+
+				invOctant = 7 - Octant(ray.direction);
+				invOctant4 = invOctant * 0x01010101;
+
+				ray.origin = bvhInstance.invTransform.TransformPoint(ray.origin);
+				ray.direction = bvhInstance.invTransform.TransformVector(ray.direction);
+				ray.invDirection = 1.0f / ray.direction;
+
+				break;
+			}
+
+			float ratio = __popc(__activemask());
+
+			// If the ratio of active threads in the warp performing triangle
+			// intersection is less than the threshold, postpone
+			if (ratio < postponeThreshold)
+			{
+				StackPush(sharedStack, stack, stackPtr, triangleEntry);
+				break;
+			}
+
+			const int triangleOffset = 31 - __clz(triangleEntry.y);
+
+			// Set the hits bit of the selected triangle to 0
+			triangleEntry.y &= ~(1 << (triangleOffset));
+
+			// Fetch the triangle index
+			const uint32_t triangleIdx = bvh.triangleIdx[triangleEntry.x + triangleOffset];
+
+			assert(triangleIdx < bvh8.triCount);
+
+			// Ray triangle intersection
+			if (bvh.triangles[triangleIdx].ShadowTrace(ray))
+				return true;
+		}
+
+		// If the node entry is empty (hits field equals 0), pop from the stack
+		if ((nodeEntry.y & 0xff000000) == 0)
+		{
+			if (stackPtr == 0)
+				break;
+
+			if (stackPtr == instanceStackDepth)
+			{
+				ray.origin = backupRay.origin;
+				ray.direction = backupRay.direction;
+				ray.invDirection = backupRay.invDirection;
+
+				invOctant = 7 - Octant(ray.direction);
+				invOctant4 = invOctant * 0x01010101;
+				bvh = tlas;
+				nodes = tlas.nodes;
+
+				instanceStackDepth = -1;
+			}
+
+			nodeEntry = StackPop(sharedStack, stack, stackPtr);
+		}
+	}
+	ray.origin = backupRay.origin;
+	ray.direction = backupRay.direction;
+	ray.invDirection = backupRay.invDirection;
+
+	return false;
+}

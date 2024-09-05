@@ -145,104 +145,104 @@ __global__ void TraceShadowKernel()
 }
 
 
-//inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
-//{
-//	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
-//
-//	if (light.type == D_Light::Type::MESH_LIGHT)
-//	{
-//		D_BVHInstance instance = blas[light.mesh.meshId];
-//
-//		uint32_t triangleIdx;
-//		float2 uv;
-//		Sampler::UniformSampleMesh(scene.tlas.bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
-//
-//		D_Triangle triangle = scene.tlas.bvhs[instance.bvhIdx].triangles[triangleIdx];
-//
-//		const float3 edge1 = triangle.pos1 - triangle.pos0;
-//		const float3 edge2 = triangle.pos2 - triangle.pos0;
-//		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
-//		p = instance.transform.TransformPoint(p);
-//
-//		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
-//		const float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
-//
-//		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
-//
-//		float3 shadingNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
-//		shadingNormal = normalize(instance.transform.TransformVector(shadingNormal));
-//
-//		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
-//		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
-//
-//		//if (wiGeometryBackSide != wiShadingBackSide)
-//		//	return make_float3(0.0f);
-//
-//		D_Ray shadowRay;
-//		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
-//		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitResult.normal;
-//
-//		const float3 toLight = p - shadowRay.origin;
-//		const float distance = length(toLight);
-//		shadowRay.direction = toLight / distance;
-//		shadowRay.invDirection = 1.0f / shadowRay.direction;
-//		shadowRay.hit.t = distance;
-//
-//		const float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
-//
-//		bool anyHit = TLASTraceShadow(scene.tlas, shadowRay);
-//
-//		if (anyHit)
-//			return make_float3(0.0f);
-//
-//		const float cosThetaO = fabs(dot(shadingNormal, shadowRay.direction));
-//
-//		const float dSquared = dot(toLight, toLight);
-//
-//		float lightPdf = 1.0f / (scene.lightCount * scene.tlas.bvhs[instance.bvhIdx].triCount * triangle.Area());
-//		// Transform pdf over an area to pdf over directions
-//		lightPdf *= dSquared / cosThetaO;
-//
-//		if (!Sampler::IsPdfValid(lightPdf))
-//			return make_float3(0.0f);
-//
-//		const D_Material& material = scene.materials[instance.materialId];
-//
-//		float3 throughput;
-//		float bsdfPdf;
-//		bool sampleIsValid;
-//
-//		switch (hitResult.material.type)
-//		{
-//		case D_Material::D_Type::DIFFUSE:
-//			sampleIsValid = D_BSDF::Eval<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-//			break;
-//		case D_Material::D_Type::PLASTIC:
-//			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-//			break;
-//		case D_Material::D_Type::DIELECTRIC:
-//			sampleIsValid = D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-//			break;
-//		}
-//
-//		if (!sampleIsValid)
-//			return make_float3(0.0f);
-//
-//		//const float weight = 1.0f;
-//		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
-//
-//		float3 emissive;
-//		if (material.emissiveMapId != -1)
-//		{
-//			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
-//			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
-//		}
-//		else
-//			emissive = material.emissive;
-//
-//		return weight * throughput * emissive * material.intensity / lightPdf;
-//	}
-//}
+inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
+{
+	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
+
+	if (light.type == D_Light::Type::MESH_LIGHT)
+	{
+		D_BVHInstance instance = blas[light.mesh.meshId];
+
+		uint32_t triangleIdx;
+		float2 uv;
+		Sampler::UniformSampleMesh(bvhs[instance.bvhIdx], rngState, triangleIdx, uv);
+
+		D_Triangle triangle = bvhs[instance.bvhIdx].triangles[triangleIdx];
+
+		const float3 edge1 = triangle.pos1 - triangle.pos0;
+		const float3 edge2 = triangle.pos2 - triangle.pos0;
+		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
+		p = instance.transform.TransformPoint(p);
+
+		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
+		const float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+
+		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
+		float3 shadingNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
+		shadingNormal = normalize(instance.transform.TransformVector(shadingNormal));
+
+		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
+		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
+
+		//if (wiGeometryBackSide != wiShadingBackSide)
+		//	return make_float3(0.0f);
+
+		D_Ray shadowRay;
+		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
+		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitResult.normal;
+
+		const float3 toLight = p - shadowRay.origin;
+		const float distance = length(toLight);
+		shadowRay.direction = toLight / distance;
+		shadowRay.invDirection = 1.0f / shadowRay.direction;
+		shadowRay.hit.t = distance;
+
+		const float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
+
+		bool anyHit = BVH8TraceShadow(shadowRay);
+
+		if (anyHit)
+			return make_float3(0.0f);
+
+		const float cosThetaO = fabs(dot(shadingNormal, shadowRay.direction));
+
+		const float dSquared = dot(toLight, toLight);
+
+		float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangle.Area());
+		// Transform pdf over an area to pdf over directions
+		lightPdf *= dSquared / cosThetaO;
+
+		if (!Sampler::IsPdfValid(lightPdf))
+			return make_float3(0.0f);
+
+		const D_Material& material = scene.materials[instance.materialId];
+
+		float3 throughput;
+		float bsdfPdf;
+		bool sampleIsValid;
+
+		switch (hitResult.material.type)
+		{
+		case D_Material::D_Type::DIFFUSE:
+			sampleIsValid = D_BSDF::Eval<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		case D_Material::D_Type::PLASTIC:
+			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		case D_Material::D_Type::DIELECTRIC:
+			sampleIsValid = D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
+			break;
+		}
+
+		if (!sampleIsValid)
+			return make_float3(0.0f);
+
+		//const float weight = 1.0f;
+		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
+
+		float3 emissive;
+		if (material.emissiveMapId != -1)
+		{
+			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
+			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
+		}
+		else
+			emissive = material.emissive;
+
+		return weight * throughput * emissive * material.intensity / lightPdf;
+	}
+}
 
 // Incoming radiance estimate on ray origin and in ray direction
 inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
@@ -372,8 +372,8 @@ inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned
 		lastBsdfPdf = bsdfPdf;
 
 
-		//if (scene.renderSettings.useMIS && !hitLight && j < scene.renderSettings.pathLength - 1)
-		//	emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
+		if (scene.renderSettings.useMIS && !hitLight && j < scene.renderSettings.pathLength - 1)
+			emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
 
 		// Inverse ray transformation to world space
 		wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
