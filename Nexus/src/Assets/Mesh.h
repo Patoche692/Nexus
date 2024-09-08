@@ -19,9 +19,10 @@ struct Mesh
 		BVH8Builder builder(triangles);
 		builder.Init();
 		bvh8 = builder.Build();
-		std::cout << &bvh8 << std::endl;
 		bvh8.InitDeviceData();
 	}
+	Mesh(const Mesh& other) = default;
+	Mesh(Mesh&& other) = default;
 
 	BVH8 bvh8;
 

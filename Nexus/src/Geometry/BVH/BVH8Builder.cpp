@@ -21,7 +21,6 @@ BVH8 BVH8Builder::Build()
     BVH8 bvh8(m_Bvh2.triangles);
     bvh8.nodes.emplace_back();
     CollapseNode(bvh8, 0, 0);
-    std::cout << &bvh8 << std::endl;
     std::cout << "Used nodes: " << m_UsedNodes << std::endl;
     return bvh8;
 }

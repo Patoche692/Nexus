@@ -182,8 +182,8 @@ static void GetMeshesFromAiNode(const aiScene* scene, const aiNode* node, std::v
 		scale /= scaleFactor;
 		position /= scaleFactor;
 
-		const Mesh newMesh(meshName, triangles, materialIds[mesh->mMaterialIndex], position, rotation, scale);
-		meshes.push_back(newMesh);
+		Mesh newMesh(meshName, triangles, materialIds[mesh->mMaterialIndex], position, rotation, scale);
+		meshes.push_back(std::move(newMesh));
 	}
 
 	for (int i = 0; i < node->mNumChildren; i++)

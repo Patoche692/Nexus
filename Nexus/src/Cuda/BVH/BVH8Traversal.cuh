@@ -51,8 +51,9 @@ inline __device__ void StackPush(
 __forceinline__ __device__ void ChildTrace(
 	const D_BVH8Node* nodes,
 	const uint32_t nodeIdx,
-	D_Ray& ray,
+	const D_Ray& ray,
 	const uint32_t invOctant4,
+	const float hitDistance,
 	uint2& internalEntry,
 	uint2& triangleEntry
 )
@@ -120,7 +121,7 @@ __forceinline__ __device__ void ChildTrace(
 			tmax3 = tmax3 * transformedDirection + transformedOrigin;
 
 			const float tmin = vMaxMax(tmin3.x, tmin3.y, fmaxf(tmin3.z, 0.0f));
-			const float tmax = vMinMin(tmax3.x, tmax3.y, fminf(tmax3.z, ray.hit.t));
+			const float tmax = vMinMin(tmax3.x, tmax3.y, fminf(tmax3.z, hitDistance));
 
 			const bool intersected = tmin <= tmax;
 			if (intersected) {
@@ -140,13 +141,15 @@ __forceinline__ __device__ void ChildTrace(
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
-inline __device__ void BVH8Trace(D_Ray& ray)
+inline __device__ D_Intersection BVH8Trace(D_Ray& ray)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
 	int stackPtr = 0;
 
 	const D_Ray backupRay = ray;
+	D_Intersection intersection;
+	intersection.hitDistance = 1e30f;
 
 	uint32_t idx;
 	int32_t instanceStackDepth = -1;
@@ -188,7 +191,7 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 
 			assert(nodeEntry.x + relativeNodeIdx < bvh.nodesUsed);
 
-			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
+			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, intersection.hitDistance, nodeEntry, triangleEntry);
 		}
 		else
 		{
@@ -257,7 +260,7 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 			assert(triangleIdx < bvh.triCount);
 
 			// Ray triangle intersection
-			bvh.triangles[triangleIdx].Trace(ray, instanceIdx, triangleIdx);
+			bvh.triangles[triangleIdx].Trace(ray, intersection, instanceIdx, triangleIdx);
 		}
 
 		// If the node entry is empty (hits field equals 0), pop from the stack
@@ -285,11 +288,12 @@ inline __device__ void BVH8Trace(D_Ray& ray)
 	ray.origin = backupRay.origin;
 	ray.direction = backupRay.direction;
 	ray.invDirection = backupRay.invDirection;
+	return intersection;
 }
 
 
 // Shadow ray tracing: true if any hit
-inline __device__ bool BVH8TraceShadow(D_Ray& ray)
+inline __device__ bool BVH8TraceShadow(D_Ray& ray, float hitDistance)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
@@ -337,7 +341,7 @@ inline __device__ bool BVH8TraceShadow(D_Ray& ray)
 
 			assert(nodeEntry.x + relativeNodeIdx < bvh.nodesUsed);
 
-			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, nodeEntry, triangleEntry);
+			ChildTrace(nodes, nodeEntry.x + relativeNodeIdx, ray, invOctant4, hitDistance, nodeEntry, triangleEntry);
 		}
 		else
 		{
@@ -406,7 +410,7 @@ inline __device__ bool BVH8TraceShadow(D_Ray& ray)
 			assert(triangleIdx < bvh.triCount);
 
 			// Ray triangle intersection
-			if (bvh.triangles[triangleIdx].ShadowTrace(ray))
+			if (bvh.triangles[triangleIdx].ShadowTrace(ray, hitDistance))
 				return true;
 		}
 

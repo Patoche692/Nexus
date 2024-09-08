@@ -65,6 +65,8 @@ public:
 
 	TDevice* operator->()
 	{
+		// Get the instance from copyAsync
+		CheckCudaErrors(cudaDeviceSynchronize());
 		return &m_Instance;
 	}
 

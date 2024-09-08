@@ -5,12 +5,36 @@
 struct D_Intersection
 {
 	// Ray hit distance
-	float t = 1.0e30f;
+	float hitDistance = 1.0e30f;
 	// Barycentric coordinates;
 	float u, v;
 
 	uint32_t triIdx = -1;
 	uint32_t instanceIdx = -1;
+};
+
+struct D_IntersectionSAO
+{
+	// Ray hit distance
+	float* hitDistance;
+	// Barycentric coordinates;
+	float* u;
+	float* v;
+
+	uint32_t* triIdx;
+	uint32_t* instanceIdx;
+
+	D_Intersection Get(uint32_t index)
+	{
+		D_Intersection intersection = {
+			hitDistance[index],
+			u[index],
+			v[index],
+			triIdx[index],
+			instanceIdx[index]
+		};
+		return intersection;
+	}
 };
 
 struct D_Ray
@@ -28,9 +52,15 @@ struct D_Ray
 	// Ray inverse direction (reduce divisions for optimization)
 	float3 invDirection = make_float3(0.0f, 0.0f, 1.0f);
 
-	D_Intersection hit;
+	//D_Intersection hit;
 
 	inline  __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
+};
+
+struct D_RaySAO
+{
+	float3* origin;
+	float3* direction;
 };
 
 struct D_HitResult
