@@ -24,7 +24,7 @@ struct D_IntersectionSAO
 	uint32_t* triIdx;
 	uint32_t* instanceIdx;
 
-	D_Intersection Get(uint32_t index)
+	inline __device__ D_Intersection Get(uint32_t index)
 	{
 		D_Intersection intersection = {
 			hitDistance[index],
@@ -34,6 +34,14 @@ struct D_IntersectionSAO
 			instanceIdx[index]
 		};
 		return intersection;
+	}
+	inline __device__ void Set(uint32_t index, D_Intersection intersection)
+	{
+		hitDistance[index] = intersection.hitDistance;
+		u[index] = intersection.u;
+		v[index] = intersection.v;
+		triIdx[index] = intersection.triIdx;
+		instanceIdx[index] = intersection.instanceIdx;
 	}
 };
 
