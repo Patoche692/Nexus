@@ -25,7 +25,7 @@ struct D_DielectricBSDF
 		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
 	}
 
-	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3& throughput, float& pdf)
+	inline __device__ bool Eval(const D_Material& material, const float3& wi, const float3& wo, float3& throughput, float& pdf)
 	{
 		const float wiDotN = wi.z;
 		const float woDotN = wo.z;
@@ -41,7 +41,7 @@ struct D_DielectricBSDF
 		float cosThetaT;
 		const float wiDotM = dot(wi, m);
 		const float woDotM = dot(wo, m);
-		const float F = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
+		const float F = Fresnel::DieletricReflectance(1.0f / material.dielectric.ior, wiDotM, cosThetaT);
 		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
@@ -57,7 +57,7 @@ struct D_DielectricBSDF
 		}
 		else
 		{
-			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN) * Square(eta * wiDotM + woDotM)) * hitResult.material.dielectric.albedo;
+			const float3 btdf = fabs(wiDotM * woDotM) * (1.0f - F) * G * D / (fabs(wiDotN) * Square(eta * wiDotM + woDotM)) * material.dielectric.albedo;
 			throughput = btdf;
 
 			pdf = (1.0f - F) * D * m.z * fabs(woDotM) / Square(eta * wiDotM + woDotM);
@@ -66,14 +66,14 @@ struct D_DielectricBSDF
 		return Sampler::IsPdfValid(pdf);
 	}
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
+	inline __device__ bool Sample(const D_Material& material, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		const float fr = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
+		const float fr = Fresnel::DieletricReflectance(1.0f /material.dielectric.ior, wiDotM, cosThetaT);
 
 		// Randomly select a reflected or transmitted ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
@@ -111,7 +111,7 @@ struct D_DielectricBSDF
 			if (wo.z * wi.z > 0.0f)
 				return false;
 
-			throughput = hitResult.material.dielectric.albedo * weight;
+			throughput = material.dielectric.albedo * weight;
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 			const float woDotM = dot(wo, m);

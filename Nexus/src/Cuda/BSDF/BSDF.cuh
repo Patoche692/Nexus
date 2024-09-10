@@ -7,18 +7,18 @@
 struct D_BSDF {
 
 	template<typename T>
-	inline __device__ static bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
+	inline __device__ static bool Sample(const D_Material& material, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		T bsdf;
-		bsdf.PrepareBSDFData(wi, hitResult.material);
-		return bsdf.Sample(hitResult, wi, wo, throughput, pdf, rngState);
+		bsdf.PrepareBSDFData(wi, material);
+		return bsdf.Sample(material, wi, wo, throughput, pdf, rngState);
 	}
 
 	template<typename T>
-	inline __device__ static bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3& throughput, float& pdf)
+	inline __device__ static bool Eval(const D_Material& material, const float3& wi, const float3& wo, float3& throughput, float& pdf)
 	{
 		T bsdf;
-		bsdf.PrepareBSDFData(wi, hitResult.material);
-		return bsdf.Eval(hitResult, wi, wo, throughput, pdf);
+		bsdf.PrepareBSDFData(wi, material);
+		return bsdf.Eval(material, wi, wo, throughput, pdf);
 	}
 };

@@ -69,6 +69,17 @@ struct D_RaySAO
 {
 	float3* origin;
 	float3* direction;
+
+	inline __device__ D_Ray Get(uint32_t index)
+	{
+		return D_Ray(origin[index], direction[index]);
+	}
+
+	inline __device__ void Set(uint32_t index, const D_Ray& ray)
+	{
+		origin[index] = ray.origin;
+		direction[index] = ray.direction;
+	}
 };
 
 struct D_HitResult

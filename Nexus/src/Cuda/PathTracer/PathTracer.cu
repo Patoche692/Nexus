@@ -250,22 +250,22 @@ __global__ void LogicKernel()
 	switch (material.type)
 	{
 	case D_Material::D_Type::DIFFUSE:
-		const uint32_t requestIdx = AtomicAdd(diffuseMaterialBuffer.size, 1);
+		const uint32_t requestIdx = atomicAdd(&diffuseMaterialBuffer.size, 1);
 		diffuseMaterialBuffer.intersection.Set(requestIdx, intersection);
 		diffuseMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		break;
 	case D_Material::D_Type::PLASTIC:
-		const uint32_t requestIdx = AtomicAdd(plasticMaterialBuffer.size, 1);
+		const uint32_t requestIdx = atomicAdd(&plasticMaterialBuffer.size, 1);
 		plasticMaterialBuffer.intersection.Set(requestIdx, intersection);
 		plasticMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		break;
 	case D_Material::D_Type::DIELECTRIC:
-		const uint32_t requestIdx = AtomicAdd(dielectricMaterialBuffer.size, 1);
+		const uint32_t requestIdx = atomicAdd(&dielectricMaterialBuffer.size, 1);
 		dielectricMaterialBuffer.intersection.Set(requestIdx, intersection);
 		dielectricMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		break;
 	case D_Material::D_Type::CONDUCTOR:
-		const uint32_t requestIdx = AtomicAdd(conductorMaterialBuffer.size, 1);
+		const uint32_t requestIdx = atomicAdd(&conductorMaterialBuffer.size, 1);
 		conductorMaterialBuffer.intersection.Set(requestIdx, intersection);
 		conductorMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		break;
@@ -274,47 +274,16 @@ __global__ void LogicKernel()
 	}
 }
 
+
 template<typename BSDF>
-inline __device__ void Shade(const D_Intersection& intersection, const float3& rayDirection)
-{
-	D_BSDF::Sample<BSDF>();
-}
-
-__global__ void DiffuseMaterialKernel()
-{
-	const uint32_t materialIdx = AtomicAdd(diffuseMaterialBuffer.size, -1);
-	const D_Intersection intersection = diffuseMaterialBuffer.intersection.Get(materialIdx);
-	const float3 rayDirection = diffuseMaterialBuffer.rayDirection[materialIdx];
-	Shade<D_LambertianBSDF>(intersection, rayDirection);
-}
-
-__global__ void PlasticMaterialKernel()
-{
-	const uint32_t materialIdx = AtomicAdd(plasticMaterialBuffer.size, -1);
-	const D_Intersection intersection = plasticMaterialBuffer.intersection.Get(materialIdx);
-	const float3 rayDirection = plasticMaterialBuffer.rayDirection[materialIdx];
-	Shade<D_PlasticBSDF>(intersection, rayDirection);
-}
-
-__global__ void DielectricMaterialKernel()
-{
-	const uint32_t materialIdx = AtomicAdd(dielectricMaterialBuffer.size, -1);
-	const D_Intersection intersection = dielectricMaterialBuffer.intersection.Get(materialIdx);
-	const float3 rayDirection = dielectricMaterialBuffer.rayDirection[materialIdx];
-	Shade<D_DielectricBSDF>(intersection, rayDirection);
-}
-
-__global__ void ConductorMaterialKernel()
-{
-	const uint32_t materialIdx = AtomicAdd(conductorMaterialBuffer.size, -1);
-	const D_Intersection intersection = conductorMaterialBuffer.intersection.Get(materialIdx);
-	const float3 rayDirection = conductorMaterialBuffer.rayDirection[materialIdx];
-	Shade<D_ConductorBSDF>(intersection, rayDirection);
-}
-
-
-inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& r, const D_HitResult& hitResult, const float3 hitGNormal, unsigned int& rngState)
-{
+inline __device__ void NextEventEstimation(
+	const float3 wi,
+	const D_Material& material,
+	const D_Intersection& intersection,
+	const float3 normal,
+	const float3 hitGNormal,
+	unsigned int& rngState
+) {
 	D_Light light = Sampler::UniformSampleLights(scene.lights, scene.lightCount, rngState);
 
 	if (light.type == D_Light::Type::MESH_LIGHT)
@@ -332,13 +301,10 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
 		p = instance.transform.TransformPoint(p);
 
-		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
-		const float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
+		const float3 lightGNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
-		const float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
-
-		float3 shadingNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
-		shadingNormal = normalize(instance.transform.TransformVector(shadingNormal));
+		float3 lightNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
+		lightNormal = normalize(instance.transform.TransformVector(lightNormal));
 
 		bool wiShadingBackSide = dot(-hitResult.rIn.direction, hitResult.normal) < 0.0f;
 		bool wiGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
@@ -348,22 +314,17 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 
 		D_Ray shadowRay;
 		float offsetDirection = wiGeometryBackSide ? -1.0f : 1.0f;
-		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * hitResult.normal;
+		shadowRay.origin = hitResult.p + offsetDirection * 1.0e-4f * normal;
 
 		const float3 toLight = p - shadowRay.origin;
+
 		const float distance = length(toLight);
 		shadowRay.direction = toLight / distance;
 		shadowRay.invDirection = 1.0f / shadowRay.direction;
-		shadowRay.hit.t = distance;
 
 		const float3 wo = rotatePoint(qRotationToZ, shadowRay.direction);
 
-		bool anyHit = BVH8TraceShadow(shadowRay);
-
-		if (anyHit)
-			return make_float3(0.0f);
-
-		const float cosThetaO = fabs(dot(shadingNormal, shadowRay.direction));
+		const float cosThetaO = fabs(dot(lightNormal, shadowRay.direction));
 
 		const float dSquared = dot(toLight, toLight);
 
@@ -372,45 +333,138 @@ inline __device__ float3 NextEventEstimation(const D_Scene& scene, const D_Ray& 
 		lightPdf *= dSquared / cosThetaO;
 
 		if (!Sampler::IsPdfValid(lightPdf))
-			return make_float3(0.0f);
+			return;
 
-		const D_Material& material = scene.materials[instance.materialId];
+		const D_Material& lightMaterial = scene.materials[instance.materialId];
 
 		float3 throughput;
 		float bsdfPdf;
-		bool sampleIsValid;
 
-		switch (hitResult.material.type)
-		{
-		case D_Material::D_Type::DIFFUSE:
-			sampleIsValid = D_BSDF::Eval<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-			break;
-		case D_Material::D_Type::PLASTIC:
-			sampleIsValid = D_BSDF::Eval<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-			break;
-		case D_Material::D_Type::DIELECTRIC:
-			sampleIsValid = D_BSDF::Eval<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf);
-			break;
-		}
+		bool sampleIsValid = D_BSDF::Eval<BSDF>(material, wi, wo, throughput, bsdfPdf);
 
 		if (!sampleIsValid)
-			return make_float3(0.0f);
+			return;
 
 		//const float weight = 1.0f;
 		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
 
 		float3 emissive;
-		if (material.emissiveMapId != -1)
+		if (lightMaterial.emissiveMapId != -1)
 		{
 			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
-			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
+			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[lightMaterial.emissiveMapId], texUv.x, texUv.y));
 		}
 		else
-			emissive = material.emissive;
+			emissive = lightMaterial.emissive;
 
-		return weight * throughput * emissive * material.intensity / lightPdf;
+		const float3 radiance = weight * throughput * emissive * lightMaterial.intensity / lightPdf;
+
+		const uint32_t index = atomicAdd(&shadowRayState.size, 1);
+		shadowRayState.hitDistance[index] = distance;
+		shadowRayState.radiance[index] = radiance;
+		shadowRayState.ray.Set(index, shadowRay);
+		//shadowRayState.pixelIdx[index] = 
 	}
 }
+
+
+template<typename BSDF>
+inline __device__ void Shade(const D_Intersection& intersection, const float3& rayDirection)
+{
+	uint32_t index = blockIdx.x * blockDim.x + threadIdx.x;
+	uint32_t rngState = Random::InitRNG(index, scene.camera.resolution, frameNumber);
+
+	const D_BVHInstance& instance = blas[intersection.instanceIdx];
+	const D_Triangle& triangle = bvhs[instance.bvhIdx].triangles[intersection.triIdx];
+
+	D_Material material = scene.materials[instance.materialId];
+
+	const float u = intersection.u, v = intersection.v;
+
+	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
+	normal = normalize(instance.transform.TransformVector(normal));
+
+	float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+
+	if (material.diffuseMapId != -1)
+	{
+		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], uv.x, uv.y));
+	}
+	if (material.emissiveMapId != -1)
+	{
+		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
+	}
+
+	// Invert normals for non transmissive material if the primitive is backfacing the ray
+	if (dot(gNormal, rayDirection) > 0.0f && (material.type != D_Material::D_Type::DIELECTRIC))
+	{
+		normal = -normal;
+		gNormal = -gNormal;
+	}
+
+	float4 qRotationToZ = getRotationToZAxis(normal);
+	float3 wi = rotatePoint(qRotationToZ, -rayDirection);
+
+	if (scene.renderSettings.useMIS)
+		NextEventEstimation<BSDF>(wi, material, intersection, normal, gNormal, rngState);
+
+	float3 wo, throughput;
+	float pdf;
+
+	bool scattered = D_BSDF::Sample<BSDF>(material, wi, wo, throughput, pdf, rngState);
+
+	if (!scattered)
+		return;
+
+	wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+	bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
+	bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
+
+	// If sample valid, write trace request in the path state
+	if (woGeometryBackSide == woShadingBackSide)
+	{
+		const uint32_t pathIdx = atomicAdd(&pathState.size, 1);
+		pathState.throughput[pathIdx] *= throughput;
+		float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
+		const D_Ray scatteredRay(p + offsetDirection * 1.0e-4 * normal);
+		pathState.ray.Set(pathIdx, scatteredRay);
+	}
+}
+
+__global__ void DiffuseMaterialKernel()
+{
+	const uint32_t materialIdx = atomicAdd(diffuseMaterialBuffer.size, -1);
+	const D_Intersection intersection = diffuseMaterialBuffer.intersection.Get(materialIdx);
+	const float3 rayDirection = diffuseMaterialBuffer.rayDirection[materialIdx];
+	Shade<D_LambertianBSDF>(intersection, rayDirection);
+}
+
+__global__ void PlasticMaterialKernel()
+{
+	const uint32_t materialIdx = atomicAdd(plasticMaterialBuffer.size, -1);
+	const D_Intersection intersection = plasticMaterialBuffer.intersection.Get(materialIdx);
+	const float3 rayDirection = plasticMaterialBuffer.rayDirection[materialIdx];
+	Shade<D_PlasticBSDF>(intersection, rayDirection);
+}
+
+__global__ void DielectricMaterialKernel()
+{
+	const uint32_t materialIdx = atomicAdd(dielectricMaterialBuffer.size, -1);
+	const D_Intersection intersection = dielectricMaterialBuffer.intersection.Get(materialIdx);
+	const float3 rayDirection = dielectricMaterialBuffer.rayDirection[materialIdx];
+	Shade<D_DielectricBSDF>(intersection, rayDirection);
+}
+
+__global__ void ConductorMaterialKernel()
+{
+	const uint32_t materialIdx = atomicAdd(conductorMaterialBuffer.size, -1);
+	const D_Intersection intersection = conductorMaterialBuffer.intersection.Get(materialIdx);
+	const float3 rayDirection = conductorMaterialBuffer.rayDirection[materialIdx];
+	Shade<D_ConductorBSDF>(intersection, rayDirection);
+}
+
 
 // Incoming radiance estimate on ray origin and in ray direction
 inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)

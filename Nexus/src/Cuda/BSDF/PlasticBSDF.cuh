@@ -27,7 +27,7 @@ struct D_PlasticBSDF
 	}
 
 	// Evaluation function for a shadow ray
-	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3& throughput, float& pdf)
+	inline __device__ bool Eval(const D_Material& material, const float3& wi, const float3& wo, float3& throughput, float& pdf)
 	{
 		const float wiDotN = wi.z;
 		const float woDotN = wo.z;
@@ -40,7 +40,7 @@ struct D_PlasticBSDF
 		const float3 m = normalize(wo + wi);
 		float cosThetaT;
 		const float wiDotM = dot(wi, m);
-		const float F = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
+		const float F = Fresnel::DieletricReflectance(1.0f / material.dielectric.ior, wiDotM, cosThetaT);
 		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
@@ -48,7 +48,7 @@ struct D_PlasticBSDF
 		const float3 brdf = make_float3(F * G * D / (4.0f * fabs(wiDotN)));
 
 		// Diffuse bounce
-		const float3 btdf = (1.0f - F) * hitResult.material.plastic.albedo * INV_PI * wo.z;
+		const float3 btdf = (1.0f - F) * material.plastic.albedo * INV_PI * wo.z;
 
 		throughput = brdf + btdf;
 
@@ -64,14 +64,14 @@ struct D_PlasticBSDF
 		return Sampler::IsPdfValid(pdf);
 	}
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
+	inline __device__ bool Sample(const D_Material& material, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		const float fr = Fresnel::DieletricReflectance(1.0f / hitResult.material.dielectric.ior, wiDotM, cosThetaT);
+		const float fr = Fresnel::DieletricReflectance(1.0f / material.dielectric.ior, wiDotM, cosThetaT);
 
 		// Randomly select a specular or diffuse ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
@@ -99,7 +99,7 @@ struct D_PlasticBSDF
 		{
 			//Diffuse
 			wo = Random::RandomCosineHemisphere(rngState);
-			throughput = hitResult.material.dielectric.albedo;
+			throughput = material.dielectric.albedo;
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 			pdf = (1.0f - fr) * INV_PI * wo.z;
