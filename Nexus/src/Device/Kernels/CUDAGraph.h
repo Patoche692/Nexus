@@ -13,7 +13,7 @@ public:
 	void Reset();
 	void BuildGraph();
 	void Execute();
-	void AddKernelNode(CUDAKernel& kernel);
+	cudaGraphNode_t AddKernelNode(CUDAKernel& kernel, cudaGraphNode_t* dependencies = nullptr, size_t numDependencies = 0);
 
 private:
 	cudaGraph_t m_Graph;

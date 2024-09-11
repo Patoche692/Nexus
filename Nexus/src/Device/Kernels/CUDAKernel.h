@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cuda_runtime_api.h>
+#include "Utils/Utils.h"
 
 class CUDAKernel
 {
@@ -11,7 +12,10 @@ public:
 		: m_Function(function), m_GridSize(gridsize), m_BlockSize(blockSize), m_LaunchParameters(params) {}
 
 	virtual void Init() { }
-	virtual void Launch() { }
+	virtual void Launch()
+	{ 
+		CheckCudaErrors(cudaLaunchKernel(m_Function, m_GridSize, m_BlockSize, m_LaunchParameters.data(), 0, 0));
+	}
 
 	const dim3 GetBlockSize() const { return m_BlockSize; }
 	const dim3 GetGridSize() const { return m_GridSize; }

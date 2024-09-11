@@ -26,6 +26,7 @@ public:
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
+	const RenderSettings& GetRenderSettings() const { return m_RenderSettings; }
 	RenderSettings& GetRenderSettings() { return m_RenderSettings; }
 
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }

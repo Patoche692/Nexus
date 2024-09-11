@@ -15,7 +15,51 @@
 #define PATH_MAX_LENGTH 30
 
 
-__global__ void TraceRay();
+
+struct D_PathStateSAO
+{
+	D_RaySAO ray;
+	D_IntersectionSAO intersection;
+
+	uint32_t* pixelIdx;
+	float3* throughput;
+	float3* radiance;
+
+	float* lastPdf;
+
+	int32_t size;
+};
+
+struct D_ShadowRayStateSAO
+{
+	D_RaySAO ray;
+	float* hitDistance;
+	uint32_t* pixelIdx;
+	float3* radiance;
+
+	int32_t size;
+};
+
+struct D_MaterialRequestSAO
+{
+	float3* rayDirection;
+	D_IntersectionSAO intersection;
+
+	int32_t size;
+};
+
+
+
+//__global__ void TraceRay();
+
+__global__ void GenerateKernel();
+__global__ void LogicKernel();
+__global__ void TraceKernel();
+__global__ void TraceShadowKernel();
+__global__ void DiffuseMaterialKernel();
+__global__ void PlasticMaterialKernel();
+__global__ void DielectricMaterialKernel();
+__global__ void ConductorMaterialKernel();
 
 D_Scene* GetDeviceSceneAddress();
 float3** GetDeviceAccumulationBufferAddress();
@@ -24,3 +68,10 @@ uint32_t* GetDeviceFrameNumberAddress();
 D_BVH8* GetDeviceTLASAddress();
 D_BVH8** GetDeviceBVHAddress();
 D_BVHInstance** GetDeviceBLASAddress();
+
+D_PathStateSAO* GetDevicePathStateAddress();
+D_ShadowRayStateSAO* GetDeviceShadowRayStateAddress();
+D_MaterialRequestSAO* GetDeviceDiffuseRequestAddress();
+D_MaterialRequestSAO* GetDevicePlasticRequestAddress();
+D_MaterialRequestSAO* GetDeviceDielectricRequestAddress();
+D_MaterialRequestSAO* GetDeviceConductorRequestAddress();

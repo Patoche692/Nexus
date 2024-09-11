@@ -66,7 +66,6 @@ public:
 	TDevice* operator->()
 	{
 		// Get the instance from copyAsync
-		CheckCudaErrors(cudaDeviceSynchronize());
 		return &m_Instance;
 	}
 
@@ -79,7 +78,7 @@ private:
 	TDevice Get()
 	{
 		TDevice target;
-		CudaMemory::CopyAsync(&target, m_DevicePtr, 1, cudaMemcpyDeviceToHost);
+		CudaMemory::Copy(&target, m_DevicePtr, 1, cudaMemcpyDeviceToHost);
 		return target;
 	}
 

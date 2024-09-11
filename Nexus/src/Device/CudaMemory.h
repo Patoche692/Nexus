@@ -15,6 +15,14 @@ public:
 		return ptr;
 	}
 
+	template<typename T>
+	static T* AllocateAsync(uint32_t count)
+	{
+		T* ptr;
+		CheckCudaErrors(cudaMallocAsync((void**)&ptr, sizeof(T) * count, 0));
+		return ptr;
+	}
+
 	template<typename THost, typename TDevice = THost>
 	static TDevice* AllocBuffer(THost* hostBuffer, uint32_t count)
 	{
@@ -46,5 +54,10 @@ public:
 	static void Free(void* ptr)
 	{
 		CheckCudaErrors(cudaFree(ptr));
+	}
+
+	static void FreeAsync(void* ptr)
+	{
+		CheckCudaErrors(cudaFreeAsync(ptr, 0));
 	}
 };

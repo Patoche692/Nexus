@@ -34,7 +34,7 @@ Renderer::~Renderer()
 
 void Renderer::Reset()
 {
-	m_PathTracer.Reset();
+	m_PathTracer.ResetFrameNumber();
 	m_MetricsPanel.Reset();
 }
 
@@ -52,7 +52,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 	if (scene.IsInvalid())
 	{
 		scene.Update();
-		m_PathTracer.Reset();
+		m_PathTracer.ResetFrameNumber();
 	}
 
 	// Launch cuda path tracing kernel, writes the viewport into the pixelbuffer
@@ -61,7 +61,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 		//if (m_FrameNumber < 24)
 		//{
 		m_PathTracer.UpdateDeviceScene(*m_Scene);
-		m_PathTracer.Render();
+		m_PathTracer.Render(scene);
 
 		// Unpack the pixel buffer written by cuda to the renderer texture
 		UnpackToTexture();
@@ -69,7 +69,7 @@ void Renderer::Render(Scene& scene, float deltaTime)
 
 	}
 	else
-		m_PathTracer.Reset();
+		m_PathTracer.ResetFrameNumber();
 
 
 	ImGui::Render();
@@ -112,7 +112,7 @@ void Renderer::RenderUI(Scene& scene)
 					std::string fileName, filePath;
 					Utils::GetPathAndFileName(fullPath, filePath, fileName);
 					scene.AddHDRMap(filePath, fileName);
-					m_PathTracer.Reset();
+					m_PathTracer.ResetFrameNumber();
 				}
 			}
 

@@ -49,7 +49,7 @@ struct D_Ray
 {
 	__device__ D_Ray() = default;
 	__device__ D_Ray(float3 o, float3 d)
-		:origin(o), direction(d), invDirection(1/direction) {};
+		:origin(o), direction(d), invDirection(1.0f / direction) {};
 
 	// Ray origin
 	float3 origin = make_float3(0.0f);

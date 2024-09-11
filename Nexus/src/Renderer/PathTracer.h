@@ -12,18 +12,27 @@ public:
 	PathTracer(uint32_t width, uint32_t height);
 	~PathTracer();
 
+	void FreeDeviceBuffers();
 	void Reset();
-	void Render();
+	void ResetFrameNumber();
+	void Render(const Scene& scene);
 	void OnResize(uint32_t width, uint32_t height);
 
 	void UpdateDeviceScene(const Scene& scene);
 
 	uint32_t GetFrameNumber() { return m_FrameNumber; }
 	const PixelBuffer& GetPixelBuffer() { return m_PixelBuffer; }
-	const CUDAKernel& GetKernel() { return m_Kernel; }
 
 private:
-	CUDAKernel m_Kernel;
+	CUDAKernel m_GenerateKernel;
+	CUDAKernel m_LogicKernel;
+	CUDAKernel m_TraceKernel;
+	CUDAKernel m_TraceShadowKernel;
+	CUDAKernel m_DiffuseMaterialKernel;
+	CUDAKernel m_PlasticMaterialKernel;
+	CUDAKernel m_DielectricMaterialKernel;
+	CUDAKernel m_ConductorMaterialKernel;
+
 	CUDAGraph m_RenderGraph;
 
 
@@ -39,4 +48,13 @@ private:
 	PixelBuffer m_PixelBuffer;
 
 	DeviceInstance<Scene, D_Scene> m_Scene;
+
+	DeviceInstance<D_PathStateSAO> m_PathState;
+
+	DeviceInstance<D_ShadowRayStateSAO> m_ShadowRayState;
+
+	DeviceInstance<D_MaterialRequestSAO> m_DiffuseMaterialBuffer;
+	DeviceInstance<D_MaterialRequestSAO> m_PlasticMaterialBuffer;
+	DeviceInstance<D_MaterialRequestSAO> m_DielectricMaterialBuffer;
+	DeviceInstance<D_MaterialRequestSAO> m_ConductorMaterialBuffer;
 };
