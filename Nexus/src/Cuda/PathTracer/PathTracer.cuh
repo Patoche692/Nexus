@@ -8,35 +8,37 @@
 #include "Scene/Scene.h"
 
 // Number of threads in a block
-#define BLOCK_SIZE 8
+#define BLOCK_SIZE 256
 
 #define WARP_SIZE 32	// Same size for all NVIDIA GPUs
 
 #define PATH_MAX_LENGTH 30
 
 
-
 struct D_PathStateSAO
+{
+	float3* throughput;
+	float* lastPdf;
+};
+
+struct D_TraceRequestSAO
 {
 	D_RaySAO ray;
 	D_IntersectionSAO intersection;
-
 	uint32_t* pixelIdx;
-	float3* throughput;
-	float3* radiance;
 
-	float* lastPdf;
-
+	int32_t traceCount;
 	int32_t size;
 };
 
-struct D_ShadowRayStateSAO
+struct D_ShadowTraceRequestSAO
 {
 	D_RaySAO ray;
 	float* hitDistance;
 	uint32_t* pixelIdx;
 	float3* radiance;
 
+	int32_t traceCount;
 	int32_t size;
 };
 
@@ -44,13 +46,12 @@ struct D_MaterialRequestSAO
 {
 	float3* rayDirection;
 	D_IntersectionSAO intersection;
+	uint32_t* pixelIdx;
 
+	int32_t shadeCount;
 	int32_t size;
 };
 
-
-
-//__global__ void TraceRay();
 
 __global__ void GenerateKernel();
 __global__ void LogicKernel();
@@ -65,12 +66,14 @@ D_Scene* GetDeviceSceneAddress();
 float3** GetDeviceAccumulationBufferAddress();
 uint32_t** GetDeviceRenderBufferAddress();
 uint32_t* GetDeviceFrameNumberAddress();
+uint32_t* GetDeviceBounceAddress();
 D_BVH8* GetDeviceTLASAddress();
 D_BVH8** GetDeviceBVHAddress();
 D_BVHInstance** GetDeviceBLASAddress();
 
 D_PathStateSAO* GetDevicePathStateAddress();
-D_ShadowRayStateSAO* GetDeviceShadowRayStateAddress();
+D_ShadowTraceRequestSAO* GetDeviceShadowTraceRequestAddress();
+D_TraceRequestSAO* GetDeviceTraceRequestAddress();
 D_MaterialRequestSAO* GetDeviceDiffuseRequestAddress();
 D_MaterialRequestSAO* GetDevicePlasticRequestAddress();
 D_MaterialRequestSAO* GetDeviceDielectricRequestAddress();

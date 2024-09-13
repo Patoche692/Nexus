@@ -29,7 +29,7 @@ inline __device__ uint2 StackPop(
 ) {
 	stackPtr--;
 	if (stackPtr < SHARED_STACK_SIZE)
-		return sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr];
+		return sharedStack[threadIdx.x * SHARED_STACK_SIZE + stackPtr];
 	else
 		return localStack[stackPtr - SHARED_STACK_SIZE];
 }
@@ -40,7 +40,7 @@ inline __device__ void StackPush(
 	uint2 localStack[], int& stackPtr, const uint2& stackEntry
 ) {
 	if (stackPtr < SHARED_STACK_SIZE)
-		sharedStack[(threadIdx.y * BLOCK_SIZE + threadIdx.x) * SHARED_STACK_SIZE + stackPtr] = stackEntry;
+		sharedStack[threadIdx.x * SHARED_STACK_SIZE + stackPtr] = stackEntry;
 	else
 		localStack[stackPtr - SHARED_STACK_SIZE] = stackEntry;
 
@@ -143,7 +143,7 @@ __forceinline__ __device__ void ChildTrace(
 
 inline __device__ D_Intersection BVH8Trace(D_Ray& ray)
 {
-	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
+	__shared__ uint2 sharedStack[BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
 	int stackPtr = 0;
 
@@ -295,7 +295,7 @@ inline __device__ D_Intersection BVH8Trace(D_Ray& ray)
 // Shadow ray tracing: true if any hit
 inline __device__ bool BVH8TraceShadow(D_Ray& ray, float hitDistance)
 {
-	__shared__ uint2 sharedStack[BLOCK_SIZE * BLOCK_SIZE * SHARED_STACK_SIZE];
+	__shared__ uint2 sharedStack[BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
 	int stackPtr = 0;
 

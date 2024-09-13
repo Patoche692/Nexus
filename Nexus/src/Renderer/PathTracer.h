@@ -43,6 +43,7 @@ private:
 	// Device members
 	DeviceInstance<float3*> m_AccumulationBuffer;
 	DeviceInstance<uint32_t> m_DeviceFrameNumber;
+	DeviceInstance<uint32_t> m_DeviceBounce;
 	DeviceInstance<uint32_t*> m_RenderBuffer;
 
 	PixelBuffer m_PixelBuffer;
@@ -51,7 +52,8 @@ private:
 
 	DeviceInstance<D_PathStateSAO> m_PathState;
 
-	DeviceInstance<D_ShadowRayStateSAO> m_ShadowRayState;
+	DeviceInstance<D_TraceRequestSAO> m_TraceRequest;
+	DeviceInstance<D_ShadowTraceRequestSAO> m_ShadowTraceRequest;
 
 	DeviceInstance<D_MaterialRequestSAO> m_DiffuseMaterialBuffer;
 	DeviceInstance<D_MaterialRequestSAO> m_PlasticMaterialBuffer;
