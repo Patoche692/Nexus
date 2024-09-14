@@ -61,8 +61,13 @@ target_include_directories(Nexus
 
 # CUDA optimizations
 target_compile_options(Nexus PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
-   --use_fast_math
-   -rdc=true
+	--use_fast_math
+	-rdc=true
+>)
+
+# CUDA device link-time optimization (DLTO)
+target_link_options(Nexus PRIVATE $<DEVICE_LINK:
+	--dlink-time-opt
 >)
 
 # Set Nexus as startup project in Visual Studio

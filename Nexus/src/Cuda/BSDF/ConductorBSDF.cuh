@@ -20,14 +20,14 @@ struct D_ConductorBSDF
 		k = material.conductor.k;
 	}
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
+	inline __device__ bool Sample(const D_Material& material, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		const float3 m = Microfacet::SampleSpecularHalfBeckWalt(alpha, rngState);
 
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		float3 F = Fresnel::ComplexReflectance(wiDotM, hitResult.material.conductor.ior, k);
+		float3 F = Fresnel::ComplexReflectance(wiDotM,material.conductor.ior, k);
 
 		wo = reflect(-wi, m);
 

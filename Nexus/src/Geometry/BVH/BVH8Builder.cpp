@@ -1,22 +1,15 @@
 #include "BVH8Builder.h"
 
-BVH8Builder::BVH8Builder(const BVH2& bvh) : m_Bvh2(bvh)
+BVH8Builder::BVH8Builder(const std::vector<Triangle>& triangles) : m_Bvh2(triangles)
 {
-    m_Evals = std::vector<std::vector<NodeEval>>(m_Bvh2.nodes.size(), std::vector<NodeEval>(7));
-    m_TriCount = std::vector<int>(m_Bvh2.nodes.size());
-    m_TriBaseIdx = std::vector<int>(m_Bvh2.nodes.size());
 }
 
-BVH8Builder::BVH8Builder(const std::vector<Triangle>& triangles) : m_Bvh2(triangles)
+void BVH8Builder::Init()
 {
     m_Bvh2.Build();
     m_Evals = std::vector<std::vector<NodeEval>>(m_Bvh2.nodes.size(), std::vector<NodeEval>(7));
     m_TriCount = std::vector<int>(m_Bvh2.nodes.size());
     m_TriBaseIdx = std::vector<int>(m_Bvh2.nodes.size());
-}
-
-void BVH8Builder::Init()
-{
     ComputeNodeTriCount(0, 0);
     float rootCost = ComputeNodeCost(0, 0);
 	std::cout << rootCost << std::endl;
@@ -265,7 +258,7 @@ int BVH8Builder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxBvh2)
 	if (bvh2Node.IsLeaf())
     {
 
-		for (unsigned i = 0; i < bvh2Node.triCount; i++)
+		for (size_t i = 0; i < bvh2Node.triCount; i++)
         {
 			bvh8.triangleIdx[m_UsedIndices++] = m_Bvh2.triangleIdx[bvh2Node.firstTriIdx + i];
 		}

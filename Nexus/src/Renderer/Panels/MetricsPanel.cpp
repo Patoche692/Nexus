@@ -71,17 +71,17 @@ void MetricsPanel::OnImGuiRender(uint32_t frameNumber)
 	if (ImGui::Checkbox("Use MIS", &renderSettings.useMIS))
 		m_Context->Invalidate();
 
-	int maxBounces = renderSettings.maxBounces;
+	int pathLength = renderSettings.pathLength;
 
-	if (ImGui::SliderInt("Bounces", &maxBounces, 1, LIMIT_BOUNCES))
+	if (ImGui::SliderInt("Path length", &pathLength, 1, PATH_MAX_LENGTH))
 		m_Context->Invalidate();
 
-	renderSettings.maxBounces = maxBounces;
+	renderSettings.pathLength = pathLength;
 
 	if (ImGui::ColorEdit3("Background color", (float*)&renderSettings.backgroundColor))
 		m_Context->Invalidate();
 
-	if (ImGui::DragFloat("Background intensity", &renderSettings.backgroundIntensity, 0.01))
+	if (ImGui::DragFloat("Background intensity", &renderSettings.backgroundIntensity, 0.01, 0.0f, 1000.0f))
 		m_Context->Invalidate();
 
 	ImGui::End();

@@ -13,10 +13,10 @@ cudaTextureObject_t Texture::ToDevice(const Texture& texture)
 	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
 	cudaArray_t cuArray;
 
-	checkCudaErrors(cudaMallocArray(&cuArray, &channelDesc, texture.width, texture.height));
+	CheckCudaErrors(cudaMallocArray(&cuArray, &channelDesc, texture.width, texture.height));
 
 	const size_t spitch = texture.width * 4 * sizeof(float);
-	checkCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, texture.pixels, spitch, texture.width * 4 * sizeof(float), texture.height, cudaMemcpyHostToDevice));
+	CheckCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, texture.pixels, spitch, texture.width * 4 * sizeof(float), texture.height, cudaMemcpyHostToDevice));
 
 	cudaResourceDesc resDesc;
 	memset(&resDesc, 0, sizeof(resDesc));
@@ -32,7 +32,7 @@ cudaTextureObject_t Texture::ToDevice(const Texture& texture)
 	texDesc.normalizedCoords = 1;
 
 	cudaTextureObject_t texObject = 0;
-	checkCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
+	CheckCudaErrors(cudaCreateTextureObject(&texObject, &resDesc, &texDesc, NULL));
 
 	return texObject;
 }
@@ -40,8 +40,8 @@ cudaTextureObject_t Texture::ToDevice(const Texture& texture)
 void Texture::DestructFromDevice(const cudaTextureObject_t& texture)
 {
 	cudaResourceDesc resDesc;
-	checkCudaErrors(cudaGetTextureObjectResourceDesc(&resDesc, texture));
-	checkCudaErrors(cudaDestroyTextureObject(texture));
-	checkCudaErrors(cudaFreeArray(resDesc.res.array.array));
+	CheckCudaErrors(cudaGetTextureObjectResourceDesc(&resDesc, texture));
+	CheckCudaErrors(cudaDestroyTextureObject(texture));
+	CheckCudaErrors(cudaFreeArray(resDesc.res.array.array));
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "Scene/Scene.h"
-#include "Cuda/PathTracer.cuh"
+#include "Cuda/PathTracer/PathTracer.cuh"
 
 class MetricsPanel 
 {

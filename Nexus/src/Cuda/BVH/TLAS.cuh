@@ -7,9 +7,11 @@ struct D_TLASNode
 {
 	float3 aabbMin;
 	float3 aabbMax;
-	uint32_t leftRight;
+	uint32_t left;
+	uint32_t right;
+	uint32_t blasCount;
 	uint32_t blasIdx;
-	inline __device__ bool IsLeaf() { return leftRight == 0; }
+	inline __device__ bool IsLeaf() { return left == 0; }
 };
 
 struct D_TLAS

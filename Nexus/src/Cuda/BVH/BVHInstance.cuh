@@ -6,7 +6,7 @@
 
 struct D_BVHInstance
 {
-	unsigned int bvhIdx = 0;
+	unsigned int bvhIdx;
 	Mat4 invTransform;
 	Mat4 transform;
 	D_AABB bounds;

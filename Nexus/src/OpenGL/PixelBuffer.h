@@ -11,8 +11,8 @@ public:
 	PixelBuffer(uint32_t width, uint32_t height);
 	~PixelBuffer();
 
-	void Bind();
-	void Unbind();
+	void Bind() const;
+	void Unbind() const;
 	void OnResize(uint32_t width, uint32_t height);
 
 	const uint32_t GetWidth() const { return m_Width; };

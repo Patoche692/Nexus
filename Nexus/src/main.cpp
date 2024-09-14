@@ -55,8 +55,8 @@ int main(void)
         }
     }
     // Free all device allocations
-    checkCudaErrors(cudaDeviceSynchronize());
-    checkCudaErrors(cudaDeviceReset());
+    CheckCudaErrors(cudaDeviceSynchronize());
+    CheckCudaErrors(cudaDeviceReset());
     glfwTerminate();
     return 0;
 }

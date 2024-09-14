@@ -17,8 +17,8 @@ struct AABB
 	{
 		if (other.bMin.x != 1e30f)
 		{
-			Grow(other.bMin);
-			Grow(other.bMax);
+			bMin = fminf(bMin, other.bMin);
+			bMax = fmaxf(bMax, other.bMax);
 		}
 	}
 

@@ -10,7 +10,9 @@
 #include "Scene/Scene.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/MetricsPanel.h"
-#include "Cuda/PathTracer.cuh"
+#include "Cuda/PathTracer/PathTracer.cuh"
+#include "Device/Kernels/CUDAGraph.h"
+#include "PathTracer.h"
 
 class Renderer
 {
@@ -25,17 +27,16 @@ public:
 	void RenderUI(Scene& scene);
 	void UnpackToTexture();
 
-	PixelBuffer GetPixelBuffer() { return m_PixelBuffer; }
-	OGLTexture GetTexture() { return m_Texture; }
+	OGLTexture GetTexture() { return m_RenderTexture; }
 
 private:
 	uint32_t m_ViewportWidth, m_ViewportHeight;
-	PixelBuffer m_PixelBuffer;
-	OGLTexture m_Texture;
-	uint32_t m_FrameNumber = 0;
-	float3* m_AccumulationBuffer;
+	OGLTexture m_RenderTexture;
 	Scene* m_Scene;
 	SceneHierarchyPanel m_HierarchyPannel;
 	MetricsPanel m_MetricsPanel;
+
+	CUDAGraph m_RenderGraph;
+	PathTracer m_PathTracer;
 };
 

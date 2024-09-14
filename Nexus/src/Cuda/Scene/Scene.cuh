@@ -8,17 +8,24 @@
 
 #include "Renderer/RenderSettings.h"
 
-using D_RenderSettings = RenderSettings;
+struct D_RenderSettings
+{
+	bool useMIS;
+	unsigned char pathLength;
+
+	float3 backgroundColor;
+	float backgroundIntensity;
+};
 
 struct D_Scene
 {
-	bool hasHdrMap = false;
+	bool hasHdrMap;
 	cudaTextureObject_t hdrMap;
 
 	cudaTextureObject_t* diffuseMaps;
 	cudaTextureObject_t* emissiveMaps;
 
-	D_TLAS tlas;
+	//D_TLAS tlas;
 
 	D_Light* lights;
 	uint32_t lightCount;

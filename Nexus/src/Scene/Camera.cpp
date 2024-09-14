@@ -11,7 +11,7 @@
 #include "Utils/Utils.h"
 #include "Utils/cuda_math.h"
 #include "Input.h"
-#include "Cuda/PathTracer.cuh"
+#include "Cuda/PathTracer/PathTracer.cuh"
 
 
 Camera::Camera(float horizontalFOV, uint32_t width, uint32_t height)
@@ -128,7 +128,7 @@ Ray Camera::RayThroughPixel(int2 pixel)
 	float y = pixel.y / (float)m_ViewportHeight;
 
 	float aspectRatio = m_ViewportWidth / (float)m_ViewportHeight;
-	float halfHeight = m_FocusDist * tanf(m_HorizontalFOV / 2.0f * M_PI / 180.0f);
+	float halfHeight = m_FocusDist * tanf(m_HorizontalFOV / 2.0f * PI / 180.0f);
 	float halfWidth = aspectRatio * halfHeight;
 
 	float3 viewportX = 2 * halfWidth * m_RightDirection;
@@ -146,14 +146,14 @@ D_Camera Camera::ToDevice(const Camera& camera)
 	float3 forwardDirection = camera.m_ForwardDirection;
 	float3 upDirection = cross(camera.m_RightDirection, forwardDirection);
 	float aspectRatio = camera.m_ViewportWidth / (float)camera.m_ViewportHeight;
-	float halfWidth = camera.m_FocusDist * tanf(camera.m_HorizontalFOV / 2.0f * M_PI / 180.0f);
+	float halfWidth = camera.m_FocusDist * tanf(camera.m_HorizontalFOV / 2.0f * PI / 180.0f);
 	float halfHeight = halfWidth / aspectRatio;
 
 	float3 viewportX = 2 * halfWidth * camera.m_RightDirection;
 	float3 viewportY = 2 * halfHeight * upDirection;
 	float3 lowerLeftCorner = camera.m_Position - viewportX / 2.0f - viewportY / 2.0f + forwardDirection * camera.m_FocusDist;
 
-	float lensRadius = camera.m_FocusDist * tanf(camera.m_DefocusAngle / 2.0f * M_PI / 180.0f);
+	float lensRadius = camera.m_FocusDist * tanf(camera.m_DefocusAngle / 2.0f * PI / 180.0f);
 
 	deviceCamera.position = camera.m_Position;
 	deviceCamera.right = camera.m_RightDirection;

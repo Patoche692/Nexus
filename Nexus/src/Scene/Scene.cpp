@@ -1,7 +1,8 @@
 #include "Scene.h"
-#include "Cuda/Pathtracer.cuh"
+#include "Cuda/PathTracer/Pathtracer.cuh"
 #include "Utils/cuda_math.h"
 #include "Assets/IMGLoader.h"
+#include "Geometry/BVH/TLASBuilder.h"
 
 
 Scene::Scene(uint32_t width, uint32_t height)
@@ -22,6 +23,34 @@ void Scene::Reset()
 void Scene::AddMaterial(Material& material)
 {
 	m_AssetManager.AddMaterial(material);
+}
+
+void Scene::Update()
+{
+	m_Camera->SetInvalid(false);
+
+	m_AssetManager.SendDataToDevice();
+
+	if (m_InvalidMeshInstances.size() != 0)
+	{
+		for (int i : m_InvalidMeshInstances)
+		{
+			MeshInstance& meshInstance = m_MeshInstances[i];
+			m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
+			if (meshInstance.materialId != -1)
+			{
+				m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
+				UpdateInstanceLighting(i);
+			}
+		}
+		m_Tlas->SetBVHInstances(m_BVHInstances);
+		m_Tlas->Build();
+		m_Tlas->Convert();
+		m_Tlas->UpdateDeviceData();
+
+		m_InvalidMeshInstances.clear();
+	}
+	m_Invalid = false;
 }
 
 void Scene::BuildTLAS()
@@ -81,15 +110,13 @@ void Scene::RemoveLight(const size_t index)
 	m_Lights.erase(m_Lights.begin() + index);
 }
 
-D_Scene Scene::ToDevice(Scene& scene)
+D_Scene Scene::ToDevice(const Scene& scene)
 {
 	D_Scene deviceScene;
 
-	scene.m_AssetManager.SendDataToDevice();
-
-	DeviceVector<Texture, cudaTextureObject_t>& deviceDiffuseMaps = scene.m_AssetManager.GetDeviceDiffuseMaps();
-	DeviceVector<Texture, cudaTextureObject_t>& deviceEmissiveMaps = scene.m_AssetManager.GetDeviceEmissiveMaps();
-	DeviceVector<Material, D_Material>& deviceMaterials = scene.m_AssetManager.GetDeviceMaterials();
+	const DeviceVector<Texture, cudaTextureObject_t>& deviceDiffuseMaps = scene.m_AssetManager.GetDeviceDiffuseMaps();
+	const DeviceVector<Texture, cudaTextureObject_t>& deviceEmissiveMaps = scene.m_AssetManager.GetDeviceEmissiveMaps();
+	const DeviceVector<Material, D_Material>& deviceMaterials = scene.m_AssetManager.GetDeviceMaterials();
 
 	deviceScene.diffuseMaps = deviceDiffuseMaps.Data();
 	deviceScene.emissiveMaps = deviceEmissiveMaps.Data();
@@ -97,36 +124,15 @@ D_Scene Scene::ToDevice(Scene& scene)
 	deviceScene.lights = scene.m_DeviceLights.Data();
 	deviceScene.lightCount = scene.m_DeviceLights.Size();
 
-	deviceScene.renderSettings = scene.m_RenderSettings;
+	deviceScene.renderSettings = *(D_RenderSettings*)&scene.m_RenderSettings;
 
 	deviceScene.hasHdrMap = scene.m_HdrMap.pixels != nullptr;
 	// TODO: clear m_DeviceHdrMap when reset
 	deviceScene.hdrMap = scene.m_DeviceHdrMap;
 	deviceScene.camera = Camera::ToDevice(*scene.m_Camera);
-	scene.m_Camera->SetInvalid(false);
 
-	if (scene.m_InvalidMeshInstances.size() != 0)
-	{
-		for (int i : scene.m_InvalidMeshInstances)
-		{
-			MeshInstance& meshInstance = scene.m_MeshInstances[i];
-			scene.m_BVHInstances[meshInstance.bvhInstanceIdx].SetTransform(meshInstance.position, meshInstance.rotation, meshInstance.scale);
-			if (meshInstance.materialId != -1)
-			{
-				scene.m_BVHInstances[meshInstance.bvhInstanceIdx].AssignMaterial(meshInstance.materialId);
-				scene.UpdateInstanceLighting(i);
-			}
-		}
-		scene.m_Tlas->SetBVHInstances(scene.m_BVHInstances);
-		scene.m_Tlas->Build();
-		scene.m_Tlas->UpdateDeviceData();
-
-		scene.m_InvalidMeshInstances.clear();
-	}
-
-	deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
-
-	scene.m_Invalid = false;
+	//deviceScene.tlas = TLAS::ToDevice(*scene.m_Tlas);
+	//D_BVH8* deviceTlas = GetDeviceTLASAddress();
 
 	return deviceScene;
 }

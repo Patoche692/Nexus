@@ -1,6 +1,26 @@
 #pragma once
 
+#include <cudart_platform.h>
+#include <device_launch_parameters.h>
+#include <cuda_runtime_api.h>
 #include "Ray.cuh"
+
+
+struct D_Triangle_SOA
+{
+	float3* pos0;
+	float3* pos1;
+	float3* pos2;
+
+	float3* normal0;
+	float3* normal1;
+	float3* normal2;
+
+	float3* texCoord0;
+	float3* texCoord1;
+	float3* texCoord2;
+};
+
 
 struct D_Triangle
 {
@@ -30,22 +50,22 @@ struct D_Triangle
 
 
 	// Möller-Trumbore intersection algorithm. See https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-	inline __device__ void Hit(D_Ray& r, const uint32_t instIdx, const uint32_t primIdx)
+	inline __device__ void Trace(D_Ray& r, D_Intersection& intersection, const uint32_t instIdx, const uint32_t primIdx)
 	{
-		float3 edge0 = pos1 - pos0;
-		float3 edge1 = pos2 - pos0;
+		const float3 edge0 = pos1 - pos0;
+		const float3 edge1 = pos2 - pos0;
 
-		float3 rayCrossEdge1 = cross(r.direction, edge1);
-		float det = dot(edge0, rayCrossEdge1);
+		const float3 rayCrossEdge1 = cross(r.direction, edge1);
+		const float det = dot(edge0, rayCrossEdge1);
 
 		if (det < 1.0e-8 && det > -1.0e-8)
 			return;
 
-		float invDet = 1.0f / det;
+		const float invDet = 1.0f / det;
 
-		float3 s = r.origin - pos0;
+		const float3 s = r.origin - pos0;
 		
-		float u = invDet * dot(s, rayCrossEdge1);
+		const float u = invDet * dot(s, rayCrossEdge1);
 
 		if (u < 0.0f || u > 1.0f)
 			return;
@@ -58,33 +78,33 @@ struct D_Triangle
 
 		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0f && t < r.hit.t)
+		if (t > 0.0f && t < intersection.hitDistance)
 		{
-			r.hit.t = t;
-			r.hit.u = u;
-			r.hit.v = v;
-			r.hit.instanceIdx = instIdx;
-			r.hit.triIdx = primIdx;
+			intersection.hitDistance = t;
+			intersection.u = u;
+			intersection.v = v;
+			intersection.instanceIdx = instIdx;
+			intersection.triIdx = primIdx;
 		}
 	}
 
 	// true if any hit, else false
-	inline __device__ bool ShadowTrace(D_Ray& r)
+	inline __device__ bool ShadowTrace(D_Ray& r, float hitDistance)
 	{
-		float3 edge0 = pos1 - pos0;
-		float3 edge1 = pos2 - pos0;
+		const float3 edge0 = pos1 - pos0;
+		const float3 edge1 = pos2 - pos0;
 
-		float3 rayCrossEdge1 = cross(r.direction, edge1);
-		float det = dot(edge0, rayCrossEdge1);
+		const float3 rayCrossEdge1 = cross(r.direction, edge1);
+		const float det = dot(edge0, rayCrossEdge1);
 
 		if (det < 1.0e-8 && det > -1.0e-8)
 			return false;
 
-		float invDet = 1.0f / det;
+		const float invDet = 1.0f / det;
 
-		float3 s = r.origin - pos0;
+		const float3 s = r.origin - pos0;
 		
-		float u = invDet * dot(s, rayCrossEdge1);
+		const float u = invDet * dot(s, rayCrossEdge1);
 
 		if (u < 0.0f || u > 1.0f)
 			return false;
@@ -97,7 +117,7 @@ struct D_Triangle
 
 		const float t = invDet * dot(edge1, sCrossEdge0);
 
-		if (t > 0.0f && t < r.hit.t - 1e-4f)
+		if (t > 0.0f && t < hitDistance - 1e-4f)
 			return true;
 
 		return false;
@@ -106,8 +126,8 @@ struct D_Triangle
 	// Normal (not normalized)
 	inline __device__ float3 Normal() const
 	{
-		float3 edge0 = pos1 - pos0;
-		float3 edge1 = pos2 - pos0;
+		const float3 edge0 = pos1 - pos0;
+		const float3 edge1 = pos2 - pos0;
 
 		return cross(edge0, edge1);
 	}
@@ -115,11 +135,11 @@ struct D_Triangle
 	// See https://community.khronos.org/t/how-can-i-find-the-area-of-a-3d-triangle/49777/2
 	inline __device__ float Area() const
 	{
-		const float3 e1 = pos1 - pos0;
-		const float3 e2 = pos2 - pos0;
+		const float3 edge0 = pos1 - pos0;
+		const float3 edge1 = pos2 - pos0;
 
-		const float3 e3 = cross(e1, e2);
+		const float3 normal = cross(edge0, edge1);
 
-		return 0.5f * length(e3);
+		return 0.5f * length(normal);
 	}
 };

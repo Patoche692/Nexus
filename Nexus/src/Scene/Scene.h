@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 
 #include "Camera.h"
 #include "Geometry/Sphere.h"
@@ -26,12 +26,14 @@ public:
 	std::vector<Material>& GetMaterials() { return m_AssetManager.GetMaterials(); }
 	AssetManager& GetAssetManager() { return m_AssetManager; }
 	std::shared_ptr<TLAS> GetTLAS() { return m_Tlas; }
+	const RenderSettings& GetRenderSettings() const { return m_RenderSettings; }
 	RenderSettings& GetRenderSettings() { return m_RenderSettings; }
 
 	bool IsEmpty() { return m_MeshInstances.size() == 0; }
 	void Invalidate() { m_Invalid = true; }
 	bool IsInvalid() { return m_Invalid || m_InvalidMeshInstances.size() > 0 || m_Camera->IsInvalid() || m_AssetManager.IsInvalid(); }
 
+	void Update();
 	void BuildTLAS();
 	MeshInstance& CreateMeshInstance(uint32_t meshId);
 	std::vector<MeshInstance>& GetMeshInstances() { return m_MeshInstances; }
@@ -43,7 +45,7 @@ public:
 	void RemoveLight(const size_t index);
 
 	// Create or update the device scene and returns a D_Scene object
-	static D_Scene ToDevice(Scene& scene);
+	static D_Scene ToDevice(const Scene& scene);
 
 private:
 	// Check if the instance is a light, and add it to the lights vector if it is

@@ -1,43 +1,6 @@
 #pragma once
 #include <cuda_runtime_api.h>
-#include "Memory/Device/CudaMemory.h"
-
-
-/*
- * Checks for an existing implementation of a ToDevice() method using SFINAE.
- * See https://stackoverflow.com/questions/257288/how-can-you-check-whether-a-templated-class-has-a-member-function
- */
-template<typename T>
-class ImplementsToDevice
-{
-	typedef char one;
-	struct two { char x[2]; };
-
-	template<typename C> static one test(decltype(&C::ToDevice));
-	template<typename C> static two test(...);
-
-public:
-	enum { value = sizeof(test<T>(0)) == sizeof(char) };
-};
-
-template<typename T>
-class ImplementsDestructFromDevice
-{
-	typedef char one;
-	struct two { char x[2]; };
-
-	template<typename C> static one test(decltype(&C::DestructFromDevice));
-	template<typename C> static two test(...);
-
-public:
-	enum { value = sizeof(test<T>(0)) == sizeof(char) };
-};
-
-template<typename T>
-constexpr bool is_trivially_copyable_to_device = !ImplementsToDevice<T>::value;
-
-template<typename T>
-constexpr bool is_trivially_destructible_from_device = !ImplementsDestructFromDevice<T>::value;
+#include "Device/CudaMemory.h"
 
 
 /*
@@ -57,7 +20,10 @@ public:
 	DeviceInstance() = delete;
 
 	DeviceInstance(TDevice* devicePtr)
-		: m_DevicePtr(devicePtr), m_OwnsPtr(false) { }
+		: m_DevicePtr(devicePtr), m_OwnsPtr(false)
+	{
+		m_Instance = Get();
+	}
 
 	DeviceInstance(const THost& hostInstance)
 		: m_OwnsPtr(true)
@@ -67,15 +33,16 @@ public:
 	}
 
 	DeviceInstance(const DeviceInstance<THost, TDevice>& other)
+		: m_Instance(other.m_Instance)
 	{
-		assert(is_trivially_copyable_to_device<THost>);
+		//assert(is_trivially_copyable_to_device<THost>);
 		m_OwnsPtr = true;
 		m_DevicePtr = CudaMemory::Allocate<TDevice>(1);
-		CudaMemory::Copy<TDevice>(other.m_DevicePtr, m_DevicePtr, 1, cudaMemcpyDeviceToDevice);
+		CudaMemory::CopyAsync<TDevice>(other.m_DevicePtr, m_DevicePtr, 1, cudaMemcpyDeviceToDevice);
 	}
 
 	DeviceInstance(DeviceInstance<THost, TDevice>&& other)
-		: m_OwnsPtr(other.m_OwnsPtr), m_DevicePtr(other.m_DevicePtr)
+		: m_OwnsPtr(other.m_OwnsPtr), m_DevicePtr(other.m_DevicePtr), m_Instance(other.m_Instance)
 	{
 		other.m_DevicePtr = nullptr;
 	}
@@ -95,6 +62,19 @@ public:
 		SetDeviceInstance(hostInstance);
 	}
 
+
+	TDevice* operator->()
+	{
+		// Get the instance from copyAsync
+		return &m_Instance;
+	}
+
+	TDevice Instance() { return m_Instance; }
+
+	TDevice* Data() { return m_DevicePtr; }
+
+private:
+
 	TDevice Get()
 	{
 		TDevice target;
@@ -102,29 +82,31 @@ public:
 		return target;
 	}
 
-	TDevice* Data() { return m_DevicePtr; }
-
-private:
-
 	void SetDeviceInstance(const THost& hostInstance)
 	{
 		if constexpr (!is_trivially_copyable_to_device<THost>)
 		{
 			TDevice deviceInstance = THost::ToDevice(hostInstance);
-			CudaMemory::Copy<TDevice>(m_DevicePtr, &deviceInstance, 1, cudaMemcpyHostToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_DevicePtr, &deviceInstance, 1, cudaMemcpyHostToDevice);
+			m_Instance = deviceInstance;
 		}
 		else
-			CudaMemory::Copy<TDevice>(m_DevicePtr, (TDevice*)&hostInstance, 1, cudaMemcpyHostToDevice);
+		{
+			CudaMemory::CopyAsync<TDevice>(m_DevicePtr, (TDevice*)&hostInstance, 1, cudaMemcpyHostToDevice);
+			m_Instance = *(TDevice*)&hostInstance;
+		}
 	}
 
 	void DestructDeviceInstance()
 	{
 		if constexpr (!is_trivially_destructible_from_device<THost>)
-			THost::DestructFromDevice(Get());
+			THost::DestructFromDevice(m_Instance);
 	}
 
 private:
 	TDevice* m_DevicePtr = nullptr;
+	TDevice m_Instance;
+
 	bool m_OwnsPtr = false;
 };
 

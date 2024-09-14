@@ -3,7 +3,7 @@
 #include "Allocators/DeviceAllocator.h"
 #include "CudaMemory.h"
 #include "DeviceInstance.h"
-#include "Memory/Host/Vector.h"
+#include "Memory/Vector.h"
 
 /*
  * Device vector for trivial types (does not handle copy / move constructors
@@ -33,12 +33,12 @@ public:
 		m_Size = size;
 	}
 
-	DeviceVector(DeviceVector<THost, TDevice>& other)
+	DeviceVector(const DeviceVector<THost, TDevice>& other)
 		: m_Allocator(other.m_Allocator)
 	{
 		Realloc(other.Size());
 		m_Size = other.Size();
-		CudaMemory::Copy<TDevice>(m_Data, other.Data(), other.Size(), cudaMemcpyDeviceToDevice);
+		CudaMemory::CopyAsync<TDevice>(m_Data, other.Data(), other.Size(), cudaMemcpyDeviceToDevice);
 	}
 
 	DeviceVector(DeviceVector<THost, TDevice>&& other)
@@ -54,14 +54,14 @@ public:
 		m_Size = hostVector.size();
 
 		if constexpr (is_trivially_copyable_to_device<THost>)
-			CudaMemory::Copy<TDevice>(m_Data, (TDevice*)hostVector.data(), hostVector.size(), cudaMemcpyHostToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_Data, (TDevice*)hostVector.data(), hostVector.size(), cudaMemcpyHostToDevice);
 		else
 		{
 			Vector<TDevice> deviceInstances(hostVector.size());
 			for (size_t i = 0; i < hostVector.size(); i++)
 				deviceInstances[i] = THost::ToDevice(hostVector[i]);
 
-			CudaMemory::Copy<TDevice>(m_Data, deviceInstances.Data(), hostVector.size(), cudaMemcpyHostToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_Data, deviceInstances.Data(), hostVector.size(), cudaMemcpyHostToDevice);
 		}
 	}
 
@@ -86,7 +86,16 @@ public:
 	~DeviceVector()
 	{
 		Clear();
+
+		if (m_Data)
+			DeviceAllocator<TDevice>::Free(m_Allocator, m_Data);
+	}
+
+	void Reset(size_t newCapacity)
+	{
 		DeviceAllocator<TDevice>::Free(m_Allocator, m_Data);
+		m_Data = DeviceAllocator<TDevice>::Alloc(m_Allocator, newCapacity);
+		m_Capacity = newCapacity;
 	}
 
 	DeviceVector<THost, TDevice>& operator=(const DeviceVector<THost, TDevice>& other)
@@ -98,7 +107,7 @@ public:
 			m_Capacity = other.m_Capacity;
 			Realloc(m_Capacity);
 			m_Size = other.Size();
-			CudaMemory::Copy<TDevice>(m_Data, other.m_Data, other.m_Size, cudaMemcpyDeviceToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_Data, other.m_Data, other.m_Size, cudaMemcpyDeviceToDevice);
 		}
 		return *this;
 	}
@@ -124,11 +133,11 @@ public:
 			Realloc(m_Capacity + m_Capacity / 2);
 
 		if constexpr (is_trivially_copyable_to_device<THost>)
-			CudaMemory::Copy<TDevice>(m_Data + m_Size, (TDevice*)&value, 1, cudaMemcpyHostToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_Data + m_Size, (TDevice*)&value, 1, cudaMemcpyHostToDevice);
 		else
 		{
 			TDevice deviceInstance = THost::ToDevice(value);
-			CudaMemory::Copy<TDevice>(m_Data + m_Size, &deviceInstance, 1, cudaMemcpyHostToDevice);
+			CudaMemory::CopyAsync<TDevice>(m_Data + m_Size, &deviceInstance, 1, cudaMemcpyHostToDevice);
 		}
 		m_Size++;
 	}
@@ -138,7 +147,7 @@ public:
 		assert(m_Size > 0);
 		m_Size--;
 		if constexpr (!is_trivially_destructible_from_device<THost>)
-			THost::DestructFromDevice(DeviceInstance<THost, TDevice>(m_Data + m_Size).Get());
+			THost::DestructFromDevice(DeviceInstance<THost, TDevice>(m_Data + m_Size).Instance());
 	}
 
 	void Clear()
@@ -146,7 +155,7 @@ public:
 		if constexpr (!is_trivially_destructible_from_device<THost>)
 		{
 			for (size_t i = 0; i < m_Size; i++)
-				THost::DestructFromDevice(DeviceInstance<THost, TDevice>(m_Data + i).Get());
+				THost::DestructFromDevice(DeviceInstance<THost, TDevice>(m_Data + i).Instance());
 		}
 
 		m_Size = 0;
@@ -169,7 +178,7 @@ private:
 
 		size_t size = std::min(newCapacity, m_Size);
 
-		CudaMemory::Copy<TDevice>(newBlock, m_Data, size, cudaMemcpyDeviceToDevice);
+		CudaMemory::CopyAsync<TDevice>(newBlock, m_Data, size, cudaMemcpyDeviceToDevice);
 
 		DeviceAllocator<TDevice>::Free(m_Allocator, m_Data);
 		m_Data = newBlock;

@@ -13,7 +13,7 @@ struct D_LambertianBSDF
 
 	}
 
-	inline __device__ bool Eval(const D_HitResult& hitResult, const float3& wi, const float3& wo, float3& throughput, float& pdf)
+	inline __device__ bool Eval(const D_Material& material, const float3& wi, const float3& wo, float3& throughput, float& pdf)
 	{
 		const float wiDotN = wi.z;
 		const float woDotN = wo.z;
@@ -22,16 +22,16 @@ struct D_LambertianBSDF
 		if (!reflected)
 			return false;
 
-		throughput = hitResult.material.diffuse.albedo * INV_PI * woDotN;
+		throughput = material.diffuse.albedo * INV_PI * woDotN;
 		pdf = INV_PI * woDotN;
 
 		return Sampler::IsPdfValid(pdf);
 	}
 
-	inline __device__ bool Sample(const D_HitResult& hitResult, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
+	inline __device__ bool Sample(const D_Material& material, const float3& wi, float3& wo, float3& throughput, float& pdf, unsigned int& rngState)
 	{
 		wo = Random::RandomCosineHemisphere(rngState);
-		throughput = hitResult.material.diffuse.albedo;
+		throughput = material.diffuse.albedo;
 		pdf = INV_PI * wo.z;
 
 		return Sampler::IsPdfValid(pdf);

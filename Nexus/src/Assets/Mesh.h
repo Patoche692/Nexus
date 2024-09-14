@@ -21,6 +21,8 @@ struct Mesh
 		bvh8 = builder.Build();
 		bvh8.InitDeviceData();
 	}
+	Mesh(const Mesh& other) = default;
+	Mesh(Mesh&& other) = default;
 
 	BVH8 bvh8;
 

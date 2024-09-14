@@ -51,6 +51,7 @@ public:
 	void Build();
 
 private:
+	void ComputeTrianglesAABB();
 	void SplitNodeInHalf(BVH2Node& node);
 	void Subdivide(uint32_t nodeIdx);
 	void UpdateNodeBounds(uint32_t nodeIdx);
@@ -60,6 +61,7 @@ public:
 	std::vector<Triangle> triangles;
 	std::vector<uint32_t> triangleIdx;
 	std::vector<BVH2Node> nodes;
+	std::vector<AABB> trianglesAABB;
 };
 
 

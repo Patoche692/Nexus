@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <set>
-#include "Memory/Device/DeviceVector.h"
+#include "Device/DeviceVector.h"
 #include "Assets/Mesh.h"
 #include "Assets/Material.h"
 #include "Geometry/BVH/BVHInstance.h"
@@ -31,6 +31,10 @@ public:
 	DeviceVector<Material, D_Material>& GetDeviceMaterials() { return m_DeviceMaterials; }
 	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceDiffuseMaps() { return m_DeviceDiffuseMaps; }
 	DeviceVector<Texture, cudaTextureObject_t>& GetDeviceEmissiveMaps() { return m_DeviceEmissiveMaps; }
+
+	const DeviceVector<Material, D_Material>& GetDeviceMaterials() const { return m_DeviceMaterials; }
+	const DeviceVector<Texture, cudaTextureObject_t>& GetDeviceDiffuseMaps() const { return m_DeviceDiffuseMaps; }
+	const DeviceVector<Texture, cudaTextureObject_t>& GetDeviceEmissiveMaps() const { return m_DeviceEmissiveMaps; }
 
 	int AddTexture(const Texture& texture);
 	void ApplyTextureToMaterial(int materialId, int diffuseMapId);
