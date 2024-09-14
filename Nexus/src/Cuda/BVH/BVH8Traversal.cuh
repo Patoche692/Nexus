@@ -152,8 +152,8 @@ inline __device__ D_Intersection BVH8Trace(D_Ray& ray)
 	intersection.hitDistance = 1e30f;
 
 	uint32_t idx;
+	uint32_t instanceIdx;
 	int32_t instanceStackDepth = -1;
-	uint32_t instanceIdx = -1;
 	D_BVH8 bvh = tlas;
 
 	uint2 nodeEntry = make_uint2(0);
@@ -302,8 +302,8 @@ inline __device__ bool BVH8TraceShadow(D_Ray& ray, float hitDistance)
 	const D_Ray backupRay = ray;
 
 	uint32_t idx;
+	uint32_t instanceIdx;
 	int32_t instanceStackDepth = -1;
-	uint32_t instanceIdx = -1;
 	D_BVH8 bvh = tlas;
 
 	uint2 nodeEntry = make_uint2(0);

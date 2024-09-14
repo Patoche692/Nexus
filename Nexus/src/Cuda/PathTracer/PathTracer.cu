@@ -31,6 +31,8 @@ __device__ __constant__ D_MaterialRequestSAO plasticMaterialBuffer;
 __device__ __constant__ D_MaterialRequestSAO dielectricMaterialBuffer;
 __device__ __constant__ D_MaterialRequestSAO conductorMaterialBuffer;
 
+__device__ D_QueueSize queueSize;
+
 
 inline __device__ uint32_t ToColorUInt(float3 color)
 {
@@ -109,24 +111,20 @@ __global__ void GenerateKernel()
 		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
 	);
 
-	//TODO: retrieve throughput, lastPdf, and radiance for frameNumber == 0
-	//pathState.lastPdf[index] = 1.0e10f;
-	//pathState.radiance[index] = make_float3(0.0f);
+	if (index == 0)
+		queueSize.traceSize[0] = resolution.x * resolution.y;
 
-	atomicAdd(&traceRequest.size, 1);
 	traceRequest.ray.origin[index] = ray.origin;
 	traceRequest.ray.direction[index] = ray.direction;
 	traceRequest.pixelIdx[index] = index;
-
-	if (index == 0)
-		traceRequest.traceCount = 0;
 }
 
 
 __global__ void TraceKernel()
 {
-	const int32_t index = atomicAdd(&traceRequest.traceCount, 1);
-	if (index > traceRequest.size)
+	//const int32_t index = atomicAdd(&queueSize.traceCount[bounce], 1);
+	const int32_t index = blockIdx.x * blockDim.x + threadIdx.x;
+	if (index >= queueSize.traceSize[bounce])
 		return;
 
 	D_Ray ray(
@@ -135,15 +133,13 @@ __global__ void TraceKernel()
 	);
 	D_Intersection intersection = BVH8Trace(ray);
 	traceRequest.intersection.Set(index, intersection);
-
-	//if (blockIdx.x * blockDim.x + threadIdx.x == 0)
-	//	traceRequest.traceCount = 0;
 }
 
 __global__ void TraceShadowKernel()
 {
-	const int32_t index = atomicAdd(&shadowTraceRequest.traceCount, 1);
-	if (index > shadowTraceRequest.size)
+	//const int32_t index = atomicAdd(&queueSize.traceShadowCount[bounce], 1);
+	const int32_t index = blockIdx.x * blockDim.x + threadIdx.x;
+	if (index >= queueSize.traceShadowSize[bounce])
 		return;
 
 	D_Ray ray(
@@ -156,14 +152,8 @@ __global__ void TraceShadowKernel()
 	const uint32_t pixelIdx = shadowTraceRequest.pixelIdx[index];
 	if (!anyHit)
 	{
-		if (frameNumber == 1)
-			accumulationBuffer[pixelIdx] = shadowTraceRequest.radiance[index];
-		else
-			accumulationBuffer[pixelIdx] += shadowTraceRequest.radiance[index];
+		pathState.radiance[pixelIdx] += shadowTraceRequest.radiance[index];
 	}
-
-	if (blockIdx.x * blockDim.x + threadIdx.x == 0)
-		shadowTraceRequest.traceCount = 0;
 }
 
 
@@ -171,11 +161,8 @@ __global__ void LogicKernel()
 {
 	const uint32_t index = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (index >= traceRequest.size)
+	if (index >= queueSize.traceSize[bounce - 1])
 		return;
-
-	if (index == 0)
-		traceRequest.size = 0;
 
 	uint32_t rngState = Random::InitRNG(index, scene.camera.resolution, frameNumber);
 
@@ -183,29 +170,30 @@ __global__ void LogicKernel()
 	const D_Ray ray(traceRequest.ray.origin[index], traceRequest.ray.direction[index]);
 	const uint32_t pixelIdx = traceRequest.pixelIdx[index];
 
-	const float lastPdf = bounce == 0 ? 1.0e10f : pathState.lastPdf[pixelIdx];
-	const float3 throughput = bounce == 0 ? make_float3(1.0f) : pathState.throughput[pixelIdx];
+	const float3 throughput = bounce == 1 ? make_float3(1.0f) : pathState.throughput[pixelIdx];
 
 	// If no intersection, sample background
 	if (intersection.hitDistance == 1e30f)
 	{
 		float3 backgroundColor = SampleBackground(scene, ray.direction);
-		if (frameNumber == 1)
-			accumulationBuffer[pixelIdx] = throughput * backgroundColor;
+		if (bounce == 1)
+			pathState.radiance[pixelIdx] = throughput * backgroundColor;
 		else
-			accumulationBuffer[pixelIdx] += throughput * backgroundColor;
-
-		const float3 c = accumulationBuffer[pixelIdx] / frameNumber;
-		renderBuffer[pixelIdx] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
-
+			pathState.radiance[pixelIdx] += throughput * backgroundColor;
 		return;
 	}
 
 	const D_BVHInstance instance = blas[intersection.instanceIdx];
-	const D_Material material = scene.materials[instance.materialId];
+	D_Material material = scene.materials[instance.materialId];
 
 	const D_Triangle triangle = bvhs[instance.bvhIdx].triangles[intersection.triIdx];
 	float u = intersection.u, v = intersection.v;
+
+	if (material.emissiveMapId != -1)
+	{
+		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
+	}
 
 	const float3 edge1 = triangle.pos1 - triangle.pos0;
 	const float3 edge2 = triangle.pos2 - triangle.pos0;
@@ -216,13 +204,17 @@ __global__ void LogicKernel()
 	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
 	normal = normalize(instance.transform.TransformVector(normal));
 
+	float3 radiance = make_float3(0.0f);
 
 	if (fmaxf(material.emissive * material.intensity) > 0.0f)
 	{
 		float weight = 1.0f;
 
-		if (scene.renderSettings.useMIS)
+		// Not using MIS for primary rays
+		if (scene.renderSettings.useMIS && bounce > 1)
 		{
+			const float lastPdf = pathState.lastPdf[pixelIdx];
+
 			const float cosThetaO = fabs(dot(normal, ray.direction));
 
 			const float dSquared = Square(intersection.hitDistance);
@@ -233,16 +225,17 @@ __global__ void LogicKernel()
 
 			weight = Sampler::PowerHeuristic(lastPdf, lightPdf);
 		}
-
-		if (frameNumber == 1)
-			accumulationBuffer[pixelIdx] = weight * material.emissive * material.intensity * throughput;
-		else
-			accumulationBuffer[pixelIdx] += weight * material.emissive * material.intensity * throughput;
+		radiance = weight * material.emissive * material.intensity * throughput;
 
 	}
 
-	const float3 c = accumulationBuffer[pixelIdx] / frameNumber;
-	renderBuffer[pixelIdx] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
+	if (bounce == 1)
+		pathState.radiance[pixelIdx] = radiance;
+	else
+		pathState.radiance[pixelIdx] += radiance;
+
+	if (bounce == scene.renderSettings.pathLength)
+		return;
 
 	// Russian roulette
 	float probability = fmaxf(throughput);// clamp(fmaxf(currentThroughput), 0.01f, 1.0f);
@@ -250,7 +243,7 @@ __global__ void LogicKernel()
 	{
 		// To get unbiased results, we need to increase the contribution of
 		// the non-terminated rays with their probability of being terminated
-		pathState.throughput[pixelIdx] *= 1.0f / p;
+		pathState.throughput[pixelIdx] = throughput / probability;
 	}
 	else
 		return;
@@ -259,25 +252,25 @@ __global__ void LogicKernel()
 	switch (material.type)
 	{
 	case D_Material::D_Type::DIFFUSE:
-		requestIdx = atomicAdd(&diffuseMaterialBuffer.size, 1);
+		requestIdx = atomicAdd(&queueSize.diffuseSize[bounce], 1);
 		diffuseMaterialBuffer.intersection.Set(requestIdx, intersection);
 		diffuseMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		diffuseMaterialBuffer.pixelIdx[requestIdx] = pixelIdx;
 		break;
 	case D_Material::D_Type::PLASTIC:
-		requestIdx = atomicAdd(&plasticMaterialBuffer.size, 1);
+		requestIdx = atomicAdd(&queueSize.plasticSize[bounce], 1);
 		plasticMaterialBuffer.intersection.Set(requestIdx, intersection);
 		plasticMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		plasticMaterialBuffer.pixelIdx[requestIdx] = pixelIdx;
 		break;
 	case D_Material::D_Type::DIELECTRIC:
-		requestIdx = atomicAdd(&dielectricMaterialBuffer.size, 1);
+		requestIdx = atomicAdd(&queueSize.dielectricSize[bounce], 1);
 		dielectricMaterialBuffer.intersection.Set(requestIdx, intersection);
 		dielectricMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		dielectricMaterialBuffer.pixelIdx[requestIdx] = pixelIdx;
 		break;
 	case D_Material::D_Type::CONDUCTOR:
-		requestIdx = atomicAdd(&conductorMaterialBuffer.size, 1);
+		requestIdx = atomicAdd(&queueSize.conductorSize[bounce], 1);
 		conductorMaterialBuffer.intersection.Set(requestIdx, intersection);
 		conductorMaterialBuffer.rayDirection[requestIdx] = ray.direction;
 		conductorMaterialBuffer.pixelIdx[requestIdx] = pixelIdx;
@@ -296,6 +289,7 @@ inline __device__ void NextEventEstimation(
 	const float3 hitPoint,
 	const float3 normal,
 	const float3 hitGNormal,
+	const float3 throughput,
 	const uint32_t pixelIdx,
 	unsigned int& rngState
 ) {
@@ -354,10 +348,10 @@ inline __device__ void NextEventEstimation(
 
 		const D_Material lightMaterial = scene.materials[instance.materialId];
 
-		float3 throughput;
+		float3 sampleThroughput;
 		float bsdfPdf;
 
-		bool sampleIsValid = D_BSDF::Eval<BSDF>(material, wi, wo, throughput, bsdfPdf);
+		bool sampleIsValid = D_BSDF::Eval<BSDF>(material, wi, wo, sampleThroughput, bsdfPdf);
 
 		if (!sampleIsValid)
 			return;
@@ -374,9 +368,9 @@ inline __device__ void NextEventEstimation(
 		else
 			emissive = lightMaterial.emissive;
 
-		const float3 radiance = weight * throughput * emissive * lightMaterial.intensity / lightPdf;
+		const float3 radiance = weight * throughput * sampleThroughput * emissive * lightMaterial.intensity / lightPdf;
 
-		const int32_t index = atomicAdd(&shadowTraceRequest.size, 1);
+		const int32_t index = atomicAdd(&queueSize.traceShadowSize[bounce], 1);
 		shadowTraceRequest.hitDistance[index] = distance;
 		shadowTraceRequest.radiance[index] = radiance;
 		shadowTraceRequest.ray.Set(index, shadowRay);
@@ -386,17 +380,18 @@ inline __device__ void NextEventEstimation(
 
 
 template<typename BSDF>
-inline __device__ void Shade(D_MaterialRequestSAO materialRequest)
+inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 {
-	const int32_t requestIdx = atomicAdd(&materialRequest.size, -1) - 1;
-	if (requestIdx < 0)
-	{
-		atomicAdd(&materialRequest.size, 1);
+	const int32_t requestIdx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (requestIdx >= size)
 		return;
-	}
+
 	const D_Intersection intersection = materialRequest.intersection.Get(requestIdx);
 	const float3 rayDirection = materialRequest.rayDirection[requestIdx];
 	const uint32_t pixelIdx = materialRequest.pixelIdx[requestIdx];
+
+	float3 throughput = bounce == 1 ? make_float3(1.0f) : pathState.throughput[pixelIdx];
 
 	uint32_t index = blockIdx.x * blockDim.x + threadIdx.x;
 	uint32_t rngState = Random::InitRNG(index, scene.camera.resolution, frameNumber);
@@ -423,11 +418,6 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest)
 		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
 		material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], uv.x, uv.y));
 	}
-	if (material.emissiveMapId != -1)
-	{
-		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
-	}
 
 	// Invert normals for non transmissive material if the primitive is backfacing the ray
 	if (dot(gNormal, rayDirection) > 0.0f && (material.type != D_Material::D_Type::DIELECTRIC))
@@ -440,15 +430,17 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest)
 	float3 wi = rotatePoint(qRotationToZ, -rayDirection);
 
 	if (scene.renderSettings.useMIS)
-		NextEventEstimation<BSDF>(wi, material, intersection, p, normal, gNormal, pixelIdx, rngState);
+		NextEventEstimation<BSDF>(wi, material, intersection, p, normal, gNormal, throughput, pixelIdx, rngState);
 
-	float3 wo, throughput;
+	float3 wo, sampleThroughput;
 	float pdf;
 
-	bool scattered = D_BSDF::Sample<BSDF>(material, wi, wo, throughput, pdf, rngState);
+	bool scattered = D_BSDF::Sample<BSDF>(material, wi, wo, sampleThroughput, pdf, rngState);
 
 	if (!scattered)
 		return;
+
+	throughput *= sampleThroughput;
 
 	wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
 	bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
@@ -460,237 +452,55 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest)
 		float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
 		const D_Ray scatteredRay(p + offsetDirection * 1.0e-4 * normal, wo);
 
-		const int32_t pathIdx = atomicAdd(&traceRequest.size, 1);
-		traceRequest.ray.Set(pathIdx, scatteredRay);
-		traceRequest.pixelIdx[pathIdx] = pixelIdx;
+		const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
+		traceRequest.ray.Set(traceRequestIdx, scatteredRay);
+		traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
 
-		pathState.throughput[pixelIdx] *= throughput;
+		pathState.throughput[pixelIdx] = throughput;
+
+
 		pathState.lastPdf[pixelIdx] = pdf;
 	}
 }
 
 __global__ void DiffuseMaterialKernel()
 {
-	Shade<D_LambertianBSDF>(diffuseMaterialBuffer);
+	Shade<D_LambertianBSDF>(diffuseMaterialBuffer, queueSize.diffuseSize[bounce]);
 }
 
 __global__ void PlasticMaterialKernel()
 {
-	Shade<D_PlasticBSDF>(plasticMaterialBuffer);
+	Shade<D_PlasticBSDF>(plasticMaterialBuffer, queueSize.plasticSize[bounce]);
 }
 
 __global__ void DielectricMaterialKernel()
 {
-	Shade<D_DielectricBSDF>(dielectricMaterialBuffer);
+	Shade<D_DielectricBSDF>(dielectricMaterialBuffer, queueSize.dielectricSize[bounce]);
 }
 
 __global__ void ConductorMaterialKernel()
 {
-	//Shade<D_ConductorBSDF>(conductorMaterialBuffer);
+	//Shade<D_ConductorBSDF>(conductorMaterialBuffer, queueSize.conductorSize[bounce]);
 }
 
+__global__ void AccumulateKernel()
+{
+	const uint32_t index = blockIdx.x * blockDim.x + threadIdx.x;
 
-// Incoming radiance estimate on ray origin and in ray direction
-//inline __device__ float3 Radiance(const D_Scene& scene, const D_Ray& r, unsigned int& rngState)
-//{
-//	D_Ray currentRay = r;
-//	float3 currentThroughput = make_float3(1.0f);
-//	float3 emission = make_float3(0.0f);
-//	float lastBsdfPdf = 1e10f;
-//
-//	for (int j = 0; j < scene.renderSettings.pathLength; j++)
-//	{
-//		// Reset the hit position and calculate the inverse of the new direction
-//		currentRay.hit.t = 1e30f;
-//		currentRay.invDirection = 1.0f / currentRay.direction;
-//
-//		BVH8Trace(currentRay);
-//
-//		// If no intersection, sample background
-//		if (currentRay.hit.t == 1e30f)
-//		{ 
-//			float3 backgroundColor = SampleBackground(scene, currentRay.direction);
-//			return currentThroughput * backgroundColor + emission;
-//		}
-//
-//		D_HitResult hitResult;
-//		//hitResult.p = currentRay.origin + currentRay.direction * currentRay.hit.t;
-//		hitResult.rIn = currentRay;
-//
-//		const D_BVHInstance& instance = blas[currentRay.hit.instanceIdx];
-//		const D_Triangle& triangle = bvhs[instance.bvhIdx].triangles[currentRay.hit.triIdx];
-//		float u = currentRay.hit.u, v = currentRay.hit.v;
-//
-//		const float3 edge1 = triangle.pos1 - triangle.pos0;
-//		const float3 edge2 = triangle.pos2 - triangle.pos0;
-//		hitResult.p = triangle.pos0 + currentRay.hit.u * edge1 + currentRay.hit.v * edge2;
-//		hitResult.p = instance.transform.TransformPoint(hitResult.p);
-//
-//		// Interpolating and rotating the normal
-//		hitResult.normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
-//		hitResult.normal = normalize(instance.transform.TransformVector(hitResult.normal));
-//
-//		float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
-//
-//		hitResult.material = scene.materials[instance.materialId];
-//
-//		if (hitResult.material.diffuseMapId == -1)
-//			hitResult.albedo = hitResult.material.diffuse.albedo;
-//		else
-//		{
-//			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-//			hitResult.material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[hitResult.material.diffuseMapId], uv.x, uv.y));
-//		}
-//		if (hitResult.material.emissiveMapId != -1) {
-//			float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-//			hitResult.material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[hitResult.material.emissiveMapId], uv.x, uv.y));
-//		}
-//
-//		// Normal flipping
-//		//if (dot(hitResult.normal, currentRay.direction) > 0.0f)
-//		//	hitResult.normal = -hitResult.normal;
-//
-//		// Invert normals for non transmissive material if the primitive is backfacing the ray
-//		if (dot(gNormal, currentRay.direction) > 0.0f && (hitResult.material.type != D_Material::D_Type::DIELECTRIC))
-//		{
-//			hitResult.normal = -hitResult.normal;
-//			gNormal = -gNormal;
-//		}
-//
-//		// Transform the incoming ray to local space (positive Z axis aligned with shading normal)
-//		float4 qRotationToZ = getRotationToZAxis(hitResult.normal);
-//		float3 wi = rotatePoint(qRotationToZ, -hitResult.rIn.direction);
-//
-//		//bool wiGeometryBackSide = dot(wi, gNormal) < 0.0f;
-//		//bool wiShadingBackSide = dot(wi, hitResult.normal) < 0.0f;
-//
-//		//if (wiGeometryBackSide != wiShadingBackSide)
-//		//	continue;
-//
-//		float3 throughput;
-//		float3 wo;
-//
-//		bool scattered = false;
-//		float bsdfPdf;
-//		switch (hitResult.material.type)
-//		{
-//		case D_Material::D_Type::DIFFUSE:
-//			scattered = D_BSDF::Sample<D_LambertianBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
-//			break;
-//		case D_Material::D_Type::DIELECTRIC:
-//			scattered = D_BSDF::Sample<D_DielectricBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
-//			break;
-//		case D_Material::D_Type::PLASTIC:
-//			scattered = D_BSDF::Sample<D_PlasticBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
-//			break;
-//		case D_Material::D_Type::CONDUCTOR:
-//			scattered = D_BSDF::Sample<D_ConductorBSDF>(hitResult, wi, wo, throughput, bsdfPdf, rngState);
-//			break;
-//		default:
-//			break;
-//		}
-//
-//		if (!scattered)
-//			continue;
-//
-//		bool hitLight = false;
-//		if (fmaxf(hitResult.material.emissive * hitResult.material.intensity) > 0.0f)
-//		{
-//			float weight = 1.0f;
-//
-//			if (scene.renderSettings.useMIS)
-//			{
-//				hitLight = true;
-//				const float cosThetaO = fabs(dot(hitResult.normal, currentRay.direction));
-//
-//				const float dSquared = Square(currentRay.hit.t);
-//
-//				float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangle.Area());
-//				// Transform pdf over an area to pdf over directions
-//				lightPdf *= dSquared / cosThetaO;
-//
-//				weight = scene.renderSettings.useMIS ? Sampler::PowerHeuristic(lastBsdfPdf, lightPdf) : 1.0f;
-//			}
-//			//weight = 0.0f;
-//
-//			emission += weight * hitResult.material.emissive * hitResult.material.intensity * currentThroughput;
-//		}
-//		lastBsdfPdf = bsdfPdf;
-//
-//
-//		if (scene.renderSettings.useMIS && !hitLight && j < scene.renderSettings.pathLength - 1)
-//			emission += currentThroughput * NextEventEstimation(scene, currentRay, hitResult, gNormal, rngState);
-//
-//		// Inverse ray transformation to world space
-//		wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-//		bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
-//		bool woShadingBackSide = dot(wo, hitResult.normal) < 0.0f;
-//
-//		if (woGeometryBackSide == woShadingBackSide)
-//		{
-//			currentThroughput *= throughput;
-//			float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
-//			currentRay.origin = hitResult.p + offsetDirection * 1.0e-4 * hitResult.normal;
-//			currentRay.direction = wo;
-//		}
-//
-//		// Russian roulette
-//		if (j > 2)
-//		{
-//			float p = fmaxf(currentThroughput);// clamp(fmaxf(currentThroughput), 0.01f, 1.0f);
-//			if (Random::Rand(rngState) < p)
-//			{
-//				// To get unbiased results, we need to increase the contribution of
-//				// the non-terminated rays with their probability of being terminated
-//				currentThroughput *= 1.0f / p;
-//			}
-//			else
-//				return emission;
-//		}
-//	}
-//
-//	return emission;
-//}
+	const uint2 resolution = scene.camera.resolution;
 
-// Megakernel
-//__global__ void TraceRay()
-//{
-//	const int i = blockIdx.x * blockDim.x + threadIdx.x;
-//	const int j = blockIdx.y * blockDim.y + threadIdx.y;
-//
-//	const uint2 pixel = make_uint2(i, j);
-//
-//	D_Camera camera = scene.camera;
-//	uint2 resolution = camera.resolution;
-//
-//	if (pixel.x >= resolution.x || pixel.y >= resolution.y)
-//		return;
-//
-//	unsigned int rngState = Random::InitRNG(pixel, resolution, frameNumber);
-//
-//	// Normalized jittered coordinates
-//	float x = (pixel.x + Random::Rand(rngState)) / (float)resolution.x;
-//	float y = (pixel.y + Random::Rand(rngState)) / (float)resolution.y;
-//
-//	float2 rd = camera.lensRadius * Random::RandomInUnitDisk(rngState);
-//	float3 offset = camera.right * rd.x + camera.up * rd.y;
-//
-//	D_Ray ray(
-//		camera.position + offset,
-//		normalize(camera.lowerLeftCorner + x * camera.viewportX + y * camera.viewportY - camera.position - offset)
-//	);
-//
-//	float3 c = Radiance(scene, ray, rngState);
-//
-//	if (frameNumber == 1)
-//		accumulationBuffer[pixel.y * resolution.x + pixel.x] = c;
-//	else
-//		accumulationBuffer[pixel.y * resolution.x + pixel.x] += c;
-//
-//	c = accumulationBuffer[pixel.y * resolution.x + pixel.x] / frameNumber;
-//
-//	renderBuffer[pixel.y * resolution.x + pixel.x] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
-//}
+	if (index >= resolution.x * resolution.y)
+		return;
+
+	if (frameNumber == 1)
+		accumulationBuffer[index] = pathState.radiance[index];
+	else
+		accumulationBuffer[index] += pathState.radiance[index];
+
+	float3 c = accumulationBuffer[index] / frameNumber;
+
+	renderBuffer[index] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
+}
 
 D_Scene* GetDeviceSceneAddress()
 {
@@ -794,5 +604,12 @@ D_MaterialRequestSAO* GetDeviceConductorRequestAddress()
 {
 	D_MaterialRequestSAO* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, conductorMaterialBuffer));
+	return target;
+}
+
+D_QueueSize* GetDeviceQueueSizeAddress()
+{
+	D_QueueSize* target;
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, queueSize));
 	return target;
 }

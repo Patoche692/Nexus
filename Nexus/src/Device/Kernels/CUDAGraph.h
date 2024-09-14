@@ -14,7 +14,6 @@ public:
 	void BuildGraph();
 	void Execute();
 	cudaGraphNode_t AddKernelNode(CUDAKernel& kernel, cudaGraphNode_t* dependencies = nullptr, size_t numDependencies = 0);
-	cudaGraphNode_t AddMemsetNode();
 
 private:
 	cudaGraph_t m_Graph;

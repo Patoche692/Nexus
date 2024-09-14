@@ -51,6 +51,11 @@ public:
 		CheckCudaErrors(cudaMemcpyAsync((void*)dst, (void*)src, sizeof(T) * count, kind));
 	}
 
+	static void MemsetAsync(void* dst, uint32_t value, uint32_t count)
+	{
+		CheckCudaErrors(cudaMemsetAsync(dst, value, count));
+	}
+
 	static void Free(void* ptr)
 	{
 		CheckCudaErrors(cudaFree(ptr));

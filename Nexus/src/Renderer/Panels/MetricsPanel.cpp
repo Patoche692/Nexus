@@ -81,7 +81,7 @@ void MetricsPanel::OnImGuiRender(uint32_t frameNumber)
 	if (ImGui::ColorEdit3("Background color", (float*)&renderSettings.backgroundColor))
 		m_Context->Invalidate();
 
-	if (ImGui::DragFloat("Background intensity", &renderSettings.backgroundIntensity, 0.01))
+	if (ImGui::DragFloat("Background intensity", &renderSettings.backgroundIntensity, 0.01, 0.0f, 1000.0f))
 		m_Context->Invalidate();
 
 	ImGui::End();

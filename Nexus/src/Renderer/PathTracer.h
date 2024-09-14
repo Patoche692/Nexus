@@ -32,6 +32,7 @@ private:
 	CUDAKernel m_PlasticMaterialKernel;
 	CUDAKernel m_DielectricMaterialKernel;
 	CUDAKernel m_ConductorMaterialKernel;
+	CUDAKernel m_AccumulateKernel;
 
 	CUDAGraph m_RenderGraph;
 
@@ -55,8 +56,10 @@ private:
 	DeviceInstance<D_TraceRequestSAO> m_TraceRequest;
 	DeviceInstance<D_ShadowTraceRequestSAO> m_ShadowTraceRequest;
 
-	DeviceInstance<D_MaterialRequestSAO> m_DiffuseMaterialBuffer;
-	DeviceInstance<D_MaterialRequestSAO> m_PlasticMaterialBuffer;
-	DeviceInstance<D_MaterialRequestSAO> m_DielectricMaterialBuffer;
-	DeviceInstance<D_MaterialRequestSAO> m_ConductorMaterialBuffer;
+	DeviceInstance<D_MaterialRequestSAO> m_DiffuseMaterialRequest;
+	DeviceInstance<D_MaterialRequestSAO> m_PlasticMaterialRequest;
+	DeviceInstance<D_MaterialRequestSAO> m_DielectricMaterialRequest;
+	DeviceInstance<D_MaterialRequestSAO> m_ConductorMaterialRequest;
+	DeviceInstance<D_QueueSize> m_QueueSize;
+
 };

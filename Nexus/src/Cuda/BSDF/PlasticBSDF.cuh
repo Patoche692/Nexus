@@ -22,8 +22,8 @@ struct D_PlasticBSDF
 
 	inline __device__ void PrepareBSDFData(const float3& wi,  const D_Material& material)
 	{
-		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.dielectric.roughness * material.dielectric.roughness, 1.0e-4f, 1.0f);
-		eta = wi.z < 0.0f ? material.dielectric.ior : 1 / material.dielectric.ior;
+		alpha = clamp((1.2f - 0.2f * sqrtf(fabs(wi.z))) * material.plastic.roughness * material.plastic.roughness, 1.0e-4f, 1.0f);
+		eta = wi.z < 0.0f ? material.plastic.ior : 1 / material.plastic.ior;
 	}
 
 	// Evaluation function for a shadow ray
@@ -40,7 +40,7 @@ struct D_PlasticBSDF
 		const float3 m = normalize(wo + wi);
 		float cosThetaT;
 		const float wiDotM = dot(wi, m);
-		const float F = Fresnel::DieletricReflectance(1.0f / material.dielectric.ior, wiDotM, cosThetaT);
+		const float F = Fresnel::DieletricReflectance(1.0f / material.plastic.ior, wiDotM, cosThetaT);
 		const float G = Microfacet::Smith_G2(alpha, fabs(woDotN), fabs(wiDotN));
 		const float D = Microfacet::BeckmannD(alpha, m.z);
 
@@ -71,7 +71,7 @@ struct D_PlasticBSDF
 		const float wiDotM = dot(wi, m);
 
 		float cosThetaT;
-		const float fr = Fresnel::DieletricReflectance(1.0f / material.dielectric.ior, wiDotM, cosThetaT);
+		const float fr = Fresnel::DieletricReflectance(1.0f / material.plastic.ior, wiDotM, cosThetaT);
 
 		// Randomly select a specular or diffuse ray based on Fresnel reflectance
 		if (Random::Rand(rngState) < fr)
@@ -99,7 +99,7 @@ struct D_PlasticBSDF
 		{
 			//Diffuse
 			wo = Random::RandomCosineHemisphere(rngState);
-			throughput = material.dielectric.albedo;
+			throughput = material.plastic.albedo;
 			// Same here, we don't need to include the Fresnel term
 			//throughput = throughput * (1.0f - F) / (1.0f - fr)
 			pdf = (1.0f - fr) * INV_PI * wo.z;

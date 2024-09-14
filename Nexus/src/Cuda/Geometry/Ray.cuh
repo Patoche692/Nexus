@@ -9,8 +9,8 @@ struct D_Intersection
 	// Barycentric coordinates;
 	float u, v;
 
-	uint32_t triIdx = -1;
-	uint32_t instanceIdx = -1;
+	uint32_t triIdx;
+	uint32_t instanceIdx;
 };
 
 struct D_IntersectionSAO

@@ -46,12 +46,3 @@ cudaGraphNode_t CUDAGraph::AddKernelNode(CUDAKernel& kernel, cudaGraphNode_t* de
 	CheckCudaErrors(cudaGraphAddKernelNode(&kernelNode, m_Graph, dependencies, numDependencies, &nodeParams));
 	return kernelNode;
 }
-
-cudaGraphNode_t CUDAGraph::AddMemsetNode()
-{
-	cudaGraphNode_t memsetNode;
-	cudaMemsetParams memsetParams;
-	
-
-	return cudaGraphNode_t();
-}
