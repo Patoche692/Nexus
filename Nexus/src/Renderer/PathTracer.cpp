@@ -28,7 +28,7 @@ PathTracer::PathTracer(uint32_t width, uint32_t height)
 PathTracer::~PathTracer()
 {
 	FreeDeviceBuffers();
-	CudaMemory::Free(m_AccumulationBuffer.Instance());
+	CheckCudaErrors(cudaDeviceSynchronize());
 }
 
 void PathTracer::FreeDeviceBuffers()
@@ -88,7 +88,7 @@ void PathTracer::FreeDeviceBuffers()
 
 void PathTracer::Reset()
 {
-	m_AccumulationBuffer = CudaMemory::Allocate<float3>(m_ViewportHeight * m_ViewportHeight);
+	m_AccumulationBuffer = CudaMemory::Allocate<float3>(m_ViewportWidth * m_ViewportHeight);
 
 	dim3 gridSize(m_ViewportWidth * m_ViewportHeight / BLOCK_SIZE + 1, 1, 1);
 	dim3 blockSize(BLOCK_SIZE, 1, 1);
@@ -99,9 +99,14 @@ void PathTracer::Reset()
 	m_PlasticMaterialKernel = CUDAKernel((void*)PlasticMaterialKernel, gridSize, blockSize);
 	m_DielectricMaterialKernel = CUDAKernel((void*)DielectricMaterialKernel, gridSize, blockSize);
 	m_ConductorMaterialKernel = CUDAKernel((void*)ConductorMaterialKernel, gridSize, blockSize);
-	m_TraceKernel = CUDAKernel((void*)TraceKernel, gridSize, blockSize);
-	m_TraceShadowKernel = CUDAKernel((void*)TraceShadowKernel, gridSize, blockSize);
+	m_TraceKernel = CUDAKernel((void*)TraceKernel);
+	m_TraceShadowKernel = CUDAKernel((void*)TraceShadowKernel);
 	m_AccumulateKernel = CUDAKernel((void*)AccumulateKernel, gridSize, blockSize);
+
+	// Set minimal launch configuration for trace kernels.
+	// Inactive threads will fetch new rays in the trace queue.
+	m_TraceKernel.SetMinimalLaunchConfigurationWithBlockSize(BLOCK_SIZE);
+	m_TraceShadowKernel.SetMinimalLaunchConfigurationWithBlockSize(BLOCK_SIZE);
 
 	m_RenderGraph.Reset();
 	cudaGraphNode_t logicNode = m_RenderGraph.AddKernelNode(m_LogicKernel);
