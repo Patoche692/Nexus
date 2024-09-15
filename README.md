@@ -33,25 +33,27 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 ![24spp_MIS_IS_Comparison](https://github.com/user-attachments/assets/bf24f824-c643-47df-ae4d-c474273aa8fb)
-<p align="center"><em>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp</em></p>
+<p align="center"><em>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp.</em></p>
 
 
 ## Features
 - Interactive camera with thin lens approximation: FOV, defocus blur.
+- Wavefront path tracing, see [Laine et al. 2013](https://research.nvidia.com/sites/default/files/pubs/2013-07_Megakernels-Considered-Harmful/laine2013hpg_paper.pdf). The path tracing algorithm is divided into specialized CUDA kernels accessing global work queues to get more coherent workloads and to reduce the amount of inactive threads. Kernel launches are optimized using CUDA graphs.
+- Persistent threads with dynamic ray fetching, see [Aila and Laine 2009](https://research.nvidia.com/sites/default/files/pubs/2009-08_Understanding-the-Efficiency/aila2009hpg_paper.pdf). The trace kernel is launched with just enough threads to fill the device. During traversal, inactive threads will fetch new rays in the global trace queue to avoid wasting resources.
 - BVH:
    - Standard SAH-based BVH (BVH2) using binned building
-   - Compressed-wide BVH (BVH8), see [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf). BVH2 is collapsed into an 8-ary BVH. Nodes are compressed to 80 bytes to limit memory bandwidth on the GPU. Full efficiency is not used so far since I have not yet implemented wavefront path tracing.
+   - Compressed-wide BVH (BVH8), see [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf). BVH2 is collapsed into an 8-ary BVH. Nodes are compressed to 80 bytes encoding the child nodes' bounding boxes to limit memory bandwidth on the GPU.
 - The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh as well as dynamic scenes using object transforms.
 - Model loader: obj, ply, fbx, glb, gltf, 3ds, blend with Assimp
 - Materials:
    - Diffuse BSDF (Lambertian)
    - Rough dielectric BSDF (Beckmann microfacet model, see [Walter et al. 2007](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwilsq_av4qGAxWOSFUIHdm4A64QFnoECBMQAQ&url=https%3A%2F%2Fwww.graphics.cornell.edu%2F~bjw%2Fmicrofacetbsdf.pdf&usg=AOvVaw0iX18V7ncCyVX6K-TPfdO3&opi=89978449)).
-   - Rough plastic BSDF (mix between diffuse and rough specular)
-   - Rough conductor BSDF
+   - Rough plastic BSDF (mix between diffuse and rough specular).
+   - Rough conductor BSDF.
 - Importance sampling: cosine weighted for diffuse materials, VNDF sampling for rough materials.
 - Multiple importance sampling, see [Veach 1997](https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf). BSDF importance sampling is combined with next event estimation (direct light sampling) and the results from both sampling strategies are weighted using the power heuristic to get low-variance results.
-- Texture mapping (diffuse, emissive)
-- HDR environment maps
+- Texture mapping (diffuse, emissive).
+- HDR environment maps.
 
 ## Prerequisites
 Nexus requires the following:
@@ -84,7 +86,7 @@ Here are the main resources I used for this project.
 
 #### Path tracing in general
 - [Eric Veach's thesis](https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf). The best resource to understand all the theory behind Monte Carlo path tracing. It is code agnostic and fairly theorical but it helped me a lot to implement importance sampling, next event estimation and multiple importance sampling.
-- [Physically based rendering book](https://www.pbr-book.org/4ed/contents). The reference book for path tracing, detailing a complete path tracer implementation.
+- [Physically based rendering book](https://www.pbr-book.org/4ed/contents), the reference book for path tracing detailing a complete path tracer implementation.
 - [Ray Tracing Gems II: Next Generation Real-Time Rendering with DXR, Vulkan, and OptiX](https://www.realtimerendering.com/raytracinggems/rtg2/index.html)
 
 #### Getting started on ray tracing
@@ -105,6 +107,10 @@ Here are the main resources I used for this project.
 
 #### Sampling
 - [Computer Graphics at TU Wien videos](https://www.youtube.com/watch?v=FU1dbi827LY) for next event estimation and multiple importance sampling.
+
+#### GPU optimization
+- [Aila and Laine 2009](https://research.nvidia.com/sites/default/files/pubs/2009-08_Understanding-the-Efficiency/aila2009hpg_paper.pdf) to understand GPU architecture, traversal optimization and persistent threads.
+- [Laine et al. 2013](https://research.nvidia.com/sites/default/files/pubs/2013-07_Megakernels-Considered-Harmful/laine2013hpg_paper.pdf) for wavefront path tracing.
 
 I also had a look at other renderer implementations such as Blender's [cycles](https://github.com/blender/cycles), [Tungsten renderer](https://github.com/tunabrain/tungsten), and [Jan van Bergen's CUDA ray tracer](https://github.com/jan-van-bergen/GPU-Raytracer).
 
