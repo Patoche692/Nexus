@@ -12,7 +12,6 @@
 #include "Cuda/Scene/Scene.cuh"
 #include "Cuda/Scene/Camera.cuh"
 #include "Cuda/Sampler.cuh"
-#include "LogicStage.cuh"
 
 
 __device__ __constant__ uint32_t frameNumber;
@@ -122,38 +121,12 @@ __global__ void GenerateKernel()
 
 __global__ void TraceKernel()
 {
-	//const int32_t index = atomicAdd(&queueSize.traceCount[bounce], 1);
-	const int32_t index = blockIdx.x * blockDim.x + threadIdx.x;
-	if (index >= queueSize.traceSize[bounce])
-		return;
-
-	D_Ray ray(
-		traceRequest.ray.origin[index],
-		traceRequest.ray.direction[index]
-	);
-	D_Intersection intersection = BVH8Trace(ray);
-	traceRequest.intersection.Set(index, intersection);
+	BVH8Trace(traceRequest, queueSize.traceSize[bounce], &queueSize.traceCount[bounce]);
 }
 
 __global__ void TraceShadowKernel()
 {
-	//const int32_t index = atomicAdd(&queueSize.traceShadowCount[bounce], 1);
-	const int32_t index = blockIdx.x * blockDim.x + threadIdx.x;
-	if (index >= queueSize.traceShadowSize[bounce])
-		return;
-
-	D_Ray ray(
-		shadowTraceRequest.ray.origin[index],
-		shadowTraceRequest.ray.direction[index]
-	);
-	float hitDistance = shadowTraceRequest.hitDistance[index];
-	bool anyHit = BVH8TraceShadow(ray, hitDistance);
-
-	const uint32_t pixelIdx = shadowTraceRequest.pixelIdx[index];
-	if (!anyHit)
-	{
-		pathState.radiance[pixelIdx] += shadowTraceRequest.radiance[index];
-	}
+	BVH8TraceShadow(shadowTraceRequest, queueSize.traceShadowSize[bounce], &queueSize.traceShadowCount[bounce], pathState.radiance);
 }
 
 

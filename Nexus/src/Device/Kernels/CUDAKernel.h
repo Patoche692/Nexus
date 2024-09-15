@@ -1,14 +1,14 @@
 #pragma once
 
 #include <vector>
-#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
 #include "Utils/Utils.h"
 
 class CUDAKernel
 {
 public:
 	CUDAKernel() = default;
-	CUDAKernel(void* function, dim3 gridsize, dim3 blockSize, std::vector<void*> params = std::vector<void*>())
+	CUDAKernel(void* function, dim3 gridsize = dim3(1, 0, 0), dim3 blockSize = dim3(1, 0, 0), std::vector<void*> params = std::vector<void*>())
 		: m_Function(function), m_GridSize(gridsize), m_BlockSize(blockSize), m_LaunchParameters(params) {}
 
 	virtual void Init() { }
@@ -26,6 +26,31 @@ public:
 	{
 		m_GridSize = GridSize;
 		m_BlockSize = BlockSize;
+	}
+
+	void SetMinimalLaunchConfigurationWithBlockSize(int32_t blockSize)
+	{
+		int device;
+		cudaDeviceProp prop;
+
+		cudaGetDevice(&device);
+		cudaGetDeviceProperties(&prop, device);
+
+		int gridSize;
+		cudaOccupancyMaxActiveBlocksPerMultiprocessor(&gridSize, m_Function, blockSize, 0);
+		m_GridSize = dim3(gridSize * prop.multiProcessorCount, 1, 1);
+		m_BlockSize = dim3(blockSize, 1, 1);
+
+		//cudaOccupancyMaxPotentialBlockSize(&gridSize, &blockSize, m_Function);
+	}
+
+	// Minimal launch configuration suggested to achieve full gpu occupancy
+	void SetMinimalLaunchConfiguration()
+	{
+		int gridSize, blockSize;
+		cudaOccupancyMaxPotentialBlockSize(&gridSize, &blockSize, m_Function);
+		m_GridSize = dim3(gridSize, 1, 1);
+		m_BlockSize = dim3(blockSize, 1, 1);
 	}
 
 	void SetLaunchParameters(const std::vector<void*>& params)

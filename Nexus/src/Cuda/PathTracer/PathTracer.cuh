@@ -8,7 +8,7 @@
 #include "Scene/Scene.h"
 
 // Number of threads in a block
-#define BLOCK_SIZE 256
+#define BLOCK_SIZE 64
 
 #define WARP_SIZE 32	// Same size for all NVIDIA GPUs
 
