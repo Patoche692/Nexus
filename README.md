@@ -33,7 +33,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 <!--![junk_shop](https://github.com/Patoche692/PathTracer/assets/54531293/1c46544b-8889-4b02-bd82-86924ffc36b3)-->
 <!--![cornell_box_spheres](https://github.com/Patoche692/PathTracer/assets/54531293/c8028e26-bb3d-45f5-bfdf-d8e1849d3c39)-->
 ![24spp_MIS_IS_Comparison](https://github.com/user-attachments/assets/bf24f824-c643-47df-ae4d-c474273aa8fb)
-<p align="center"><em>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp</em></p>.
+<p align="center"><em>Left: multiple importance sampling. Right: naive render (BSDF sampling). Image rendered at 24 spp.</em></p>
 
 
 ## Features
