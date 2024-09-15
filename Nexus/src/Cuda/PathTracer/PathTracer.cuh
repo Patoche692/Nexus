@@ -45,6 +45,12 @@ struct D_MaterialRequestSAO
 	uint32_t* pixelIdx;
 };
 
+struct D_PixelQuery
+{
+	int32_t pixelIdx;
+	int32_t instanceIdx;
+};
+
 // From Jan van Bergen: store all the queue sizes for different depths
 // so that we only need to reset the sizes once after rendering
 struct D_QueueSize
@@ -89,3 +95,4 @@ D_MaterialRequestSAO* GetDevicePlasticRequestAddress();
 D_MaterialRequestSAO* GetDeviceDielectricRequestAddress();
 D_MaterialRequestSAO* GetDeviceConductorRequestAddress();
 D_QueueSize* GetDeviceQueueSizeAddress();
+D_PixelQuery* GetDevicePixelQueryAddress();

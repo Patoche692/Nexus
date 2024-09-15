@@ -12,7 +12,7 @@ void BVH8Builder::Init()
     m_TriBaseIdx = std::vector<int>(m_Bvh2.nodes.size());
     ComputeNodeTriCount(0, 0);
     float rootCost = ComputeNodeCost(0, 0);
-	std::cout << rootCost << std::endl;
+	//std::cout << rootCost << std::endl;
 }
 
 BVH8 BVH8Builder::Build()
@@ -21,7 +21,7 @@ BVH8 BVH8Builder::Build()
     BVH8 bvh8(m_Bvh2.triangles);
     bvh8.nodes.emplace_back();
     CollapseNode(bvh8, 0, 0);
-    std::cout << "Used nodes: " << m_UsedNodes << std::endl;
+    //std::cout << "Used nodes: " << m_UsedNodes << std::endl;
     return bvh8;
 }
 

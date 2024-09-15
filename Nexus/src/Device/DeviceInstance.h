@@ -73,6 +73,9 @@ public:
 
 	TDevice* Data() { return m_DevicePtr; }
 
+	// Get the latest instance from device
+	void Synchronize() { m_Instance = Get(); }
+
 private:
 
 	TDevice Get()

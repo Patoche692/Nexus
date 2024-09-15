@@ -20,7 +20,10 @@ public:
 
 	void UpdateDeviceScene(const Scene& scene);
 
-	uint32_t GetFrameNumber() { return m_FrameNumber; }
+	void SetPixelQuery(uint32_t x, uint32_t y);
+
+	int32_t GetSelectedInstance() { return m_PixelQuery->instanceIdx; }
+	uint32_t GetFrameNumber() const { return m_FrameNumber; }
 	const PixelBuffer& GetPixelBuffer() { return m_PixelBuffer; }
 
 private:
@@ -51,6 +54,9 @@ private:
 
 	DeviceInstance<Scene, D_Scene> m_Scene;
 
+	DeviceInstance<D_PixelQuery> m_PixelQuery;
+	bool m_PixelQueryPending = false;
+
 	DeviceInstance<D_PathStateSAO> m_PathState;
 
 	DeviceInstance<D_TraceRequestSAO> m_TraceRequest;
@@ -61,5 +67,4 @@ private:
 	DeviceInstance<D_MaterialRequestSAO> m_DielectricMaterialRequest;
 	DeviceInstance<D_MaterialRequestSAO> m_ConductorMaterialRequest;
 	DeviceInstance<D_QueueSize> m_QueueSize;
-
 };

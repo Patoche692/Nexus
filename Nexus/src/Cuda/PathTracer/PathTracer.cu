@@ -30,6 +30,7 @@ __device__ __constant__ D_MaterialRequestSAO plasticMaterialBuffer;
 __device__ __constant__ D_MaterialRequestSAO dielectricMaterialBuffer;
 __device__ __constant__ D_MaterialRequestSAO conductorMaterialBuffer;
 
+__device__ D_PixelQuery pixelQuery;
 __device__ D_QueueSize queueSize;
 
 
@@ -153,8 +154,15 @@ __global__ void LogicKernel()
 			pathState.radiance[pixelIdx] = throughput * backgroundColor;
 		else
 			pathState.radiance[pixelIdx] += throughput * backgroundColor;
+
+		if (bounce == 1 && pixelQuery.pixelIdx == pixelIdx)
+			pixelQuery.instanceIdx = -1;
+
 		return;
 	}
+
+	if (bounce == 1 && pixelQuery.pixelIdx == pixelIdx)
+		pixelQuery.instanceIdx = intersection.instanceIdx;
 
 	const D_BVHInstance instance = blas[intersection.instanceIdx];
 	D_Material material = scene.materials[instance.materialId];
@@ -584,5 +592,12 @@ D_QueueSize* GetDeviceQueueSizeAddress()
 {
 	D_QueueSize* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, queueSize));
+	return target;
+}
+
+D_PixelQuery* GetDevicePixelQueryAddress()
+{
+	D_PixelQuery* target;
+	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, pixelQuery));
 	return target;
 }

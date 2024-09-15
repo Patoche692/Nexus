@@ -14,7 +14,7 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Path Tracer", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Nexus", NULL, NULL);
     if (!window)
     {
         std::cout << "Error creating glfw window" << std::endl;

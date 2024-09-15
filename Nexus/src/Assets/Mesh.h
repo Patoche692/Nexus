@@ -20,6 +20,8 @@ struct Mesh
 		builder.Init();
 		bvh8 = builder.Build();
 		bvh8.InitDeviceData();
+
+		std::cout << "BVH8 successfully built" << std::endl << std::endl;
 	}
 	Mesh(const Mesh& other) = default;
 	Mesh(Mesh&& other) = default;

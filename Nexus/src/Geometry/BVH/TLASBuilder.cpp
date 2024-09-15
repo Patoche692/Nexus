@@ -10,7 +10,7 @@ TLASBuilder::TLASBuilder(TLAS& tlas) : m_Tlas(tlas)
 void TLASBuilder::Init()
 {
     float rootCost = ComputeNodeCost(0, 0);
-	std::cout << rootCost << std::endl;
+	//std::cout << rootCost << std::endl;
 }
 
 BVH8 TLASBuilder::Build()
@@ -20,7 +20,7 @@ BVH8 TLASBuilder::Build()
     bvh8.triangleIdx = m_Tlas.instancesIdx;
     bvh8.nodes.emplace_back();
     CollapseNode(bvh8, 0, 0);
-    std::cout << "Used nodes: " << m_UsedNodes << std::endl;
+    //std::cout << "Used nodes: " << m_UsedNodes << std::endl;
     return bvh8;
 }
 

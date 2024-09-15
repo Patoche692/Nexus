@@ -18,7 +18,8 @@ PathTracer::PathTracer(uint32_t width, uint32_t height)
 	m_PlasticMaterialRequest(GetDevicePlasticRequestAddress()),
 	m_DielectricMaterialRequest(GetDeviceDielectricRequestAddress()),
 	m_ConductorMaterialRequest(GetDeviceConductorRequestAddress()),
-	m_QueueSize(GetDeviceQueueSizeAddress())
+	m_QueueSize(GetDeviceQueueSizeAddress()),
+	m_PixelQuery(GetDevicePixelQueryAddress())
 {
 	m_AccumulationBuffer = CudaMemory::Allocate<float3>(width * height);
 
@@ -224,6 +225,13 @@ void PathTracer::Reset()
 	materialRequest.pixelIdx = pixelIdx;
 
 	m_ConductorMaterialRequest = materialRequest;
+
+	// Set pixel query index to undefined
+	D_PixelQuery pixelQuery;
+	pixelQuery.pixelIdx = -1;
+	pixelQuery.instanceIdx = -1;
+
+	m_PixelQuery = pixelQuery;
 }
 
 void PathTracer::ResetFrameNumber()
@@ -263,6 +271,12 @@ void PathTracer::Render(const Scene& scene)
 
 	m_AccumulateKernel.Launch();
 
+	if (m_PixelQueryPending)
+	{
+		m_PixelQueryPending = false;
+		m_PixelQuery.Synchronize();
+	}
+
 	CheckCudaErrors(cudaGetLastError());
 	CheckCudaErrors(cudaGraphicsUnmapResources(1, &m_PixelBuffer.GetCudaResource(), 0));
 }
@@ -285,5 +299,14 @@ void PathTracer::OnResize(uint32_t width, uint32_t height)
 void PathTracer::UpdateDeviceScene(const Scene& scene)
 {
 	m_Scene = scene;
+}
+
+void PathTracer::SetPixelQuery(uint32_t x, uint32_t y)
+{
+	D_PixelQuery pixelQuery;
+	pixelQuery.pixelIdx = m_ViewportWidth * y + x;
+	pixelQuery.instanceIdx = -1;
+	m_PixelQuery = pixelQuery;
+	m_PixelQueryPending = true;
 }
 
