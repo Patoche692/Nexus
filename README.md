@@ -42,7 +42,7 @@ Interactive physically based GPU path tracer from scratch written in C++ using C
 - Persistent threads with dynamic ray fetching, see [Aila and Laine 2009](https://research.nvidia.com/sites/default/files/pubs/2009-08_Understanding-the-Efficiency/aila2009hpg_paper.pdf). The trace kernel is launched with just enough threads to fill the device. During traversal, inactive threads will fetch new rays in the global trace queue to avoid wasting resources.
 - BVH:
    - Standard SAH-based BVH (BVH2) using binned building
-   - Compressed-wide BVH (BVH8), see [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf). BVH2 is collapsed into an 8-ary BVH. Nodes are compressed to 80 bytes to limit memory bandwidth on the GPU. Full efficiency is not used so far since I have not yet implemented wavefront path tracing.
+   - Compressed-wide BVH (BVH8), see [Ylitie et al. 2017](https://research.nvidia.com/sites/default/files/publications/ylitie2017hpg-paper.pdf). BVH2 is collapsed into an 8-ary BVH. Nodes are compressed to 80 bytes encoding the child nodes' bounding boxes to limit memory bandwidth on the GPU.
 - The BVH is split into two parts: a top level structure (TLAS) and a bottom level structure (BLAS). This allows for multiple instances of the same mesh as well as dynamic scenes using object transforms.
 - Model loader: obj, ply, fbx, glb, gltf, 3ds, blend with Assimp
 - Materials:
