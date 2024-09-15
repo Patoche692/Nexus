@@ -12,7 +12,6 @@
 #include "Cuda/Scene/Scene.cuh"
 #include "Cuda/Scene/Camera.cuh"
 #include "Cuda/Sampler.cuh"
-#include "LogicStage.cuh"
 
 
 __device__ __constant__ uint32_t frameNumber;
