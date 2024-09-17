@@ -144,14 +144,23 @@ void Scene::UpdateInstanceLighting(size_t index)
 	if (meshInstance.materialId == -1)
 		return;
 
-	// If light already in the scene, return
-	for (Light& light : m_Lights)
+	const Material& material = m_AssetManager.GetMaterials()[meshInstance.materialId];
+
+	// If light already in the scene, return or remove light
+	for (size_t i = 0; i < m_Lights.size(); i++)
 	{
+		const Light& light = m_Lights[i];
 		if (light.type == Light::Type::MESH_LIGHT && light.mesh.meshId == index)
+		{
+			if (fmaxf(material.intensity * material.emissive) == 0.0f)
+			{
+				m_Lights.erase(m_Lights.begin() + i);
+				m_DeviceLights = m_Lights;
+			}
 			return;
+		}
 	}
 
-	const Material& material = m_AssetManager.GetMaterials()[meshInstance.materialId];
 	// If mesh has an emissive material, add it to the lights list
 	if (material.emissiveMapId != -1 ||
 		material.intensity * fmaxf(material.emissive) > 0.0f)

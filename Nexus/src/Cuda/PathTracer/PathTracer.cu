@@ -183,7 +183,7 @@ __global__ void LogicKernel()
 
 	// Interpolating and rotating the normal
 	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
-	normal = normalize(instance.transform.TransformVector(normal));
+	normal = normalize(instance.invTransform.Transposed().TransformVector(normal));
 
 	float3 radiance = make_float3(0.0f);
 
@@ -200,7 +200,13 @@ __global__ void LogicKernel()
 
 			const float dSquared = Square(intersection.hitDistance);
 
-			float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangle.Area());
+			const D_Triangle triangleTransformed(
+				instance.transform.TransformPoint(triangle.pos0),
+				instance.transform.TransformPoint(triangle.pos1),
+				instance.transform.TransformPoint(triangle.pos2)
+			);
+
+			float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangleTransformed.Area());
 			// Transform pdf over an area to pdf over directions
 			lightPdf *= dSquared / cosThetaO;
 
@@ -320,7 +326,13 @@ inline __device__ void NextEventEstimation(
 
 		const float dSquared = dot(toLight, toLight);
 
-		float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangle.Area());
+		const D_Triangle triangleTransformed(
+			instance.transform.TransformPoint(triangle.pos0),
+			instance.transform.TransformPoint(triangle.pos1),
+			instance.transform.TransformPoint(triangle.pos2)
+		);
+
+		float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangleTransformed.Area());
 		// Transform pdf over an area to pdf over directions
 		lightPdf *= dSquared / cosThetaO;
 
@@ -386,11 +398,14 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 
 	const float3 edge1 = triangle.pos1 - triangle.pos0;
 	const float3 edge2 = triangle.pos2 - triangle.pos0;
-	float3 p = triangle.pos0 + intersection.u * edge1 + intersection.v * edge2;
+	float3 p = triangle.pos0 + u * edge1 + v * edge2;
 	p = instance.transform.TransformPoint(p);
 
 	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
-	normal = normalize(instance.transform.TransformVector(normal));
+
+	// We use the transposed of the inverse matrix to transform normals.
+	// See https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html
+	normal = normalize(instance.invTransform.Transposed().TransformVector(normal));
 
 	float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
@@ -476,11 +491,10 @@ __global__ void AccumulateKernel()
 	if (frameNumber == 1)
 		accumulationBuffer[index] = pathState.radiance[index];
 	else
-		accumulationBuffer[index] += pathState.radiance[index];
+		accumulationBuffer[index] += (pathState.radiance[index] - accumulationBuffer[index]) / frameNumber;
 
-	float3 c = accumulationBuffer[index] / frameNumber;
 
-	renderBuffer[index] = ToColorUInt(Utils::LinearToGamma(Tonemap(c)));
+	renderBuffer[index] = ToColorUInt(Utils::LinearToGamma(Tonemap(accumulationBuffer[index])));
 }
 
 D_Scene* GetDeviceSceneAddress()

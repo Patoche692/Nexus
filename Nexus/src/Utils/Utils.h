@@ -33,7 +33,17 @@ namespace Utils
 		return angle * PI / 180.0f;
 	}
 
+	inline __host__ __device__ float3 ToRadians(float3 angle)
+	{
+		return angle * PI / 180.0f;
+	}
+
 	inline __host__ __device__ float ToDegrees(float angle)
+	{
+		return angle * 180.0f / PI;
+	}
+
+	inline __host__ __device__ float3 ToDegrees(float3 angle)
 	{
 		return angle * 180.0f / PI;
 	}

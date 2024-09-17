@@ -81,15 +81,11 @@ struct D_DielectricBSDF
 			// Specular
 			wo = reflect(-wi, m);
 
-			const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
-
-			// Handle divisions by zero
-			if (weight > 1.0e10)
-				return false;
-
 			// If the new ray is under the hemisphere, return
 			if (wo.z * wi.z < 0.0f)
 				return false;
+
+			const float weight = Microfacet::WeightBeckmannWalter(alpha, abs(wiDotM), abs(wo.z), abs(wi.z), m.z);
 
 			// We dont need to include the Fresnel term since it's already included when
 			// we select between reflection and refraction (see paper page 7)

@@ -192,9 +192,16 @@ void SceneHierarchyPanel::DrawProperties(int selectionContext)
 				break;
 			}
 			if (ImGui::ColorEdit3("Emission", (float*)&material.emissive))
+			{
+				// Invalidate mesh instance to update lighting
+				m_Context->InvalidateMeshInstance(selectionContext);
 				assetManager.InvalidateMaterial(meshInstance.materialId);
+			}
 			if (ImGui::DragFloat("Intensity", (float*)&material.intensity, 0.1f, 0.0f, 1000.0f))
+			{
+				m_Context->InvalidateMeshInstance(selectionContext);
 				assetManager.InvalidateMaterial(meshInstance.materialId);
+			}
 		}
 		ImGui::TreePop();
 	}

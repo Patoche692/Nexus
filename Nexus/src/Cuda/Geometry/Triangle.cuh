@@ -58,9 +58,6 @@ struct D_Triangle
 		const float3 rayCrossEdge1 = cross(r.direction, edge1);
 		const float det = dot(edge0, rayCrossEdge1);
 
-		if (det < 1.0e-8 && det > -1.0e-8)
-			return;
-
 		const float invDet = 1.0f / det;
 
 		const float3 s = r.origin - pos0;
@@ -96,9 +93,6 @@ struct D_Triangle
 
 		const float3 rayCrossEdge1 = cross(r.direction, edge1);
 		const float det = dot(edge0, rayCrossEdge1);
-
-		if (det < 1.0e-8 && det > -1.0e-8)
-			return false;
 
 		const float invDet = 1.0f / det;
 

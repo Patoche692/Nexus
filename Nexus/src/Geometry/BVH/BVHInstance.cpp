@@ -23,8 +23,8 @@ void BVHInstance::SetTransform(Mat4& t)
 
 void BVHInstance::SetTransform(float3 pos, float3 r, float3 s)
 {
-	Mat4 t = Mat4::Translate(pos) * Mat4::RotateX(Utils::ToRadians(r.x))
-		* Mat4::RotateY(Utils::ToRadians(r.y)) * Mat4::RotateZ(Utils::ToRadians(r.z)) * Mat4::Scale(s);
+	Mat4 t = Mat4::Translate(pos) * Mat4::RotateZ(Utils::ToRadians(r.z))
+		* Mat4::RotateY(Utils::ToRadians(r.y)) * Mat4::RotateX(Utils::ToRadians(r.x)) * Mat4::Scale(s);
 	SetTransform(t);
 }
 
