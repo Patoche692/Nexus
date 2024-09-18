@@ -14,7 +14,7 @@ Texture IMGLoader::LoadIMG(const std::string& filepath)
 {
 	int width, height, channels;
 
-	float3* pixels = (float3*)stbi_loadf(filepath.c_str(), &width, &height, &channels, 4);
+	unsigned char* pixels = stbi_load(filepath.c_str(), &width, &height, &channels, 4);
 
 	if (pixels == NULL)
 		std::cout << "IMGLoader: Failed to load texture " << filepath << std::endl;
@@ -25,7 +25,7 @@ Texture IMGLoader::LoadIMG(const std::string& filepath)
 Texture IMGLoader::LoadIMG(const aiTexture* texture)
 {
 	int width, height, channels;
-	float3* pixels = (float3*)stbi_loadf_from_memory((const stbi_uc*)texture->pcData, texture->mWidth, &width, &height, &channels, 4);
+	unsigned char* pixels = stbi_load_from_memory((const stbi_uc*)texture->pcData, texture->mWidth, &width, &height, &channels, 4);
 
 	if (pixels == NULL)
 		std::cout << "IMGLoader: Failed to load an embedded texture" << std::endl;

@@ -3,20 +3,20 @@
 #include <cuda_runtime_api.h>
 
 
-Texture::Texture(uint32_t w, uint32_t h, uint32_t c, float3* d) : width(w), height(h), channels(c), pixels(d)
+Texture::Texture(uint32_t w, uint32_t h, uint32_t c, unsigned char* d) : width(w), height(h), channels(c), pixels(d)
 {
 }
 
 cudaTextureObject_t Texture::ToDevice(const Texture& texture)
 {
 	// Channel descriptor for 4 Channels (RGBA)
-	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 	cudaArray_t cuArray;
 
 	CheckCudaErrors(cudaMallocArray(&cuArray, &channelDesc, texture.width, texture.height));
 
-	const size_t spitch = texture.width * 4 * sizeof(float);
-	CheckCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, texture.pixels, spitch, texture.width * 4 * sizeof(float), texture.height, cudaMemcpyHostToDevice));
+	const size_t spitch = texture.width * 4 * sizeof(unsigned char);
+	CheckCudaErrors(cudaMemcpy2DToArray(cuArray, 0, 0, texture.pixels, spitch, texture.width * 4 * sizeof(unsigned char), texture.height, cudaMemcpyHostToDevice));
 
 	cudaResourceDesc resDesc;
 	memset(&resDesc, 0, sizeof(resDesc));
@@ -27,8 +27,9 @@ cudaTextureObject_t Texture::ToDevice(const Texture& texture)
 	memset(&texDesc, 0, sizeof(texDesc));
 	texDesc.addressMode[0] = cudaAddressModeWrap;
 	texDesc.addressMode[1] = cudaAddressModeWrap;
+	texDesc.sRGB = 1;
 	texDesc.filterMode = cudaFilterModeLinear;
-	texDesc.readMode = cudaReadModeElementType;
+	texDesc.readMode = cudaReadModeNormalizedFloat;
 	texDesc.normalizedCoords = 1;
 
 	cudaTextureObject_t texObject = 0;

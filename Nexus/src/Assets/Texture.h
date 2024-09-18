@@ -13,7 +13,7 @@ struct Texture
 	};
 
 	Texture() = default;
-	Texture(uint32_t w, uint32_t h, uint32_t c, float3* d);
+	Texture(uint32_t w, uint32_t h, uint32_t c, unsigned char* d);
 
 	static cudaTextureObject_t ToDevice(const Texture& texture);
 	static void DestructFromDevice(const cudaTextureObject_t& texture);
@@ -22,6 +22,6 @@ struct Texture
 	uint32_t height = 0;
 	uint32_t channels = 0;
 
-	float3* pixels = nullptr;
+	unsigned char* pixels = nullptr;
 	Type type = Type::DIFFUSE;
 };
