@@ -409,10 +409,12 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 
 	float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
 
+	float4 color = make_float4(1.0f);
 	if (material.diffuseMapId != -1)
 	{
-		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		material.diffuse.albedo = make_float3(tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], uv.x, uv.y));
+		const float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
+		color = tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], uv.x, uv.y);
+		material.diffuse.albedo = make_float3(color);
 	}
 
 	// Invert normals for non transmissive material if the primitive is backfacing the ray
@@ -425,13 +427,27 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 	float4 qRotationToZ = getRotationToZAxis(normal);
 	float3 wi = rotatePoint(qRotationToZ, -rayDirection);
 
-	if (scene.renderSettings.useMIS)
-		NextEventEstimation<BSDF>(wi, material, intersection, p, normal, gNormal, throughput, pixelIdx, rngState);
-
 	float3 wo, sampleThroughput;
 	float pdf;
 
-	bool scattered = D_BSDF::Sample<BSDF>(material, wi, wo, sampleThroughput, pdf, rngState);
+	// TODO: handle use of MIS for semi-transparent diffuse textures
+	//bool useMIS = material.opacity == 1.0f;
+
+	bool scattered = true;
+	// Handle texture transparency
+	if (Random::Rand(rngState) > material.opacity || (material.diffuseMapId != -1 && Random::Rand(rngState) > color.w))
+	{
+		wo = -wi;
+		sampleThroughput = make_float3(1.0f);
+		pdf = 1.0f;
+	}
+	else
+	{
+		if (scene.renderSettings.useMIS)
+			NextEventEstimation<BSDF>(wi, material, intersection, p, normal, gNormal, throughput, pixelIdx, rngState);
+
+		scattered = D_BSDF::Sample<BSDF>(material, wi, wo, sampleThroughput, pdf, rngState);
+	}
 
 	if (!scattered)
 		return;
@@ -449,12 +465,11 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 		const D_Ray scatteredRay(p + offsetDirection * 1.0e-4 * normal, wo);
 
 		const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
+
 		traceRequest.ray.Set(traceRequestIdx, scatteredRay);
 		traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
 
 		pathState.throughput[pixelIdx] = throughput;
-
-
 		pathState.lastPdf[pixelIdx] = pdf;
 	}
 }

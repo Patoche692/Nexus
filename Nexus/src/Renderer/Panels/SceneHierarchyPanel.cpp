@@ -202,6 +202,10 @@ void SceneHierarchyPanel::DrawProperties(int selectionContext)
 				m_Context->InvalidateMeshInstance(selectionContext);
 				assetManager.InvalidateMaterial(meshInstance.materialId);
 			}
+			if (ImGui::DragFloat("Opacity", (float*)&material.opacity, 0.01f, 0.0f, 1.0f))
+			{
+				assetManager.InvalidateMaterial(meshInstance.materialId);
+			}
 		}
 		ImGui::TreePop();
 	}

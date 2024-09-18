@@ -1,7 +1,7 @@
 #pragma once
 
 #include <device_launch_parameters.h>
-#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
 #include <iostream>
 #include <glm/glm.hpp>
 #include "OpenGL/PixelBuffer.h"

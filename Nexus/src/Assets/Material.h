@@ -44,7 +44,7 @@ struct Material
 
 	float3 emissive;
 	float intensity;
-	float opacity;
+	float opacity = 1.0f;
 
 	int diffuseMapId = -1;
 	int emissiveMapId = -1;
