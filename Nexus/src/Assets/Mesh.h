@@ -9,30 +9,21 @@
 struct Mesh
 {
 	Mesh() = default;
-	Mesh(const std::string n, std::vector<Triangle>& triangles, int mId,
+	Mesh(const std::string n, int32_t bId = -1, int32_t mId = -1,
 		float3 p = make_float3(0.0f), float3 r = make_float3(0.0f), float3 s = make_float3(1.0f))
-		: name(n), materialId(mId), position(p), rotation(r), scale(s)
+		: name(n), materialId(mId), position(p), rotation(r), scale(s), bvhId(bId)
 	{
-		std::cout << "Mesh: " << n << std::endl;
-		std::cout << "Triangle count: " << triangles.size() << std::endl;
-
-		BVH8Builder builder(triangles);
-		builder.Init();
-		bvh8 = builder.Build();
-		bvh8.InitDeviceData();
-
-		std::cout << "BVH8 successfully built" << std::endl << std::endl;
 	}
 	Mesh(const Mesh& other) = default;
 	Mesh(Mesh&& other) = default;
 
-	BVH8 bvh8;
+	int32_t bvhId;
 
 	// Transform component of the mesh at loading
 	float3 position = make_float3(0.0f);
 	float3 rotation = make_float3(0.0f);
 	float3 scale = make_float3(1.0f);
 
-	int materialId;
+	int32_t materialId;
 	std::string name;
 };

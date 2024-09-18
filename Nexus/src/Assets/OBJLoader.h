@@ -8,11 +8,12 @@
 #include "Geometry/BVH/BVH.h"
 #include "Assets/Mesh.h"
 #include "Assets/AssetManager.h"
+#include "Scene/Scene.h"
 
 class OBJLoader
 {
 public:
-	static std::vector<Mesh> LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager);
+	static void LoadOBJ(const std::string& path, const std::string& filename, Scene* scene, AssetManager* assetManager);
 
 private:
 	static Assimp::Importer m_Importer;

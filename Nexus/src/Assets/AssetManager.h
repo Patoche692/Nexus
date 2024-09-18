@@ -13,11 +13,14 @@
 class AssetManager
 {
 public:
-	AssetManager() = default;
+	AssetManager();
 
 	void Reset();
 
-	void AddMesh(const std::string& path, const std::string filename);
+	int32_t CreateBVH(const std::vector<Triangle>& triangles);
+	int32_t AddMesh(Mesh&& mesh);
+
+	void InitDeviceData();
 
 	void AddMaterial();
 	int AddMaterial(const Material& material);
@@ -25,7 +28,7 @@ public:
 	void InvalidateMaterial(uint32_t index);
 	std::string GetMaterialTypesString();
 	std::string GetMaterialsString();
-	std::vector<BVH8> GetBVHs() { return m_Bvhs; }
+	std::vector<BVH8>& GetBVHs() { return m_Bvhs; }
 	std::vector<Mesh>& GetMeshes() { return m_Meshes; }
 
 	DeviceVector<Material, D_Material>& GetDeviceMaterials() { return m_DeviceMaterials; }
@@ -55,4 +58,6 @@ private:
 	DeviceVector<Material, D_Material> m_DeviceMaterials;
 	DeviceVector<Texture, cudaTextureObject_t> m_DeviceDiffuseMaps;
 	DeviceVector<Texture, cudaTextureObject_t> m_DeviceEmissiveMaps;
+	DeviceVector<BVH8, D_BVH8> m_DeviceBvhs;
+	DeviceInstance<D_BVH8*> m_DeviceBvhsAddress;
 };

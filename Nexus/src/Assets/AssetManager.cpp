@@ -1,6 +1,12 @@
 #include "AssetManager.h"
 #include "OBJLoader.h"
 #include "IMGLoader.h"
+#include "Cuda/PathTracer/PathTracer.cuh"
+
+AssetManager::AssetManager()
+	: m_DeviceBvhsAddress(GetDeviceBVHAddress())
+{
+}
 
 void AssetManager::Reset()
 {
@@ -14,14 +20,32 @@ void AssetManager::Reset()
 	m_Meshes.clear();
 }
 
-void AssetManager::AddMesh(const std::string& path, const std::string filename)
+int32_t AssetManager::CreateBVH(const std::vector<Triangle>& triangles)
 {
-	std::vector<Mesh> meshes = OBJLoader::LoadOBJ(path, filename, this);
-	for (Mesh& mesh : meshes)
-	{
-		m_Meshes.push_back(mesh);
-		m_Bvhs.push_back(mesh.bvh8);
-	}
+	BVH8 bvh8;
+	std::cout << "Triangle count: " << triangles.size() << std::endl;
+
+	BVH8Builder builder(triangles);
+	builder.Init();
+	bvh8 = builder.Build();
+	bvh8.InitDeviceData();
+
+	std::cout << "BVH8 successfully built" << std::endl << std::endl;
+
+	m_Bvhs.push_back(std::move(bvh8));
+	return m_Bvhs.size() - 1;
+}
+
+int32_t  AssetManager::AddMesh(Mesh&& mesh)
+{
+	m_Meshes.push_back(std::move(mesh));
+	return m_Meshes.size() - 1;
+}
+
+void AssetManager::InitDeviceData()
+{
+	m_DeviceBvhs = m_Bvhs;
+	m_DeviceBvhsAddress = m_DeviceBvhs.Data();
 }
 
 void AssetManager::AddMaterial()

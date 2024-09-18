@@ -68,7 +68,7 @@ static std::vector<Triangle> GetTrianglesFromAiMesh(const aiMesh* mesh)
 }
 
 // Return the list of IDs of the created materials
-static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetManager* assetManager, const std::string& path)
+static std::vector<int32_t > CreateMaterialsFromAiScene(const aiScene* scene, AssetManager* assetManager, const std::string& path)
 {
 	std::vector<int> materialIdx(scene->mNumMaterials);
 
@@ -162,14 +162,30 @@ static std::vector<int> CreateMaterialsFromAiScene(const aiScene* scene, AssetMa
 	return materialIdx;
 }
 
-static void GetMeshesFromAiNode(const aiScene* scene, const aiNode* node, std::vector<Mesh>& meshes, aiMatrix4x4 aiTransform, std::vector<int>& materialIds)
+static std::vector<int32_t> CreateMeshesFromScene(const aiScene* scene, AssetManager* assetManager)
 {
-	aiTransform = node->mTransformation * aiTransform;
+	std::vector<int32_t> meshIds;
+	for (int i = 0; i < scene->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[i];
+		std::vector<Triangle> triangles = GetTrianglesFromAiMesh(mesh);
+		int32_t bvhId = assetManager->CreateBVH(triangles);
+
+		std::string meshName = mesh->mName.data;
+		Mesh newMesh(meshName, bvhId);
+		int32_t meshId = assetManager->AddMesh(std::move(newMesh));
+		meshIds.push_back(meshId);
+	}
+	return meshIds;
+}
+
+static void CreateMeshInstancesFromNode(const aiScene* assimpScene, Scene* scene, const aiNode* node, aiMatrix4x4 aiTransform, std::vector<int>& materialIds, std::vector<int>& meshIds)
+{
+	aiTransform = aiTransform * node->mTransformation;
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		std::vector<Triangle> triangles = GetTrianglesFromAiMesh(mesh);
-		std::string meshName = mesh->mName.data;
+		aiMesh* mesh = assimpScene->mMeshes[node->mMeshes[i]];
+		int32_t meshId = meshIds[node->mMeshes[i]];
 
 		aiVector3D aiPosition, aiRotation, aiScale;
 		aiTransform.Decompose(aiScale, aiRotation, aiPosition);
@@ -178,46 +194,46 @@ static void GetMeshesFromAiNode(const aiScene* scene, const aiNode* node, std::v
 		float3 scale = { aiScale.x, aiScale.y, aiScale.z };
 
 		double scaleFactor = 1.0f;
-		bool result = scene->mMetaData->Get("UnitScaleFactor", scaleFactor);
+		bool result = assimpScene->mMetaData->Get("UnitScaleFactor", scaleFactor);
 		scale /= scaleFactor;
 		position /= scaleFactor;
 
-		Mesh newMesh(meshName, triangles, materialIds[mesh->mMaterialIndex], position, rotation, scale);
-		meshes.push_back(std::move(newMesh));
+		MeshInstance& meshInstance = scene->CreateMeshInstance(meshId);
+		meshInstance.AssignMaterial(materialIds[mesh->mMaterialIndex]);
+		meshInstance.SetTransform(position, rotation, scale);
 	}
 
 	for (int i = 0; i < node->mNumChildren; i++)
 	{
-		GetMeshesFromAiNode(scene, node->mChildren[i], meshes, aiTransform, materialIds);
+		CreateMeshInstancesFromNode(assimpScene, scene, node->mChildren[i], aiTransform, materialIds, meshIds);
 	}
 }
 
-std::vector<Mesh> OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, AssetManager* assetManager)
+
+void OBJLoader::LoadOBJ(const std::string& path, const std::string& filename, Scene* scene, AssetManager* assetManager)
 {
 	const std::string filePath = path + filename;
 
 	// Pretransform all meshes for simplicity, but this will need to be removed
 	// in the future to implement proper scene hierarchy
-	const aiScene* scene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
-		| aiProcess_FlipUVs | aiProcess_PreTransformVertices);
+	const aiScene* objScene = m_Importer.ReadFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate
+		| aiProcess_FlipUVs);
 
 	std::vector<Mesh> meshes;
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	if (!objScene || objScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !objScene->mRootNode)
 	{
 		std::cout << "OBJLoader: Error loading model " << filePath << std::endl;
-		return meshes;
+		return;
 	}
 
 	//double factor = 100.0f;
 	//// Fix for assimp scaling FBX with a factor 100
 	//scene->mMetaData->Set("UnitScaleFactor", factor);
 	
-
-	std::vector<int> materialIds = CreateMaterialsFromAiScene(scene, assetManager, path);
-	GetMeshesFromAiNode(scene, scene->mRootNode, meshes, aiMatrix4x4(), materialIds);
+	std::vector<int32_t> materialIds = CreateMaterialsFromAiScene(objScene, assetManager, path);
+	std::vector<int32_t> meshIds = CreateMeshesFromScene(objScene, assetManager);
+	CreateMeshInstancesFromNode(objScene, scene, objScene->mRootNode, aiMatrix4x4(), materialIds, meshIds);
 
 	std::cout << "OBJLoader: loaded model " << filePath << " successfully" << std::endl;
-
-	return meshes;
 }

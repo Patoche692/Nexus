@@ -239,7 +239,6 @@ int TLASBuilder::CountTriangles(BVH8& bvh8, uint32_t nodeIdxTlas)
 	if (tlasNode.IsLeaf())
     {
 		bvh8.triangleIdx[m_UsedIndices++] = tlasNode.blasIdx;
-        assert(tlasNode.blasIdx < 8);
 		return 1;
 	}
 

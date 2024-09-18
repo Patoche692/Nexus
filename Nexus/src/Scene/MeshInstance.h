@@ -22,6 +22,12 @@ struct MeshInstance
 	void SetRotationZ(float r) { position.z = r; }
 	void SetScale(float s) { scale = make_float3(s); }
 	void SetScale(float3 s) { scale = s; }
+	void SetTransform(float3 p, float3 r, float3 s)
+	{
+		position = p;
+		rotation = r;
+		scale = s;
+	}
 	void AssignMaterial(int mId) { materialId = mId; }
 
 	std::string name;

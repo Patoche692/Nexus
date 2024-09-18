@@ -3,6 +3,7 @@
 #include "Utils/cuda_math.h"
 #include "Assets/IMGLoader.h"
 #include "Geometry/BVH/TLASBuilder.h"
+#include "Assets/OBJLoader.h"
 
 
 Scene::Scene(uint32_t width, uint32_t height)
@@ -63,8 +64,9 @@ void Scene::BuildTLAS()
 MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 {
 	Mesh& mesh = m_AssetManager.GetMeshes()[meshId];
+	BVH8& bvh8 = m_AssetManager.GetBVHs()[mesh.bvhId];
 
-	m_BVHInstances.push_back(BVHInstance(meshId, &mesh.bvh8));
+	m_BVHInstances.push_back(BVHInstance(meshId, &bvh8));
 
 	MeshInstance meshInstance(mesh, m_BVHInstances.size() - 1, mesh.materialId);
 	m_MeshInstances.push_back(meshInstance);
@@ -73,7 +75,6 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 
 	// Create light if needed
 	UpdateInstanceLighting(instanceId);
-
 	InvalidateMeshInstance(instanceId);
 
 	return m_MeshInstances[instanceId];
@@ -81,9 +82,10 @@ MeshInstance& Scene::CreateMeshInstance(uint32_t meshId)
 
 void Scene::CreateMeshInstanceFromFile(const std::string& path, const std::string& fileName)
 {
-	m_AssetManager.AddMesh(path, fileName);
-	for (int i = 0; i < m_AssetManager.GetMeshes().size(); i++)
-		CreateMeshInstance(i);
+	OBJLoader::LoadOBJ(path, fileName, this, &m_AssetManager);
+
+	m_AssetManager.InitDeviceData();
+
 	if (m_MeshInstances.size() > 0)
 		BuildTLAS();
 }

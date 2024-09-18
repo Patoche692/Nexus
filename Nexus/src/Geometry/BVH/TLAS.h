@@ -36,15 +36,12 @@ struct TLAS
 	std::vector<TLASNode> nodes;
 	std::vector<BVHInstance> bvhInstances;
 	std::vector<uint32_t> instancesIdx;
-	std::vector<BVH8> bvhs;
 	BVH8 bvh8;
 
 	// Device members
 	DeviceVector<TLASNode, D_TLASNode> deviceNodes;
 	DeviceVector<BVHInstance, D_BVHInstance> deviceBlas;
-	DeviceVector<BVH8, D_BVH8> deviceBvhs;
 
 	DeviceInstance<D_BVHInstance*> deviceBlasAddress;
-	DeviceInstance<D_BVH8*> deviceBvhsAddress;
 	DeviceInstance<BVH8, D_BVH8> deviceBvh8;
 };

@@ -5,10 +5,9 @@
 #include "Cuda/PathTracer/PathTracer.cuh"
 
 TLAS::TLAS(const std::vector<BVHInstance>& instancesList, const std::vector<BVH8>& bvhList)
-	: deviceBvh8(GetDeviceTLASAddress()), deviceBlasAddress(GetDeviceBLASAddress()), deviceBvhsAddress(GetDeviceBVHAddress())
+	: deviceBvh8(GetDeviceTLASAddress()), deviceBlasAddress(GetDeviceBLASAddress())
 {
 	bvhInstances = instancesList;
-	bvhs = bvhList;
 }
 
 void TLAS::Build()
@@ -98,11 +97,9 @@ void TLAS::UpdateDeviceData()
 	bvh8.InitDeviceData();
 	deviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(bvhInstances);
 	deviceNodes = DeviceVector<TLASNode, D_TLASNode>(nodes);
-	deviceBvhs = DeviceVector<BVH8, D_BVH8>(bvhs);
 
 	deviceBvh8 = bvh8;
 	deviceBlasAddress = deviceBlas.Data();
-	deviceBvhsAddress = deviceBvhs.Data();
 }
 
 D_TLAS TLAS::ToDevice(const TLAS& tlas)
@@ -111,7 +108,6 @@ D_TLAS TLAS::ToDevice(const TLAS& tlas)
 
 	deviceTlas.blas = tlas.deviceBlas.Data();
 	deviceTlas.nodes = tlas.deviceNodes.Data();
-	deviceTlas.bvhs = tlas.deviceBvhs.Data();
 	deviceTlas.instanceCount = tlas.bvhInstances.size();
 	return deviceTlas;
 }
