@@ -4,7 +4,6 @@
 #include "Utils/cuda_math.h"
 #include "BVHInstance.h"
 #include "Utils/Utils.h"
-#include "Cuda/BVH/TLAS.cuh"
 
 struct TLASNode
 {
@@ -27,8 +26,6 @@ struct TLAS
 	void UpdateDeviceData();
 	void SetBVHInstances(const std::vector<BVHInstance>& instances) { bvhInstances = instances; }
 
-	static D_TLAS ToDevice(const TLAS& tlas);
-
 	std::vector<BVHInstance>& GetInstances() { return bvhInstances; }
 
 	int FindBestMatch(int N, int A);
@@ -39,7 +36,6 @@ struct TLAS
 	BVH8 bvh8;
 
 	// Device members
-	DeviceVector<TLASNode, D_TLASNode> deviceNodes;
 	DeviceVector<BVHInstance, D_BVHInstance> deviceBlas;
 
 	DeviceInstance<D_BVHInstance*> deviceBlasAddress;

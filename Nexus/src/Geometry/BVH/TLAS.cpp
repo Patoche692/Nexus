@@ -58,8 +58,6 @@ void TLAS::Build()
 	}
 
 	nodes[0] = nodes[instancesIdx[A]];
-
-	deviceNodes = DeviceVector<TLASNode, D_TLASNode>(nodes.size());
 }
 
 void TLAS::Convert()
@@ -96,18 +94,8 @@ void TLAS::UpdateDeviceData()
 {
 	bvh8.InitDeviceData();
 	deviceBlas = DeviceVector<BVHInstance, D_BVHInstance>(bvhInstances);
-	deviceNodes = DeviceVector<TLASNode, D_TLASNode>(nodes);
 
 	deviceBvh8 = bvh8;
 	deviceBlasAddress = deviceBlas.Data();
 }
 
-D_TLAS TLAS::ToDevice(const TLAS& tlas)
-{
-	D_TLAS deviceTlas;
-
-	deviceTlas.blas = tlas.deviceBlas.Data();
-	deviceTlas.nodes = tlas.deviceNodes.Data();
-	deviceTlas.instanceCount = tlas.bvhInstances.size();
-	return deviceTlas;
-}

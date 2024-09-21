@@ -161,69 +161,6 @@ __global__ void LogicKernel()
 		return;
 	}
 
-	if (bounce == 1 && pixelQuery.pixelIdx == pixelIdx)
-		pixelQuery.instanceIdx = intersection.instanceIdx;
-
-	const D_BVHInstance instance = blas[intersection.instanceIdx];
-	D_Material material = scene.materials[instance.materialId];
-
-	const D_Triangle triangle = bvhs[instance.bvhIdx].triangles[intersection.triIdx];
-	float u = intersection.u, v = intersection.v;
-
-	if (material.emissiveMapId != -1)
-	{
-		float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], uv.x, uv.y));
-	}
-
-	const float3 edge1 = triangle.pos1 - triangle.pos0;
-	const float3 edge2 = triangle.pos2 - triangle.pos0;
-	float3 p = triangle.pos0 + intersection.u * edge1 + intersection.v * edge2;
-	p = instance.transform.TransformPoint(p);
-
-	// Interpolating and rotating the normal
-	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
-	normal = normalize(instance.invTransform.Transposed().TransformVector(normal));
-
-	float3 radiance = make_float3(0.0f);
-
-	if (fmaxf(material.emissive * material.intensity) > 0.0f)
-	{
-		float weight = 1.0f;
-
-		// Not using MIS for primary rays
-		if (scene.renderSettings.useMIS && bounce > 1)
-		{
-			const float lastPdf = pathState.lastPdf[pixelIdx];
-
-			const float cosThetaO = fabs(dot(normal, ray.direction));
-
-			const float dSquared = Square(intersection.hitDistance);
-
-			const D_Triangle triangleTransformed(
-				instance.transform.TransformPoint(triangle.pos0),
-				instance.transform.TransformPoint(triangle.pos1),
-				instance.transform.TransformPoint(triangle.pos2)
-			);
-
-			float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangleTransformed.Area());
-			// Transform pdf over an area to pdf over directions
-			lightPdf *= dSquared / cosThetaO;
-
-			weight = Sampler::PowerHeuristic(lastPdf, lightPdf);
-		}
-		radiance = weight * material.emissive * material.intensity * throughput;
-
-	}
-
-	if (bounce == 1)
-		pathState.radiance[pixelIdx] = radiance;
-	else
-		pathState.radiance[pixelIdx] += radiance;
-
-	if (bounce == scene.renderSettings.pathLength)
-		return;
-
 	// Russian roulette
 	float probability = fmaxf(throughput);// clamp(fmaxf(currentThroughput), 0.01f, 1.0f);
 	if (Random::Rand(rngState) < probability)
@@ -234,6 +171,9 @@ __global__ void LogicKernel()
 	}
 	else
 		return;
+
+	const D_BVHInstance instance = blas[intersection.instanceIdx];
+	const D_Material material = scene.materials[instance.materialId];
 
 	int32_t requestIdx;
 	switch (material.type)
@@ -292,29 +232,24 @@ inline __device__ void NextEventEstimation(
 
 		D_Triangle triangle = bvhs[instance.bvhIdx].triangles[triangleIdx];
 
-		const float3 edge1 = triangle.pos1 - triangle.pos0;
-		const float3 edge2 = triangle.pos2 - triangle.pos0;
-		float3 p = triangle.pos0 + uv.x * edge1 + uv.y * edge2;
+		float3 p = Barycentric(triangle.pos0, triangle.pos1, triangle.pos2, uv);
 		p = instance.transform.TransformPoint(p);
 
-		const float3 lightGNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+		const float3 lightGNormal = normalize(instance.invTransform.Transposed().TransformVector(triangle.Normal()));
 
-		float3 lightNormal = uv.x * triangle.normal1 + uv.y * triangle.normal2 + (1 - (uv.x + uv.y)) * triangle.normal0;
-		lightNormal = normalize(instance.transform.TransformVector(lightNormal));
-
-		// TODO: change
-		//bool woShadingBackSide = wo.z < 0.0f;
-		//bool woGeometryBackSide = dot(-hitResult.rIn.direction, hitGNormal) < 0.0f;
-
-		//if (wiGeometryBackSide != wiShadingBackSide)
-		//	return make_float3(0.0f);
+		float3 lightNormal = Barycentric(triangle.normal0, triangle.normal1, triangle.normal2, uv);
+		lightNormal = normalize(instance.invTransform.Transposed().TransformVector(lightNormal));
 
 		D_Ray shadowRay;
-		float offsetDirection = 1.0;// wiGeometryBackSide ? -1.0f : 1.0f;
-		shadowRay.origin = hitPoint + offsetDirection * 1.0e-4f * normal;
 
-		const float3 toLight = p - shadowRay.origin;
+		float3 toLight = p - hitPoint;
+		float offsetDirection = Utils::SgnE(dot(toLight, normal));
+		shadowRay.origin = OffsetRay(hitPoint, hitGNormal * offsetDirection);
 
+		offsetDirection = Utils::SgnE(dot(-toLight, lightNormal));
+		p = OffsetRay(p, lightGNormal * offsetDirection);
+
+		toLight = p - shadowRay.origin;
 		const float distance = length(toLight);
 		shadowRay.direction = toLight / distance;
 		shadowRay.invDirection = 1.0f / shadowRay.direction;
@@ -349,13 +284,12 @@ inline __device__ void NextEventEstimation(
 		if (!sampleIsValid)
 			return;
 
-		//const float weight = 1.0f;
 		const float weight = Sampler::PowerHeuristic(lightPdf, bsdfPdf);
 
 		float3 emissive;
 		if (lightMaterial.emissiveMapId != -1)
 		{
-			float2 texUv = uv.x * triangle.texCoord1 + uv.y * triangle.texCoord2 + (1 - (uv.x + uv.y)) * triangle.texCoord0;
+			float2 texUv = Barycentric(triangle.texCoord0, triangle.texCoord1, triangle.texCoord2, uv);
 			emissive = make_float3(tex2D<float4>(scene.emissiveMaps[lightMaterial.emissiveMapId], texUv.x, texUv.y));
 		}
 		else
@@ -394,31 +328,75 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 
 	D_Material material = scene.materials[instance.materialId];
 
-	const float u = intersection.u, v = intersection.v;
+	const float2 uv = make_float2(intersection.u, intersection.v);
 
-	const float3 edge1 = triangle.pos1 - triangle.pos0;
-	const float3 edge2 = triangle.pos2 - triangle.pos0;
-	float3 p = triangle.pos0 + u * edge1 + v * edge2;
+	float3 p = Barycentric(triangle.pos0, triangle.pos1, triangle.pos2, uv);
 	p = instance.transform.TransformPoint(p);
 
-	float3 normal = u * triangle.normal1 + v * triangle.normal2 + (1 - (u + v)) * triangle.normal0;
+	float3 normal = Barycentric(triangle.normal0, triangle.normal1, triangle.normal2, uv);
+	float2 texUv = Barycentric(triangle.texCoord0, triangle.texCoord1, triangle.texCoord2, uv);
 
 	// We use the transposed of the inverse matrix to transform normals.
 	// See https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html
 	normal = normalize(instance.invTransform.Transposed().TransformVector(normal));
 
-	float3 gNormal = normalize(instance.transform.TransformVector(triangle.Normal()));
+	float3 gNormal = normalize(instance.invTransform.Transposed().TransformVector(triangle.Normal()));
+
+	if (material.emissiveMapId != -1)
+	{
+		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
+	}
+
+	float3 radiance = make_float3(0.0f);
+
+	if (fmaxf(material.emissive * material.intensity) > 0.0f)
+	{
+		float weight = 1.0f;
+
+		// Not using MIS for primary rays
+		if (scene.renderSettings.useMIS && bounce > 1)
+		{
+			const float lastPdf = pathState.lastPdf[pixelIdx];
+
+			const float cosThetaO = fabs(dot(normal, rayDirection));
+
+			const float dSquared = Square(intersection.hitDistance);
+
+			const D_Triangle triangleTransformed(
+				instance.transform.TransformPoint(triangle.pos0),
+				instance.transform.TransformPoint(triangle.pos1),
+				instance.transform.TransformPoint(triangle.pos2)
+			);
+
+			float lightPdf = 1.0f / (scene.lightCount * bvhs[instance.bvhIdx].triCount * triangleTransformed.Area());
+			// Transform pdf over an area to pdf over directions
+			lightPdf *= dSquared / cosThetaO;
+
+			weight = Sampler::PowerHeuristic(lastPdf, lightPdf);
+		}
+		radiance = weight * material.emissive * material.intensity * throughput;
+	}
+
+	if (bounce == 1)
+		pathState.radiance[pixelIdx] = radiance;
+	else
+		pathState.radiance[pixelIdx] += radiance;
+
+	if (bounce == scene.renderSettings.pathLength)
+		return;
+
+	if (bounce == 1 && pixelQuery.pixelIdx == pixelIdx)
+		pixelQuery.instanceIdx = intersection.instanceIdx;
 
 	float4 color = make_float4(1.0f);
 	if (material.diffuseMapId != -1)
 	{
-		const float2 uv = u * triangle.texCoord1 + v * triangle.texCoord2 + (1 - (u + v)) * triangle.texCoord0;
-		color = tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], uv.x, uv.y);
+		color = tex2D<float4>(scene.diffuseMaps[material.diffuseMapId], texUv.x, texUv.y);
 		material.diffuse.albedo = make_float3(color);
 	}
 
 	// Invert normals for non transmissive material if the primitive is backfacing the ray
-	if (dot(gNormal, rayDirection) > 0.0f && (material.type != D_Material::D_Type::DIELECTRIC))
+	if (dot(gNormal, rayDirection) > 0.0f && material.type != D_Material::D_Type::DIELECTRIC)
 	{
 		normal = -normal;
 		gNormal = -gNormal;
@@ -455,23 +433,19 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 	throughput *= sampleThroughput;
 
 	wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-	bool woGeometryBackSide = dot(wo, gNormal) < 0.0f;
-	bool woShadingBackSide = dot(wo, normal) < 0.0f;
 
 	// If sample is valid, write trace request in the path state
-	if (woGeometryBackSide == woShadingBackSide)
-	{
-		float offsetDirection = woGeometryBackSide ? -1.0f : 1.0f;
-		const D_Ray scatteredRay(p + offsetDirection * 1.0e-4 * normal, wo);
+	const float offsetDirection = Utils::SgnE(dot(wo, normal));
+	const float3 offsetOrigin = OffsetRay(p, gNormal * offsetDirection);
+	const D_Ray scatteredRay(offsetOrigin, wo);
 
-		const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
+	const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
 
-		traceRequest.ray.Set(traceRequestIdx, scatteredRay);
-		traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
+	traceRequest.ray.Set(traceRequestIdx, scatteredRay);
+	traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
 
-		pathState.throughput[pixelIdx] = throughput;
-		pathState.lastPdf[pixelIdx] = pdf;
-	}
+	pathState.throughput[pixelIdx] = throughput;
+	pathState.lastPdf[pixelIdx] = pdf;
 }
 
 __global__ void DiffuseMaterialKernel()

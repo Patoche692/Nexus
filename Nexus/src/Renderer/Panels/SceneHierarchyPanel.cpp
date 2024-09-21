@@ -50,7 +50,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 	ImGui::End();
 }
 
-static bool DrawFloat3Control(const std::string& label, float3& values, float resetValue = 0.0f, float columnWidth = 80.0f)
+static bool DrawFloat3Control(const std::string& label, float3& values, float resetValue = 0.0f, float step = 0.1f, const char* format = "%.2f", float columnWidth = 80.0f)
 {
 	ImGui::PushID(label.c_str());
 
@@ -75,7 +75,7 @@ static bool DrawFloat3Control(const std::string& label, float3& values, float re
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f"))
+	if (ImGui::DragFloat("##X", &values.x, step, 0.0f, 0.0f, format))
 		modified = true;
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
@@ -88,7 +88,7 @@ static bool DrawFloat3Control(const std::string& label, float3& values, float re
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f"))
+	if (ImGui::DragFloat("##Y", &values.y, step, 0.0f, 0.0f, format))
 		modified = true;
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
@@ -101,7 +101,7 @@ static bool DrawFloat3Control(const std::string& label, float3& values, float re
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f"))
+	if (ImGui::DragFloat("##Z", &values.z, step, 0.0f, 0.0f, format))
 		modified = true;
 	ImGui::PopItemWidth();
 
@@ -128,7 +128,7 @@ void SceneHierarchyPanel::DrawProperties(int selectionContext)
 		if (DrawFloat3Control("Rotation", meshInstance.rotation))
 			m_Context->InvalidateMeshInstance(selectionContext);
 
-		if (DrawFloat3Control("Scale", meshInstance.scale, 1.0f))
+		if (DrawFloat3Control("Scale", meshInstance.scale, 1.0f, 0.01f, "%.3f"))
 			m_Context->InvalidateMeshInstance(selectionContext);
 
 		ImGui::TreePop();

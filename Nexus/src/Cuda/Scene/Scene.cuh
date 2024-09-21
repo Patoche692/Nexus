@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
-#include "Cuda/BVH/TLAS.cuh"
 #include "Material.cuh"
 #include "Camera.cuh"
 #include "Light.cuh"
