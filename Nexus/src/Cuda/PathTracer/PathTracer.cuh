@@ -16,32 +16,37 @@
 
 
 // Size is the number of pixels on the screen
-struct D_PathStateSAO
+struct D_PathStateSOA
 {
 	float3* throughput;
 	float3* radiance;
+
+	// Unoccluded ray origin (used for MIS with semi-opaque materials)
+	float3* rayOrigin;
+
 	float* lastPdf;
+	bool* allowMIS;
 };
 
-struct D_TraceRequestSAO
+struct D_TraceRequestSOA
 {
-	D_RaySAO ray;
-	D_IntersectionSAO intersection;
+	D_RaySOA ray;
+	D_IntersectionSOA intersection;
 	uint32_t* pixelIdx;
 };
 
-struct D_ShadowTraceRequestSAO
+struct D_ShadowTraceRequestSOA
 {
-	D_RaySAO ray;
+	D_RaySOA ray;
 	float* hitDistance;
 	uint32_t* pixelIdx;
 	float3* radiance;
 };
 
-struct D_MaterialRequestSAO
+struct D_MaterialRequestSOA
 {
 	float3* rayDirection;
-	D_IntersectionSAO intersection;
+	D_IntersectionSOA intersection;
 	uint32_t* pixelIdx;
 };
 
@@ -87,12 +92,12 @@ D_BVH8* GetDeviceTLASAddress();
 D_BVH8** GetDeviceBVHAddress();
 D_BVHInstance** GetDeviceBLASAddress();
 
-D_PathStateSAO* GetDevicePathStateAddress();
-D_ShadowTraceRequestSAO* GetDeviceShadowTraceRequestAddress();
-D_TraceRequestSAO* GetDeviceTraceRequestAddress();
-D_MaterialRequestSAO* GetDeviceDiffuseRequestAddress();
-D_MaterialRequestSAO* GetDevicePlasticRequestAddress();
-D_MaterialRequestSAO* GetDeviceDielectricRequestAddress();
-D_MaterialRequestSAO* GetDeviceConductorRequestAddress();
+D_PathStateSOA* GetDevicePathStateAddress();
+D_ShadowTraceRequestSOA* GetDeviceShadowTraceRequestAddress();
+D_TraceRequestSOA* GetDeviceTraceRequestAddress();
+D_MaterialRequestSOA* GetDeviceDiffuseRequestAddress();
+D_MaterialRequestSOA* GetDevicePlasticRequestAddress();
+D_MaterialRequestSOA* GetDeviceDielectricRequestAddress();
+D_MaterialRequestSOA* GetDeviceConductorRequestAddress();
 D_QueueSize* GetDeviceQueueSizeAddress();
 D_PixelQuery* GetDevicePixelQueryAddress();

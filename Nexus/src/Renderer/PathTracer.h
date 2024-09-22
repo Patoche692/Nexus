@@ -57,14 +57,14 @@ private:
 	DeviceInstance<D_PixelQuery> m_PixelQuery;
 	bool m_PixelQueryPending = false;
 
-	DeviceInstance<D_PathStateSAO> m_PathState;
+	DeviceInstance<D_PathStateSOA> m_PathState;
 
-	DeviceInstance<D_TraceRequestSAO> m_TraceRequest;
-	DeviceInstance<D_ShadowTraceRequestSAO> m_ShadowTraceRequest;
+	DeviceInstance<D_TraceRequestSOA> m_TraceRequest;
+	DeviceInstance<D_ShadowTraceRequestSOA> m_ShadowTraceRequest;
 
-	DeviceInstance<D_MaterialRequestSAO> m_DiffuseMaterialRequest;
-	DeviceInstance<D_MaterialRequestSAO> m_PlasticMaterialRequest;
-	DeviceInstance<D_MaterialRequestSAO> m_DielectricMaterialRequest;
-	DeviceInstance<D_MaterialRequestSAO> m_ConductorMaterialRequest;
+	DeviceInstance<D_MaterialRequestSOA> m_DiffuseMaterialRequest;
+	DeviceInstance<D_MaterialRequestSOA> m_PlasticMaterialRequest;
+	DeviceInstance<D_MaterialRequestSOA> m_DielectricMaterialRequest;
+	DeviceInstance<D_MaterialRequestSOA> m_ConductorMaterialRequest;
 	DeviceInstance<D_QueueSize> m_QueueSize;
 };

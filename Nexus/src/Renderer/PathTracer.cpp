@@ -37,7 +37,9 @@ void PathTracer::FreeDeviceBuffers()
 	CudaMemory::FreeAsync(m_AccumulationBuffer.Instance());
 	CudaMemory::FreeAsync(m_PathState->lastPdf);
 	CudaMemory::FreeAsync(m_PathState->throughput);
+	CudaMemory::FreeAsync(m_PathState->rayOrigin);
 	CudaMemory::FreeAsync(m_PathState->radiance);
+	CudaMemory::FreeAsync(m_PathState->allowMIS);
 
 	CudaMemory::FreeAsync(m_TraceRequest->intersection.hitDistance);
 	CudaMemory::FreeAsync(m_TraceRequest->intersection.instanceIdx);
@@ -125,32 +127,36 @@ void PathTracer::Reset()
 
 	float* lastPdf = CudaMemory::AllocateAsync<float>(count);
 	float3* throughput = CudaMemory::AllocateAsync<float3>(count);
+	float3* rayOrigin = CudaMemory::AllocateAsync<float3>(count);
 	float3* radiance = CudaMemory::AllocateAsync<float3>(count);
+	bool* allowMIS = CudaMemory::AllocateAsync<bool>(count);
 
-	D_PathStateSAO pathState;
+	D_PathStateSOA pathState;
 	pathState.lastPdf = lastPdf;
 	pathState.throughput = throughput;
+	pathState.rayOrigin = rayOrigin;
 	pathState.radiance = radiance;
+	pathState.allowMIS = allowMIS;
 
 	m_PathState = pathState;
 
-	D_IntersectionSAO intersectionSAO;
-	intersectionSAO.hitDistance = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.u = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.v = CudaMemory::AllocateAsync<float>(count);
+	D_IntersectionSOA intersectionSOA;
+	intersectionSOA.hitDistance = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.u = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.v = CudaMemory::AllocateAsync<float>(count);
 
-	D_RaySAO raySAO;
-	raySAO.origin = CudaMemory::AllocateAsync<float3>(count);
-	raySAO.direction = CudaMemory::AllocateAsync<float3>(count);
+	D_RaySOA raySOA;
+	raySOA.origin = CudaMemory::AllocateAsync<float3>(count);
+	raySOA.direction = CudaMemory::AllocateAsync<float3>(count);
 
 	uint32_t* pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 
-	D_TraceRequestSAO traceRequest;
+	D_TraceRequestSOA traceRequest;
 
-	traceRequest.intersection = intersectionSAO;
-	traceRequest.ray = raySAO;
+	traceRequest.intersection = intersectionSOA;
+	traceRequest.ray = raySOA;
 	traceRequest.pixelIdx = pixelIdx;
 
 	m_TraceRequest = traceRequest;
@@ -158,69 +164,69 @@ void PathTracer::Reset()
 	float* hitDistance = CudaMemory::AllocateAsync<float>(count);
 	pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 	radiance = CudaMemory::AllocateAsync<float3>(count);
-	raySAO.origin = CudaMemory::AllocateAsync<float3>(count);
-	raySAO.direction = CudaMemory::AllocateAsync<float3>(count);
+	raySOA.origin = CudaMemory::AllocateAsync<float3>(count);
+	raySOA.direction = CudaMemory::AllocateAsync<float3>(count);
 
-	D_ShadowTraceRequestSAO shadowTraceRequest;
+	D_ShadowTraceRequestSOA shadowTraceRequest;
 	shadowTraceRequest.hitDistance = hitDistance;
 	shadowTraceRequest.pixelIdx = pixelIdx;
 	shadowTraceRequest.radiance = radiance;
-	shadowTraceRequest.ray = raySAO;
+	shadowTraceRequest.ray = raySOA;
 
 	m_ShadowTraceRequest = shadowTraceRequest;
 
-	intersectionSAO.hitDistance = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.u = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.v = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.hitDistance = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.u = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.v = CudaMemory::AllocateAsync<float>(count);
 	float3* rayDirection = CudaMemory::AllocateAsync<float3>(count);
 	pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 
-	D_MaterialRequestSAO materialRequest;
-	materialRequest.intersection = intersectionSAO;
+	D_MaterialRequestSOA materialRequest;
+	materialRequest.intersection = intersectionSOA;
 	materialRequest.rayDirection = rayDirection;
 	materialRequest.pixelIdx = pixelIdx;
 
 	m_DiffuseMaterialRequest = materialRequest;
 
-	intersectionSAO.hitDistance = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.u = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.v = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.hitDistance = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.u = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.v = CudaMemory::AllocateAsync<float>(count);
 	rayDirection = CudaMemory::AllocateAsync<float3>(count);
 	pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 
-	materialRequest.intersection = intersectionSAO;
+	materialRequest.intersection = intersectionSOA;
 	materialRequest.rayDirection = rayDirection;
 	materialRequest.pixelIdx = pixelIdx;
 
 	m_PlasticMaterialRequest = materialRequest;
 
-	intersectionSAO.hitDistance = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.u = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.v = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.hitDistance = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.u = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.v = CudaMemory::AllocateAsync<float>(count);
 	rayDirection = CudaMemory::AllocateAsync<float3>(count);
 	pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 
-	materialRequest.intersection = intersectionSAO;
+	materialRequest.intersection = intersectionSOA;
 	materialRequest.rayDirection = rayDirection;
 	materialRequest.pixelIdx = pixelIdx;
 
 	m_DielectricMaterialRequest = materialRequest;
 
-	intersectionSAO.hitDistance = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
-	intersectionSAO.u = CudaMemory::AllocateAsync<float>(count);
-	intersectionSAO.v = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.hitDistance = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.instanceIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.triIdx = CudaMemory::AllocateAsync<uint32_t>(count);
+	intersectionSOA.u = CudaMemory::AllocateAsync<float>(count);
+	intersectionSOA.v = CudaMemory::AllocateAsync<float>(count);
 	rayDirection = CudaMemory::AllocateAsync<float3>(count);
 	pixelIdx = CudaMemory::AllocateAsync<uint32_t>(count);
 
-	materialRequest.intersection = intersectionSAO;
+	materialRequest.intersection = intersectionSOA;
 	materialRequest.rayDirection = rayDirection;
 	materialRequest.pixelIdx = pixelIdx;
 

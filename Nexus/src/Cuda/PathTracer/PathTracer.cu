@@ -21,14 +21,14 @@ __device__ __constant__ float3* accumulationBuffer;
 __device__ __constant__ uint32_t* renderBuffer;
 
 __device__ __constant__ D_Scene scene;
-__device__ __constant__ D_PathStateSAO pathState;
-__device__ __constant__ D_TraceRequestSAO traceRequest;
-__device__ __constant__ D_ShadowTraceRequestSAO shadowTraceRequest;
+__device__ __constant__ D_PathStateSOA pathState;
+__device__ __constant__ D_TraceRequestSOA traceRequest;
+__device__ __constant__ D_ShadowTraceRequestSOA shadowTraceRequest;
 
-__device__ __constant__ D_MaterialRequestSAO diffuseMaterialBuffer;
-__device__ __constant__ D_MaterialRequestSAO plasticMaterialBuffer;
-__device__ __constant__ D_MaterialRequestSAO dielectricMaterialBuffer;
-__device__ __constant__ D_MaterialRequestSAO conductorMaterialBuffer;
+__device__ __constant__ D_MaterialRequestSOA diffuseMaterialBuffer;
+__device__ __constant__ D_MaterialRequestSOA plasticMaterialBuffer;
+__device__ __constant__ D_MaterialRequestSOA dielectricMaterialBuffer;
+__device__ __constant__ D_MaterialRequestSOA conductorMaterialBuffer;
 
 __device__ D_PixelQuery pixelQuery;
 __device__ D_QueueSize queueSize;
@@ -114,6 +114,8 @@ __global__ void GenerateKernel()
 	if (index == 0)
 		queueSize.traceSize[0] = resolution.x * resolution.y;
 
+	pathState.rayOrigin[index] = ray.origin;
+	pathState.lastPdf[index] = 1.0e10f;
 	traceRequest.ray.origin[index] = ray.origin;
 	traceRequest.ray.direction[index] = ray.direction;
 	traceRequest.pixelIdx[index] = index;
@@ -307,7 +309,7 @@ inline __device__ void NextEventEstimation(
 
 
 template<typename BSDF>
-inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
+inline __device__ void Shade(D_MaterialRequestSOA materialRequest, int32_t size)
 {
 	const int32_t requestIdx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -347,6 +349,8 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 		material.emissive = make_float3(tex2D<float4>(scene.emissiveMaps[material.emissiveMapId], texUv.x, texUv.y));
 	}
 
+	bool allowMIS = bounce > 1 && scene.renderSettings.useMIS;
+
 	float3 radiance = make_float3(0.0f);
 
 	if (fmaxf(material.emissive * material.intensity) > 0.0f)
@@ -354,13 +358,13 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 		float weight = 1.0f;
 
 		// Not using MIS for primary rays
-		if (scene.renderSettings.useMIS && bounce > 1)
+		if (allowMIS)
 		{
 			const float lastPdf = pathState.lastPdf[pixelIdx];
 
 			const float cosThetaO = fabs(dot(normal, rayDirection));
 
-			const float dSquared = Square(intersection.hitDistance);
+			const float dSquared = Square(length(p - pathState.rayOrigin[pixelIdx]));
 
 			const D_Triangle triangleTransformed(
 				instance.transform.TransformPoint(triangle.pos0),
@@ -372,7 +376,10 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 			// Transform pdf over an area to pdf over directions
 			lightPdf *= dSquared / cosThetaO;
 
-			weight = Sampler::PowerHeuristic(lastPdf, lightPdf);
+			if (!Sampler::IsPdfValid(lightPdf))
+				weight = 0.0f;
+			else
+				weight = Sampler::PowerHeuristic(lastPdf, lightPdf);
 		}
 		radiance = weight * material.emissive * material.intensity * throughput;
 	}
@@ -405,47 +412,49 @@ inline __device__ void Shade(D_MaterialRequestSAO materialRequest, int32_t size)
 	float4 qRotationToZ = getRotationToZAxis(normal);
 	float3 wi = rotatePoint(qRotationToZ, -rayDirection);
 
-	float3 wo, sampleThroughput;
-	float pdf;
+	float3 wo;
 
-	// TODO: handle use of MIS for semi-transparent diffuse textures
-	//bool useMIS = material.opacity == 1.0f;
-
-	bool scattered = true;
 	// Handle texture transparency
 	if (Random::Rand(rngState) > material.opacity || (material.diffuseMapId != -1 && Random::Rand(rngState) > color.w))
 	{
-		wo = -wi;
-		sampleThroughput = make_float3(1.0f);
-		pdf = 1.0f;
+		wo = normalize(rotatePoint(invertRotation(qRotationToZ), -wi));
+		const float offsetDirection = Utils::SgnE(dot(wo, normal));
+		const float3 offsetOrigin = OffsetRay(p, gNormal * offsetDirection);
+		const D_Ray scatteredRay = D_Ray(offsetOrigin, wo);
+
+		const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
+		traceRequest.ray.Set(traceRequestIdx, scatteredRay);
+		traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
 	}
 	else
 	{
 		if (scene.renderSettings.useMIS)
 			NextEventEstimation<BSDF>(wi, material, intersection, p, normal, gNormal, throughput, pixelIdx, rngState);
 
-		scattered = D_BSDF::Sample<BSDF>(material, wi, wo, sampleThroughput, pdf, rngState);
+		float pdf;
+		float3 sampleThroughput;
+		const bool scattered = D_BSDF::Sample<BSDF>(material, wi, wo, sampleThroughput, pdf, rngState);
+
+		if (!scattered)
+			return;
+
+		wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
+
+		const float offsetDirection = Utils::SgnE(dot(wo, normal));
+		const float3 offsetOrigin = OffsetRay(p, gNormal * offsetDirection);
+		const D_Ray scatteredRay = D_Ray(offsetOrigin, wo);
+
+		// If sample is valid, write trace request in the path state
+		throughput *= sampleThroughput;
+
+		const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
+		traceRequest.ray.Set(traceRequestIdx, scatteredRay);
+		traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
+
+		pathState.rayOrigin[pixelIdx] = scatteredRay.origin;
+		pathState.throughput[pixelIdx] = throughput;
+		pathState.lastPdf[pixelIdx] = pdf;
 	}
-
-	if (!scattered)
-		return;
-
-	throughput *= sampleThroughput;
-
-	wo = normalize(rotatePoint(invertRotation(qRotationToZ), wo));
-
-	// If sample is valid, write trace request in the path state
-	const float offsetDirection = Utils::SgnE(dot(wo, normal));
-	const float3 offsetOrigin = OffsetRay(p, gNormal * offsetDirection);
-	const D_Ray scatteredRay(offsetOrigin, wo);
-
-	const int32_t traceRequestIdx = atomicAdd(&queueSize.traceSize[bounce], 1);
-
-	traceRequest.ray.Set(traceRequestIdx, scatteredRay);
-	traceRequest.pixelIdx[traceRequestIdx] = pixelIdx;
-
-	pathState.throughput[pixelIdx] = throughput;
-	pathState.lastPdf[pixelIdx] = pdf;
 }
 
 __global__ void DiffuseMaterialKernel()
@@ -542,51 +551,51 @@ D_BVHInstance** GetDeviceBLASAddress()
 	return target;
 }
 
-D_PathStateSAO* GetDevicePathStateAddress()
+D_PathStateSOA* GetDevicePathStateAddress()
 {
-	D_PathStateSAO* target;
+	D_PathStateSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, pathState));
 	return target;
 }
 
-D_ShadowTraceRequestSAO* GetDeviceShadowTraceRequestAddress()
+D_ShadowTraceRequestSOA* GetDeviceShadowTraceRequestAddress()
 {
-	D_ShadowTraceRequestSAO* target;
+	D_ShadowTraceRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, shadowTraceRequest));
 	return target;
 }
 
-D_TraceRequestSAO* GetDeviceTraceRequestAddress()
+D_TraceRequestSOA* GetDeviceTraceRequestAddress()
 {
-	D_TraceRequestSAO* target;
+	D_TraceRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, traceRequest));
 	return target;
 }
 
-D_MaterialRequestSAO* GetDeviceDiffuseRequestAddress()
+D_MaterialRequestSOA* GetDeviceDiffuseRequestAddress()
 {
-	D_MaterialRequestSAO* target;
+	D_MaterialRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, diffuseMaterialBuffer));
 	return target;
 }
 
-D_MaterialRequestSAO* GetDevicePlasticRequestAddress()
+D_MaterialRequestSOA* GetDevicePlasticRequestAddress()
 {
-	D_MaterialRequestSAO* target;
+	D_MaterialRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, plasticMaterialBuffer));
 	return target;
 }
 
-D_MaterialRequestSAO* GetDeviceDielectricRequestAddress()
+D_MaterialRequestSOA* GetDeviceDielectricRequestAddress()
 {
-	D_MaterialRequestSAO* target;
+	D_MaterialRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, dielectricMaterialBuffer));
 	return target;
 }
 
-D_MaterialRequestSAO* GetDeviceConductorRequestAddress()
+D_MaterialRequestSOA* GetDeviceConductorRequestAddress()
 {
-	D_MaterialRequestSAO* target;
+	D_MaterialRequestSOA* target;
 	CheckCudaErrors(cudaGetSymbolAddress((void**)&target, conductorMaterialBuffer));
 	return target;
 }
