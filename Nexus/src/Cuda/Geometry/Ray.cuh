@@ -13,7 +13,7 @@ struct D_Intersection
 	uint32_t instanceIdx;
 };
 
-struct D_IntersectionSAO
+struct D_IntersectionSOA
 {
 	// Ray hit distance
 	float* hitDistance;
@@ -65,7 +65,7 @@ struct D_Ray
 	inline  __device__ float3 PointAtParameter(float t) const { return origin + direction * t; };
 };
 
-struct D_RaySAO
+struct D_RaySOA
 {
 	float3* origin;
 	float3* direction;

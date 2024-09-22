@@ -145,7 +145,7 @@ __forceinline__ __device__ void ChildTrace(
 	triangleEntry.y = (hitMask & 0x00ffffff);
 }
 
-inline __device__ void BVH8Trace(D_TraceRequestSAO traceRequest, int32_t traceSize, int32_t* traceCount)
+inline __device__ void BVH8Trace(D_TraceRequestSOA traceRequest, int32_t traceSize, int32_t* traceCount)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
@@ -323,7 +323,7 @@ inline __device__ void BVH8Trace(D_TraceRequestSAO traceRequest, int32_t traceSi
 
 
 // Shadow ray tracing: true if any hit
-inline __device__ void BVH8TraceShadow(D_ShadowTraceRequestSAO shadowTraceRequest, int32_t traceSize, int32_t* traceCount, float3* pathRadiance)
+inline __device__ void BVH8TraceShadow(D_ShadowTraceRequestSOA shadowTraceRequest, int32_t traceSize, int32_t* traceCount, float3* pathRadiance)
 {
 	__shared__ uint2 sharedStack[BLOCK_SIZE * SHARED_STACK_SIZE];
 	uint2 stack[TRAVERSAL_STACK_SIZE - SHARED_STACK_SIZE];
